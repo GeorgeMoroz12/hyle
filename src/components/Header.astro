@@ -1,0 +1,27 @@
+---
+// src/components/Header.astro
+---
+
+<header class="w-full py-6 sm:py-8 absolute top-0 z-50 bg-transparent">
+  <div class="container-main flex items-center justify-between">
+    <!-- Logo -->
+    <a href="/" class="font-serif text-2xl tracking-wide text-hyle-text hover:text-hyle-clay transition-colors duration-300">
+      Hyle Ceramics
+    </a>
+
+    <!-- Navigation -->
+    <nav class="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.25em] font-medium text-hyle-text/80">
+      <!-- UPDATED LINK -->
+      <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+      <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
+      <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
+    </nav>
+
+    <!-- Mobile Menu Button -->
+    <button class="md:hidden p-2 text-hyle-text" aria-label="Menu">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+      </svg>
+    </button>
+  </div>
+</header>

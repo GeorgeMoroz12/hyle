@@ -1,0 +1,81 @@
+---
+// src/components/ExpandableText.astro
+interface Props {
+  maxHeight?: string; // Например, "120px"
+  className?: string;
+  gradientFrom?: string; // Цвет начала градиента (например, "from-white" или "from-[#F6F5F1]")
+}
+
+const { 
+  maxHeight = "120px", 
+  className = "", 
+  gradientFrom = "from-white" 
+} = Astro.props;
+
+// Уникальный ID для привязки скрипта к конкретному инстансу (если их много на странице)
+const id = "expand-" + Math.random().toString(36).substr(2, 9);
+---
+
+<div id={id} class:list={["expandable-wrapper relative group", className]} data-expanded="false" style={`--max-height: ${maxHeight}`}>
+  
+  <!-- Content Area -->
+  <div class="expandable-content overflow-hidden transition-all duration-700 ease-out-expo relative z-0" style={`max-height: ${maxHeight}`}>
+    <slot />
+  </div>
+
+  <!-- Gradient Overlay (Fade out) -->
+  <div class={`expandable-gradient absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t ${gradientFrom} to-transparent z-10 pointer-events-none transition-opacity duration-500`}></div>
+
+  <!-- Toggle Button -->
+  <button class="expandable-btn hidden mt-2 text-hyle-clay font-hand text-xl hover:text-hyle-text transition-colors cursor-pointer select-none z-20 relative -rotate-1 hover:rotate-0">
+    Читать полностью ↓
+  </button>
+
+</div>
+
+<script define:vars={{ id }}>
+  // Изолированная логика для каждого компонента
+  const wrapper = document.getElementById(id);
+  
+  if (wrapper) {
+    const content = wrapper.querySelector('.expandable-content');
+    const btn = wrapper.querySelector('.expandable-btn');
+    const gradient = wrapper.querySelector('.expandable-gradient');
+    const maxHeightVal = parseInt(getComputedStyle(wrapper).getPropertyValue('--max-height'));
+
+    // Проверяем, нужен ли вообще "Read More" (если текст короткий)
+    // Используем ResizeObserver, чтобы реагировать на загрузку картинок/шрифтов
+    const observer = new ResizeObserver(() => {
+        if (content.scrollHeight > maxHeightVal + 20) { // +20px запас
+            btn.classList.remove('hidden');
+            gradient.style.display = 'block';
+        } else {
+            btn.classList.add('hidden');
+            gradient.style.display = 'none';
+        }
+    });
+    observer.observe(content);
+
+    // Логика клика
+    btn.addEventListener('click', () => {
+        const isExpanded = wrapper.getAttribute('data-expanded') === 'true';
+        
+        if (isExpanded) {
+            // Свернуть
+            content.style.maxHeight = wrapper.style.getPropertyValue('--max-height');
+            btn.innerText = 'Читать полностью ↓';
+            gradient.style.opacity = '1';
+            wrapper.setAttribute('data-expanded', 'false');
+            
+            // Скролл к началу блока, если мы ушли слишком далеко вниз
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            // Развернуть
+            content.style.maxHeight = content.scrollHeight + 'px';
+            btn.innerText = 'Свернуть ↑';
+            gradient.style.opacity = '0';
+            wrapper.setAttribute('data-expanded', 'true');
+        }
+    });
+  }
+</script>

@@ -1,0 +1,34 @@
+---
+// src/components/Footer.astro
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="mt-auto py-12 border-t border-hyle-text/10 bg-hyle-bg">
+  <div class="container-main flex flex-col md:flex-row justify-between items-center gap-6">
+    
+    <div class="text-center md:text-left">
+      <p class="font-serif text-lg mb-2">Hyle Ceramics</p>
+      <p class="text-xs text-hyle-text/60 uppercase tracking-wider">
+        © {currentYear} Handmade in Russia
+      </p>
+    </div>
+
+    <div class="flex gap-6">
+      <a 
+        href="https://t.me/your_telegram_username" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="text-sm border-b border-hyle-text/30 hover:border-hyle-clay hover:text-hyle-clay transition-colors pb-0.5"
+      >
+        Telegram
+      </a>
+      <a 
+        href="mailto:hello@hyle.com" 
+        class="text-sm border-b border-hyle-text/30 hover:border-hyle-clay hover:text-hyle-clay transition-colors pb-0.5"
+      >
+        Email
+      </a>
+    </div>
+
+  </div>
+</footer>

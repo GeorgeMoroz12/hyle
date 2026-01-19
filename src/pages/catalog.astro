@@ -1,0 +1,233 @@
+---
+// src/pages/catalog.astro
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { getCollection } from 'astro:content';
+
+// 1. ПОЛУЧЕНИЕ ДАННЫХ
+// Категории для маппинга названий
+const allCategories = await getCollection('categories');
+const categoryMap = allCategories.reduce((acc, cat) => {
+    acc[cat.slug] = cat.data.title;
+    return acc;
+}, {} as Record<string, string>);
+
+// Товары (исключаем архивные)
+const allProducts = await getCollection('products', ({ data }) => {
+    return data.status !== 'archived';
+});
+
+// Сортировка: Сначала новые (можно изменить логику)
+const sortedProducts = allProducts.sort((a, b) => {
+    // Если есть поле date, можно сортировать по нему.
+    // Пока сортируем просто по порядку добавления (в обратном)
+    return 0; 
+});
+
+// 2. СБОР УНИКАЛЬНЫХ ТЕГОВ
+const uniqueTags = Array.from(
+    new Set(
+        allProducts
+            .flatMap(p => p.data.tags || []) // Собираем все теги в один массив
+            .filter(Boolean)                 // Убираем пустые/null
+    )
+).sort(); // Сортируем по алфавиту
+
+const pageTitle = "Каталог";
+const pageDesc = "Полная коллекция керамики ручной работы Hyle.";
+---
+
+<Layout title={pageTitle} description={pageDesc}>
+  
+  <div class="min-h-screen pt-24 pb-20 bg-[#FDFCF8]">
+    <div class="container-main">
+        
+        <!-- HEADER -->
+        <div class="flex flex-col items-start gap-4 mb-12 animate-appear">
+            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">
+                Shop All
+            </span>
+            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
+                Коллекция
+            </h1>
+            <p class="text-hyle-text/60 font-light max-w-md mt-2">
+                Все изделия, доступные к заказу. Найдите то, что откликается именно вам.
+            </p>
+        </div>
+
+        <!-- FILTERS BAR (Sticky) -->
+        <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 -mx-6 px-6 md:mx-0 md:px-0 mb-12 border-b border-hyle-text/5 transition-all" id="filter-bar">
+            
+            <div class="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
+                <!-- Кнопка "Все" -->
+                <button 
+                    class="filter-btn group px-5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-xs uppercase tracking-widest"
+                    data-tag="all"
+                    data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                    data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                >
+                    Все изделия
+                </button>
+
+                <!-- Теги -->
+                {uniqueTags.map(tag => (
+                    <button 
+                        class="filter-btn group px-5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-xs uppercase tracking-widest"
+                        data-tag={tag}
+                        data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                        data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                    >
+                        #{tag}
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        <!-- PRODUCTS GRID -->
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
+            
+            {sortedProducts.map((product) => {
+                // Подготовка данных
+                const catId = typeof product.data.category === 'object' ? product.data.category.id : product.data.category;
+                const tagsString = product.data.tags ? product.data.tags.join(',') : '';
+                
+                return (
+                    <div 
+                        class="product-item transition-all duration-700 opacity-100 translate-y-0"
+                        data-tags={tagsString}
+                    >
+                        <ProductCard 
+                            product={product} 
+                            categoryName={categoryMap[catId]} 
+                        />
+                    </div>
+                );
+            })}
+
+            <!-- Empty State (Hidden by default) -->
+            <div id="empty-state" class="hidden col-span-full py-20 text-center">
+                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Ничего не найдено</p>
+                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
+                    Сбросить фильтры
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+  </div>
+</Layout>
+
+<script>
+    // --- CLIENT SIDE FILTERING LOGIC ---
+    document.addEventListener('astro:page-load', () => {
+        initCatalog();
+    }, { once: false }); // Supports View Transitions if enabled
+
+    // Fallback for standard load
+    if (document.readyState === 'complete') {
+        initCatalog();
+    } else {
+        window.addEventListener('load', initCatalog);
+    }
+
+    function initCatalog() {
+        const buttons = document.querySelectorAll('.filter-btn');
+        const items = document.querySelectorAll('.product-item');
+        const emptyState = document.getElementById('empty-state');
+        const resetBtn = document.getElementById('reset-filters');
+
+        if (!buttons.length || !items.length) return;
+
+        // 1. Функция обновления UI (кнопок)
+        const updateButtons = (activeTag) => {
+            buttons.forEach(btn => {
+                const isActive = btn.getAttribute('data-tag') === activeTag;
+                const activeClass = btn.getAttribute('data-active-class');
+                const inactiveClass = btn.getAttribute('data-inactive-class');
+
+                if (isActive) {
+                    btn.className = `filter-btn px-5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-xs uppercase tracking-widest ${activeClass}`;
+                } else {
+                    btn.className = `filter-btn px-5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-xs uppercase tracking-widest ${inactiveClass}`;
+                }
+            });
+        };
+
+        // 2. Функция фильтрации сетки
+        const filterGrid = (tag) => {
+            let visibleCount = 0;
+
+            items.forEach((item) => {
+                const itemTags = item.getAttribute('data-tags')?.split(',') || [];
+                // Если tag == 'all', показываем всё. Иначе ищем совпадение.
+                const shouldShow = tag === 'all' || itemTags.includes(tag);
+
+                const element = item as HTMLElement;
+
+                if (shouldShow) {
+                    element.classList.remove('hidden');
+                    // Небольшой таймаут для анимации появления
+                    requestAnimationFrame(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    });
+                    visibleCount++;
+                } else {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    // Ждем окончания transition перед скрытием (опционально, здесь упрощено)
+                    element.classList.add('hidden');
+                }
+            });
+
+            // Empty state toggle
+            if (visibleCount === 0 && emptyState) {
+                emptyState.classList.remove('hidden');
+            } else if (emptyState) {
+                emptyState.classList.add('hidden');
+            }
+        };
+
+        // 3. Главная функция: Применить фильтр
+        const applyFilter = (tag) => {
+            updateButtons(tag);
+            filterGrid(tag);
+            
+            // Обновляем URL без перезагрузки
+            const url = new URL(window.location.href);
+            if (tag === 'all') {
+                url.searchParams.delete('tag');
+            } else {
+                url.searchParams.set('tag', tag);
+            }
+            window.history.pushState({}, '', url);
+        };
+
+        // 4. Слушатели событий
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tag = btn.getAttribute('data-tag') || 'all';
+                applyFilter(tag);
+            });
+        });
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => applyFilter('all'));
+        }
+
+        // 5. Инициализация при загрузке (читаем URL)
+        const params = new URLSearchParams(window.location.search);
+        const initialTag = params.get('tag') || 'all';
+        
+        // Применяем начальное состояние
+        updateButtons(initialTag);
+        // Не вызываем filterGrid сразу, если это 'all', чтобы не было мигания при SSR
+        if (initialTag !== 'all') {
+            filterGrid(initialTag);
+        } else {
+            // Убеждаемся, что кнопка "Все" активна визуально
+            updateButtons('all');
+        }
+    }
+</script>

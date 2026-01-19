@@ -1,0 +1,297 @@
+---
+// src/pages/products/[slug].astro
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import ExpandableText from '../../components/ExpandableText.astro';
+import OrderButton from '../../components/OrderButton.astro';
+import ProductCard from '../../components/ProductCard.astro';
+
+export async function getStaticPaths() {
+  const products = await getCollection('products');
+  return products.map(entry => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { title, price, images, specs, status, relatedProducts, masterNote, care_instructions, category, tags } = entry.data;
+const { Content } = await entry.render();
+
+// --- 1. КАТЕГОРИИ И ХЛЕБНЫЕ КРОШКИ ---
+const categoryId = typeof category === 'object' ? category.id : category;
+const allCategories = await getCollection('categories');
+const currentCategory = allCategories.find(c => c.slug === categoryId);
+const categoryTitle = currentCategory ? currentCategory.data.title : null;
+
+// --- 2. RELATED PRODUCTS ---
+const allProducts = await getCollection('products');
+let relatedItems = [];
+if (relatedProducts && relatedProducts.length > 0) {
+    const explicit = allProducts.filter(p => relatedProducts.some((ref: any) => {
+        const refId = typeof ref === 'object' ? ref.id : ref;
+        return p.slug === refId || p.id === refId;
+    }));
+    const fallback = allProducts.filter(p => {
+        const pCat = typeof p.data.category === 'object' ? p.data.category.id : p.data.category;
+        return pCat === categoryId && p.slug !== entry.slug;
+    });
+    const combined = [...explicit, ...fallback];
+    relatedItems = combined.filter((item, index, self) => 
+        index === self.findIndex((t) => t.slug === item.slug) && item.slug !== entry.slug
+    ).slice(0, 6);
+} else {
+    relatedItems = allProducts.filter(p => p.slug !== entry.slug).slice(0, 6);
+}
+
+const categoryMap = allCategories.reduce((acc, cat) => {
+    acc[cat.slug] = cat.data.title;
+    return acc;
+}, {} as Record<string, string>);
+
+const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
+const s = status?.toLowerCase() || '';
+const isSoldOut = s === 'sold' || s === 'продано';
+const mainImage = images && images.length > 0 ? images[0] : '/placeholder.jpg';
+const noteText = masterNote || "Особенность этой серии — в несовершенстве формы. Следы пальцев оставлены намеренно.";
+const currentUrl = Astro.url.href;
+---
+
+<Layout title={title} hideHeader={true}>
+  
+  <div class="h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
+    
+    <!-- LEFT: PRODUCT STAGE -->
+    <div class="relative w-full lg:w-[70%] h-[50vh] lg:h-full bg-hyle-stone/10 flex items-center justify-center p-8 lg:p-20 overflow-hidden">
+        
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">
+            Hyle.
+        </a>
+        
+        <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
+             <a href="/catalog" class="hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0">
+                Каталог
+             </a>
+             
+             {categoryTitle && categoryTitle.toLowerCase() !== 'каталог' && (
+                <>
+                    <span class="text-hyle-text/30">/</span>
+                    <span class="text-hyle-clay -rotate-1 cursor-default">
+                        {categoryTitle}
+                    </span>
+                </>
+             )}
+        </div>
+
+        <div class="zoom-container relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center cursor-zoom-in">
+             <img 
+                src={mainImage} 
+                alt={title} 
+                id="main-product-image"
+                class="max-w-full max-h-full object-contain transition-transform duration-100 ease-out origin-center drop-shadow-2xl"
+            />
+        </div>
+
+        {images && images.length > 1 && (
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 hidden lg:flex gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm">
+                {images.map((img) => (
+                    <button 
+                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn"
+                        data-src={img}
+                    >
+                        <img src={img} class="w-full h-full object-cover" />
+                    </button>
+                ))}
+            </div>
+        )}
+    </div>
+
+    <!-- RIGHT: SIDEBAR -->
+    <div class="w-full lg:w-[30%] h-[50vh] lg:h-full bg-white/80 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
+        
+        <div class="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-hide flex flex-col gap-8">
+            
+            <!-- Header Info -->
+            <div class="mt-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1 pr-4">
+                        <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
+                            <h1 class="font-serif text-4xl lg:text-5xl text-hyle-text leading-[0.9]">
+                                {title}
+                            </h1>
+                        </ExpandableText>
+                    </div>
+                    {isSoldOut && <span class="text-[10px] border border-hyle-text/20 px-2 py-1 uppercase tracking-widest opacity-50 mt-1 shrink-0">Архив</span>}
+                </div>
+                
+                <div class="flex items-center gap-4 mt-6 border-b border-hyle-text/5 pb-6">
+                    <span class="font-hand text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
+                        {formattedPrice}
+                    </span>
+                    {!isSoldOut && status !== 'В наличии' && (
+                        <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-3">{status}</span>
+                    )}
+                </div>
+
+                {tags && tags.length > 0 && (
+                    <div class="flex flex-wrap gap-3 mt-3">
+                        {tags.slice(0, 3).map((tag: string) => (
+                            <a 
+                                href={`/catalog?tag=${tag}`}
+                                class="text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0"
+                            >
+                                #{tag}
+                            </a>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <!-- Master Note -->
+            <div class="bg-[#F6F5F1] p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
+                 <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
+                 <ExpandableText maxHeight="100px" gradientFrom="from-[#F6F5F1]">
+                    <p class="font-hand text-2xl text-hyle-text/80 leading-snug">
+                        "{noteText}"
+                    </p>
+                 </ExpandableText>
+            </div>
+
+            <ExpandableText maxHeight="160px" gradientFrom="from-white/80">
+                <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80">
+                    <Content />
+                </div>
+            </ExpandableText>
+
+            <div class="border-t border-hyle-text/10 pt-6">
+                {specs && (
+                    <dl class="text-xs grid grid-cols-2 gap-y-3 opacity-70 mb-4">
+                        {Object.entries(specs).map(([key, value]) => (
+                            <>
+                                <dt class="font-medium uppercase tracking-wider text-hyle-text/60">{key}</dt>
+                                <dd>{value}</dd>
+                            </>
+                        ))}
+                    </dl>
+                )}
+
+                {care_instructions && (
+                    <details class="group cursor-pointer border-t border-hyle-text/10 pt-3">
+                        <summary class="flex justify-between items-center list-none outline-none text-hyle-text/60 hover:text-hyle-clay transition-colors">
+                            <span class="text-xs font-medium uppercase tracking-wider">Уход за изделием</span>
+                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">
+                                ↓
+                            </span>
+                        </summary>
+                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">
+                            {care_instructions}
+                        </div>
+                    </details>
+                )}
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-4">
+                 {isSoldOut ? (
+                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center">
+                        Изделие нашло свой дом
+                    </button>
+                ) : (
+                    <OrderButton 
+                        productName={title} 
+                        price={price} 
+                        url={currentUrl} 
+                    />
+                )}
+            </div>
+
+            <!-- RELATED PRODUCTS (FIXED) -->
+            <div class="mt-auto pt-8 border-t border-hyle-text/5">
+                <div class="flex justify-between items-baseline mb-4">
+                    <h3 class="font-hand text-2xl text-hyle-text/60">
+                        {relatedItems.length > 0 ? "Вам может понравиться:" : "Другие изделия:"}
+                    </h3>
+                    <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block">Scroll →</span>
+                </div>
+                
+                <!-- 
+                    CAROUSEL UPDATES:
+                    1. Убраны отрицательные марджины (-mr-8/12), чтобы контент был внутри контейнера.
+                    2. Увеличена ширина карточки до w-60 (около 240px), чтобы текст не налезал.
+                    3. Убрана сложная анимация animate-appear-delayed.
+                -->
+                <div 
+                    id="related-slider"
+                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
+                >
+                    {relatedItems.map((item) => {
+                         const cId = typeof item.data.category === 'object' ? item.data.category.id : item.data.category;
+                         
+                         return (
+                            <div class="shrink-0 w-60 snap-start pointer-events-auto">
+                                <ProductCard 
+                                    product={item} 
+                                    categoryName={categoryMap[cId]} 
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+    // 1. ZOOM LOGIC
+    const container = document.querySelector('.zoom-container');
+    const img = document.getElementById('main-product-image');
+
+    if (container && img) {
+        container.addEventListener('mousemove', (e) => {
+            // @ts-ignore
+            const { left, top, width, height } = container.getBoundingClientRect();
+            // @ts-ignore
+            const x = ((e.clientX - left) / width) * 100;
+            // @ts-ignore
+            const y = ((e.clientY - top) / height) * 100;
+            
+            img.style.transformOrigin = `${x}% ${y}%`;
+            img.style.transform = 'scale(1.5)';
+        });
+
+        container.addEventListener('mouseleave', () => {
+            img.style.transform = 'scale(1)';
+            setTimeout(() => {
+                img.style.transformOrigin = 'center center';
+            }, 300);
+        });
+    }
+
+    // 2. THUMBNAILS LOGIC
+    const thumbs = document.querySelectorAll('.thumb-btn');
+    thumbs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const src = btn.getAttribute('data-src');
+            if (img && src) img.setAttribute('src', src);
+            
+            thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
+            btn.classList.add('border-hyle-clay');
+        });
+    });
+
+    // 3. HORIZONTAL WHEEL SCROLL (SMOOTH)
+    const slider = document.getElementById('related-slider');
+
+    if (slider) {
+        slider.addEventListener('wheel', (e) => {
+            // Проверяем, есть ли скролл
+            if (slider.scrollWidth > slider.clientWidth) {
+                // Если скроллим сам контейнер, блокируем вертикальный скролл страницы
+                e.preventDefault();
+                slider.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+    }
+</script>

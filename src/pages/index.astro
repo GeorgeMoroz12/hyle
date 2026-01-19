@@ -1,77 +1,207 @@
 ---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/ProductCard.astro';
 import { getCollection } from 'astro:content';
-import '../styles/global.css';
 
-const products = await getCollection('products');
+// --- НАСТРОЙКИ ИЗОБРАЖЕНИЙ ---
+const HERO_IMAGE = "/images/hero-minimal.jpg";       
+const WORKSHOP_IMAGE = "/images/workshop-process.jpg"; 
 
-// Функция для цвета статуса
-const getStatusColor = (status: string) => {
-	switch(status) {
-		case 'В наличии': return 'bg-green-100 text-green-800';
-		case 'Под заказ': return 'bg-yellow-100 text-yellow-800';
-		case 'Продано': return 'bg-gray-100 text-gray-500';
-		default: return 'bg-gray-100 text-gray-800';
-	}
-};
+const allProducts = await getCollection('products');
+const recentProducts = allProducts.slice(0, 4); 
+
+// Получаем категории для маппинга
+const allCategories = await getCollection('categories');
+const categoryMap = allCategories.reduce((acc, cat) => {
+    acc[cat.slug] = cat.data.title;
+    return acc;
+}, {} as Record<string, string>);
 ---
 
-<html lang="ru">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>Hyle Ceramics</title>
-	</head>
-	<body class="bg-[#F9F9F9] min-h-screen font-sans text-gray-900">
-		<main class="max-w-6xl mx-auto p-6 md:p-12">
-			
-			<header class="mb-16 text-center">
-				<h1 class="text-5xl font-light tracking-tight text-gray-900 mb-4">Hyle Ceramics</h1>
-				<p class="text-gray-500 uppercase tracking-widest text-xs">Авторская керамика • Ручная работа</p>
-			</header>
+<Layout title="Главная" hideHeader={true}>
+  
+  <!-- HERO SECTION -->
+  <section id="hero-section" class="relative min-h-screen flex items-center overflow-hidden">
+    
+    <!-- CUSTOM TRANSPARENT HEADER -->
+    <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-center animate-appear">
+        <a href="/" class="font-serif text-2xl md:text-3xl tracking-wide text-hyle-text hover:text-hyle-clay transition-colors">
+            Hyle Ceramics
+        </a>
+        
+        <div class="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.25em] text-hyle-text/80 font-medium">
+            <!-- Link updated -->
+            <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+            <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
+            <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
+        </div>
 
-			<!-- Сетка товаров -->
-			<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-				{products.map((product) => (
-					<article class="group bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
-						
-						<!-- Здесь будет фото (пока заглушка цветом) -->
-						<div class="h-64 bg-gray-200 w-full group-hover:bg-gray-300 transition-colors flex items-center justify-center text-gray-400">
-							[Фото изделия]
-						</div>
+        <button class="md:hidden text-hyle-text">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </nav>
 
-						<div class="p-6">
-							<div class="flex justify-between items-start mb-2">
-								<span class="text-xs font-bold text-gray-400 uppercase tracking-wide">
-									{product.data.category}
-								</span>
-								<span class={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide ${getStatusColor(product.data.status)}`}>
-									{product.data.status}
-								</span>
-							</div>
+    <!-- BACKGROUND (Parallax) -->
+    <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
+        <img 
+            id="hero-image"
+            src={HERO_IMAGE} 
+            alt="Атмосфера мастерской" 
+            class="w-full h-full object-cover object-center pointer-events-none scale-110 transition-transform duration-700 ease-out will-change-transform" 
+            draggable="false" 
+            onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
+        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
+    </div>
 
-							<h2 class="text-xl font-medium text-gray-900 mb-2">
-								{product.data.title}
-							</h2>
+    <!-- CONTENT LAYER -->
+    <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-20 lg:pt-0">
+        <div class="max-w-3xl animate-appear">
+          <div class="relative mb-6">
+            <span class="absolute -top-8 -left-6 font-hand text-4xl text-hyle-text/20 -rotate-6 select-none mix-blend-multiply">
+                Est. 2026
+            </span>
+            <span class="text-[10px] uppercase tracking-[0.4em] text-hyle-text/60 pl-1 relative z-10">
+                Handmade Ceramics
+            </span>
+          </div>
 
-							<div class="text-sm text-gray-500 mb-4 line-clamp-2">
-								{product.body /* Astro автоматически не рендерит body здесь, но для примера мы знаем что контент есть */}
-								{product.data.specs.material}
-							</div>
+          <h1 class="font-serif text-6xl md:text-8xl lg:text-[9rem] leading-[0.85] text-hyle-text mb-10 tracking-tight mix-blend-darken">
+              Глина <br />
+              <span class="block ml-16 md:ml-32 relative">
+                  <span class="italic font-light text-hyle-clay block transform hover:translate-x-4 transition-transform duration-700 cursor-default">хранит</span>
+              </span>
+              тепло рук.
+          </h1>
 
-							<div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
-								<span class="text-lg font-semibold text-gray-900">
-									{product.data.price} ₽
-								</span>
-								<button class="text-sm text-gray-900 border-b border-gray-900 pb-0.5 hover:text-gray-600 hover:border-gray-600 transition-colors">
-									Подробнее
-								</button>
-							</div>
-						</div>
-					</article>
-				))}
-			</section>
+          <div class="flex flex-col md:flex-row gap-12 md:items-end pl-2">
+            <p class="text-lg md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed drop-shadow-sm">
+                Вещи для тихих завтраков. <br/>
+                С несовершенствами, которые <br/> делают их живыми.
+            </p>
+            
+            <!-- Link updated to /catalog -->
+            <a 
+              href="/catalog" 
+              class="group inline-flex items-center gap-3 font-hand text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2"
+            >
+              Смотреть каталог
+              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm mt-1">→</span>
+            </a>
+          </div>
+        </div>
+    </div>
+  </section>
 
-		</main>
-	</body>
-</html>
+  <!-- GRID SECTION -->
+  <section class="py-24 md:py-32 relative z-20 bg-hyle-bg">
+    <div class="container-main relative">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+        
+        <!-- LEFT: STICKY HEADER -->
+        <div class="lg:col-span-4 lg:sticky lg:top-32 self-start flex flex-col items-start text-left mb-12 lg:mb-0">
+            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">
+                Collection 2026
+            </span>
+            
+            <h2 class="font-serif text-5xl md:text-6xl text-hyle-text leading-[0.9] mb-8 relative inline-block">
+                Новое <br/> из печи
+                <span class="absolute -top-4 -right-10 font-hand text-4xl text-hyle-clay -rotate-12 opacity-90">New!</span>
+            </h2>
+            
+            <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-10 text-sm md:text-base">
+                Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром. Еще хранят тепло огня и прикосновений.
+            </p>
+
+            <!-- Link updated to /catalog -->
+            <a 
+              href="/catalog" 
+              class="group inline-flex items-center gap-2 font-hand text-2xl text-hyle-clay hover:text-hyle-text transition-colors"
+            >
+              Вся коллекция
+              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm">→</span>
+            </a>
+        </div>
+
+        <!-- RIGHT: PRODUCT GALLERY -->
+        <div class="lg:col-span-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-12">
+                {recentProducts.map((product) => {
+                    const catId = typeof product.data.category === 'object' 
+                        ? product.data.category.id 
+                        : product.data.category;
+
+                    return (
+                        <div class="transition-all duration-700 hover:-translate-y-2">
+                             <ProductCard 
+                                product={product} 
+                                categoryName={categoryMap[catId]} 
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKSHOP DIARY -->
+  <section class="py-20 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
+     <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+        <div class="md:col-span-5 relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 hover:rotate-0 transition-transform duration-700">
+             <img 
+                src={WORKSHOP_IMAGE} 
+                alt="Процесс создания" 
+                class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+                onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
+            />
+        </div>
+        <div class="md:col-span-7 md:pl-12">
+            <span class="font-hand text-3xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
+            <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight text-[#F9F8F6]">
+                Несовершенство — <br/>
+                это часть истории.
+            </h2>
+            <p class="text-hyle-bg/60 text-lg font-light mb-10 leading-relaxed max-w-lg">
+                В блоге мы делимся процессом: как бесформенный кусок глины обретает характер, про долгие часы обжига и магию глазурей.
+            </p>
+            <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-2xl text-hyle-clay hover:text-white transition-colors">
+                <span>Читать истории</span>
+                <span class="group-hover:translate-x-1 transition-transform font-sans text-sm">→</span>
+            </a>
+        </div>
+     </div>
+  </section>
+
+  <footer class="py-12 bg-[#F6F5F1] border-t border-hyle-text/5 text-center">
+      <p class="font-serif italic text-hyle-text/40 mb-4">Hyle Ceramics © 2026</p>
+      <a href="/about" class="font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">О мастерской</a>
+  </footer>
+</Layout>
+
+<script>
+  const heroSection = document.getElementById('hero-section');
+  const heroImage = document.getElementById('hero-image');
+
+  if (heroSection && heroImage) {
+    heroSection.addEventListener('mousemove', (e) => {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        const { clientX, clientY } = e;
+        const { innerWidth, innerHeight } = window;
+        const moveX = (clientX / innerWidth - 0.5) * 15;
+        const moveY = (clientY / innerHeight - 0.5) * 15;
+        heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.1)`;
+      }
+    });
+  }
+</script>
