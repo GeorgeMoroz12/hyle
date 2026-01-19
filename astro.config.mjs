@@ -9,10 +9,15 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // Включаем гибридный режим (Статика + Сервер для админки)
-  output: 'hybrid',
+  // МЕНЯЕМ ЗДЕСЬ:
+  // 'server' (SSR) — самый надежный режим для админок на Vercel.
+  // Сайт всё равно будет летать, так как Vercel кэширует страницы.
+  output: 'server',
   
-  adapter: vercel(),
+  adapter: vercel({
+    // Включаем оптимизацию изображений Vercel
+    imageService: true,
+  }),
 
   integrations: [
     react(), 
