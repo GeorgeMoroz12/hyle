@@ -1,18 +1,17 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// 1. Импорты интеграций
 import markdoc from '@astrojs/markdoc';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
-import vercel from '@astrojs/vercel'; // <--- Новый импорт
-
-// 2. Импорт Tailwind 4 (Vite plugin)
+import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // Подключаем адаптер Vercel
+  // Включаем гибридный режим (Статика + Сервер для админки)
+  output: 'hybrid',
+  
   adapter: vercel(),
 
   integrations: [
@@ -27,8 +26,6 @@ export default defineConfig({
       dedupe: ['react', 'react-dom'],
     },
   },
-
-  output: 'static',
 
   build: {
     format: 'directory',
