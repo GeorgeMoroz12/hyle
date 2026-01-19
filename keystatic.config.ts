@@ -4,6 +4,7 @@ export default config({
   storage: import.meta.env.PROD
     ? {
         kind: 'github',
+        // ВАЖНО: Твой реальный репозиторий
         repo: 'GeorgeMoroz12/hyle', 
       }
     : {
@@ -23,8 +24,7 @@ export default config({
   },
 
   collections: {
-    // 1. НОВАЯ КОЛЛЕКЦИЯ ДЛЯ КАТЕГОРИЙ
-    // Это и есть твоя "кнопка" для добавления новых категорий без кода.
+    // 1. Справочник категорий
     categories: collection({
       label: '🗂 Справочник: Категории',
       slugField: 'title',
@@ -34,6 +34,7 @@ export default config({
       },
     }),
 
+    // 2. Товары
     products: collection({
       label: '🏺 Товары',
       slugField: 'title',
@@ -42,7 +43,6 @@ export default config({
       columns: ['title', 'status', 'price', 'category'],
 
       schema: {
-        // --- ВИЗУАЛ ---
         images: fields.array(
           fields.image({
             label: 'Фото',
@@ -56,7 +56,6 @@ export default config({
           }
         ),
 
-        // --- ОСНОВНОЕ ---
         title: fields.slug({ name: { label: 'Название' } }),
         price: fields.number({ label: 'Цена (₽)', validation: { min: 0 } }),
         
@@ -71,15 +70,13 @@ export default config({
           defaultValue: 'В наличии',
         }),
 
-        // ИЗМЕНЕНО: Теперь здесь связь с коллекцией "categories"
         category: fields.relationship({
           label: 'Категория',
-          description: 'Выберите категорию из справочника. Если нужной нет — создайте её в разделе "🗂 Справочник: Категории".',
+          description: 'Выберите категорию из справочника.',
           collection: 'categories',
           validation: { isRequired: true },
         }),
 
-        // --- СВЯЗИ ---
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'С этим товаром покупают', itemLabel: (props) => props.value || 'Товар' }
@@ -90,7 +87,6 @@ export default config({
           itemLabel: (props) => props.value,
         }),
 
-        // --- ДЕТАЛИ ---
         specs: fields.object({
           volume: fields.text({ label: 'Объем (мл)' }),
           size: fields.text({ label: 'Размер (см)' }),
@@ -111,20 +107,10 @@ export default config({
           multiline: true,
         }),
 
-        // --- LEGACY (УСТАРЕВШЕЕ) ---
-        // Поля, оставленные для совместимости со старыми файлами
-        care: fields.text({
-          label: '⚠️ Старое поле: care (Перенесите текст в Уход и удалите)',
-          multiline: true,
-        }),
-        inStock: fields.checkbox({ 
-          label: '⚠️ Старое поле: inStock (Не использовать)',
-          description: 'Это поле осталось от старой версии. Просто игнорируйте его.'
-        }),
-        isNew: fields.checkbox({ 
-          label: '⚠️ Старое поле: isNew (Не использовать)',
-          description: 'Это поле осталось от старой версии.'
-        }),
+        // Legacy поля
+        care: fields.text({ label: '⚠️ Old care', multiline: true }),
+        inStock: fields.checkbox({ label: '⚠️ Old inStock' }),
+        isNew: fields.checkbox({ label: '⚠️ Old isNew' }),
       },
     }),
 
