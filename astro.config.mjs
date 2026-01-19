@@ -5,13 +5,16 @@ import { defineConfig } from 'astro/config';
 import markdoc from '@astrojs/markdoc';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
+import vercel from '@astrojs/vercel'; // <--- Новый импорт
 
 // 2. Импорт Tailwind 4 (Vite plugin)
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // ВАЖНО: react() должен быть ПЕРЕД keystatic()
+  // Подключаем адаптер Vercel
+  adapter: vercel(),
+
   integrations: [
     react(), 
     keystatic(),
@@ -20,9 +23,6 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
-    
-    // 🔥 ФИКС ОШИБКИ useContext:
-    // Принудительно объединяем версии React, чтобы админка не ломалась
     resolve: {
       dedupe: ['react', 'react-dom'],
     },
