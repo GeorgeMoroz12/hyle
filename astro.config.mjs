@@ -9,13 +9,12 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // МЕНЯЕМ ЗДЕСЬ:
-  // 'server' (SSR) — самый надежный режим для админок на Vercel.
-  // Сайт всё равно будет летать, так как Vercel кэширует страницы.
+  // Добавляем твой официальный домен
+  site: 'https://hyle-w6he.vercel.app',
+  
   output: 'server',
   
   adapter: vercel({
-    // Включаем оптимизацию изображений Vercel
     imageService: true,
   }),
 
