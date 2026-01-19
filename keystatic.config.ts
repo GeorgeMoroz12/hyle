@@ -4,7 +4,7 @@ export default config({
   storage: import.meta.env.PROD
     ? {
         kind: 'github',
-        repo: 'YOUR_GITHUB_USERNAME/hyle-ceramics', 
+        repo: 'GeorgeMoroz12/hyle', 
       }
     : {
         kind: 'local',
