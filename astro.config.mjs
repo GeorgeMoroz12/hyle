@@ -12,16 +12,18 @@ export default defineConfig({
   // Твой реальный домен
   site: 'https://hyle-w6he.vercel.app',
   
-  // Режим сервера обязателен для админки на Vercel
-  output: 'server',
+  // ВАЖНО: Возвращаем статический режим.
+  // Это починит страницы товаров, так как они будут собраны заранее.
+  output: 'static',
   
+  // Адаптер Vercel нужен, чтобы работала API-функция админки (которую мы создадим ниже)
   adapter: vercel({
     imageService: true,
   }),
 
   integrations: [
     react(), 
-    keystatic(),
+    keystatic(), // Авто-интеграция обрабатывает UI (/keystatic), но API мы перехватим вручную
     markdoc(),
   ],
 
