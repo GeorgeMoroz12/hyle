@@ -6,7 +6,6 @@ import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
 import ProductCard from '../../components/ProductCard.astro';
 
-// 1. ПОЛУЧЕНИЕ ТЕКУЩЕГО ТОВАРА
 export async function getStaticPaths() {
   const products = await getCollection('products');
   return products.map(entry => ({
@@ -14,70 +13,52 @@ export async function getStaticPaths() {
     props: { entry },
   }));
 }
+
 const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- НАЧАЛО БЕЗОПАСНОГО БЛОКА ---
-
-// 2. БЕЗОПАСНОЕ ПОЛУЧЕНИЕ КАТЕГОРИИ
-// Мы явно проверяем, что category - это не null, не undefined и не пустая строка
-let categoryEntry = null;
-if (entry.data.category && typeof entry.data.category === 'string') {
-  try {
-    categoryEntry = await getEntry('categories', entry.data.category);
-  } catch (e) {
-    console.warn(`⚠️ Warning: Category '${entry.data.category}' not found for product ${entry.slug}`);
-  }
-}
-
-// Получаем название категории для хлебных крошек (или дефолт)
+// --- 1. DATA FETCHING ---
+const categoryEntry = (entry.data.category) ? await getEntry(entry.data.category) : null;
 const categoryTitle = categoryEntry ? categoryEntry.data.title : 'Каталог';
 
-// 3. БЕЗОПАСНОЕ ПОЛУЧЕНИЕ ТЕГОВ
-// Очищаем массив от любого мусора перед запросом
-let tagEntries = [];
-const rawTags = entry.data.tags; // Может быть undefined
+const rawTags = entry.data.tags || [];
+const validTags = rawTags.filter(tag => tag);
+const tagEntries = (validTags.length > 0) ? await getEntries(validTags) : [];
 
-if (Array.isArray(rawTags)) {
-  // Оставляем только валидные строки-ID
-  const cleanTagIds = rawTags.filter(tag => tag && typeof tag === 'string' && tag.trim() !== '');
-  
-  if (cleanTagIds.length > 0) {
-    try {
-      tagEntries = await getEntries(cleanTagIds);
-    } catch (e) {
-      console.warn(`⚠️ Warning: Some tags failed to load for product ${entry.slug}`);
-    }
-  }
+// --- 2. RELATED PRODUCTS (FIXED LOGIC) ---
+const allProducts = await getCollection('products');
+// Исключаем текущий товар сразу
+const otherProducts = allProducts.filter(p => p.id !== entry.id);
+
+let relatedItems = [];
+
+// Попытка 1: По совпадению категории
+if (categoryEntry) {
+    relatedItems = otherProducts.filter(p => {
+        const pCat = p.data.category;
+        // Проверка: pCat мб строкой или объектом, приводим к ID
+        const pCatId = (typeof pCat === 'object' && pCat !== null) ? pCat.id : pCat;
+        return pCatId === categoryEntry.id;
+    });
 }
 
-// --- КОНЕЦ БЕЗОПАСНОГО БЛОКА ---
+// Попытка 2: Если мало товаров, добиваем просто "другими" (новинками)
+if (relatedItems.length < 4) {
+    const remaining = otherProducts.filter(p => !relatedItems.includes(p));
+    relatedItems = [...relatedItems, ...remaining];
+}
 
-// --- 4. ПОХОЖИЕ ТОВАРЫ (RELATED PRODUCTS) ---
-const allProducts = await getCollection('products');
+// Обрезаем до 6
+relatedItems = relatedItems.slice(0, 6);
 
-// Фильтрация по категории с защитой от отсутствующих данных
-const relatedItems = allProducts.filter(p => {
-    // Если у текущего товара нет категории ИЛИ у проверяемого товара нет категории — пропускаем
-    if (!categoryEntry || !p.data.category) return false;
-    
-    // Сравниваем ID категорий (безопасно обрабатываем и строку, и объект-ссылку)
-    const pCatId = (typeof p.data.category === 'object' && p.data.category !== null) 
-        ? p.data.category.id 
-        : p.data.category;
-        
-    return pCatId === categoryEntry.id && p.id !== entry.id;
-}).slice(0, 6); 
-
-// Хелпер для получения названий категорий в карточках (по ID)
+// Хелпер для категорий в карточках
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
-// --- 5. UI ПЕРЕМЕННЫЕ ---
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
@@ -91,40 +72,46 @@ const currentUrl = Astro.url.href;
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
     
     <!-- LEFT: PRODUCT STAGE -->
-    <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex items-center justify-center p-6 lg:p-20 overflow-hidden">
+    <!-- Mobile: h-auto (по контенту), Desktop: h-screen sticky -->
+    <div class="relative w-full lg:w-[70%] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
         
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">
-            Hyle.
-        </a>
-        
-        <!-- BREADCRUMBS -->
-        <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
-             <a href="/" class="hover:text-hyle-clay transition-colors hidden sm:inline">
-                Главная
-             </a>
-             <span class="text-hyle-text/30 hidden sm:inline">/</span>
-             <a href="/catalog" class="hover:text-hyle-clay transition-colors">
-                Каталог
-             </a>
-             <span class="text-hyle-text/30">/</span>
-             <span class="text-hyle-clay -rotate-1 cursor-default truncate max-w-[150px]">
-                {title}
-             </span>
+        <!-- HEADER / NAVIGATION MOBILE -->
+        <div class="w-full pt-6 px-6 pb-4 flex flex-col gap-2 z-30 lg:absolute lg:top-8 lg:left-8 lg:p-0">
+            <a href="/" class="font-serif text-2xl tracking-wide text-hyle-text/80 mix-blend-multiply">
+                Hyle.
+            </a>
+            
+            <!-- Breadcrumbs: Relative on mobile (no overlap), Absolute on desktop -->
+            <div class="flex items-center gap-2 text-sm lg:text-xl font-hand text-hyle-text/50">
+                 <a href="/catalog" class="hover:text-hyle-clay transition-colors">
+                    Каталог
+                 </a>
+                 <span class="text-hyle-text/30">/</span>
+                 <span class="text-hyle-clay truncate max-w-[200px]">
+                    {title}
+                 </span>
+            </div>
         </div>
 
-        <!-- Main Image -->
-        <div class="zoom-container relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center cursor-zoom-in">
+        <!-- MAIN IMAGE -->
+        <!-- Добавлен id="mobile-zoom-target" для тапа -->
+        <div class="relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
              <img 
                 src={mainImage} 
                 alt={title} 
                 id="main-product-image"
-                class="max-w-full max-h-full object-contain transition-transform duration-100 ease-out origin-center drop-shadow-2xl"
+                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl"
             />
+            
+            <!-- Hint for mobile zoom -->
+            <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">
+                Tap to zoom
+            </div>
         </div>
 
         <!-- Desktop Thumbnails -->
         {images && images.length > 1 && (
-            <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm">
+            <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
                     <button 
                         class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn"
@@ -143,27 +130,26 @@ const currentUrl = Astro.url.href;
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
             
             <!-- Header Info -->
-            <div class="mt-2 lg:mt-4">
+            <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
-                            <h1 class="font-serif text-3xl md:text-4xl lg:text-5xl text-hyle-text leading-[1.0] hyphens-auto break-words">
-                                {title}
-                            </h1>
-                        </ExpandableText>
+                        <!-- Fix font size for mobile -->
+                        <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">
+                            {title}
+                        </h1>
                     </div>
                     {isSoldOut && <span class="text-[10px] border border-hyle-text/20 px-2 py-1 uppercase tracking-widest opacity-50 mt-1 shrink-0">Архив</span>}
                 </div>
                 
                 <div class="flex flex-col gap-2 mt-4 lg:mt-6 border-b border-hyle-text/5 pb-6">
-                    <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
+                    <span class="font-hand text-3xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
                         {formattedPrice}
                     </span>
                     {!isSoldOut && status !== 'В наличии' && (
                         <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
                     )}
                     
-                    <!-- TAGS (Safe Rendering) -->
+                    <!-- TAGS -->
                     {tagEntries.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
                             {tagEntries.slice(0, 3).map((tagEntry) => (
@@ -191,7 +177,7 @@ const currentUrl = Astro.url.href;
 
             <!-- Description -->
             <ExpandableText maxHeight="140px" gradientFrom="from-white/80">
-                <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80">
+                <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80 text-justify">
                     <Content />
                 </div>
             </ExpandableText>
@@ -227,7 +213,7 @@ const currentUrl = Astro.url.href;
             <!-- CTA -->
             <div class="mt-2">
                  {isSoldOut ? (
-                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center">
+                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">
                         Изделие нашло свой дом
                     </button>
                 ) : (
@@ -240,46 +226,51 @@ const currentUrl = Astro.url.href;
             </div>
 
             <!-- RELATED PRODUCTS -->
-            <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
-                <div class="flex justify-between items-baseline mb-4">
-                    <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
-                        {relatedItems.length > 0 ? "Вам может понравиться:" : "Другие изделия:"}
-                    </h3>
-                    <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
+            {relatedItems.length > 0 && (
+                <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
+                    <div class="flex justify-between items-baseline mb-4">
+                        <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
+                            {relatedItems.length > 0 ? "Вам может понравиться:" : "Другие изделия:"}
+                        </h3>
+                        <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
+                    </div>
+                    
+                    <div 
+                        id="related-slider"
+                        class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
+                    >
+                        {relatedItems.map((item) => {
+                             // Безопасное получение категории
+                             const relCatId = (item.data.category && typeof item.data.category === 'object') 
+                                ? item.data.category.id 
+                                : item.data.category;
+                             
+                             return (
+                                <div class="shrink-0 w-40 md:w-52 snap-start pointer-events-auto">
+                                    <ProductCard 
+                                        product={item} 
+                                        // Передаем название или пустую строку, чтобы карточка не ломалась
+                                        categoryName={relCatId ? categoryMap[relCatId] : ''}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-                
-                <div 
-                    id="related-slider"
-                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
-                >
-                    {relatedItems.map((item) => {
-                         // Получаем ID категории релейтед товара для маппинга
-                         const relCatId = (typeof item.data.category === 'object' && item.data.category !== null) 
-                            ? item.data.category.id 
-                            : item.data.category;
-                         
-                         return (
-                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
-                                <ProductCard 
-                                    product={item} 
-                                    categoryName={relCatId ? categoryMap[relCatId] : ''}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+            )}
         </div>
     </div>
   </div>
 </Layout>
 
 <script>
-    // 1. ZOOM LOGIC (Desktop Only)
+    // --- MAIN IMAGE ZOOM (MOBILE & DESKTOP) ---
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
+    let isZoomed = false;
 
     if (container && img) {
+        // Desktop Hover Zoom
         container.addEventListener('mousemove', (e) => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
                 // @ts-ignore
@@ -295,14 +286,29 @@ const currentUrl = Astro.url.href;
         });
 
         container.addEventListener('mouseleave', () => {
-            img.style.transform = 'scale(1)';
-            setTimeout(() => {
-                img.style.transformOrigin = 'center center';
-            }, 300);
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                img.style.transform = 'scale(1)';
+                setTimeout(() => {
+                    img.style.transformOrigin = 'center center';
+                }, 300);
+            }
+        });
+
+        // Mobile Tap Zoom
+        container.addEventListener('click', () => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+                if (isZoomed) {
+                    img.style.transform = 'scale(1)';
+                    isZoomed = false;
+                } else {
+                    img.style.transform = 'scale(1.5)';
+                    isZoomed = true;
+                }
+            }
         });
     }
 
-    // 2. THUMBNAILS LOGIC
+    // Thumbnails Logic
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -314,11 +320,11 @@ const currentUrl = Astro.url.href;
         });
     });
 
-    // 3. HORIZONTAL WHEEL SCROLL
+    // Horizontal Scroll Wheel (Desktop)
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
-            if (slider.scrollWidth > slider.clientWidth) {
+            if (window.matchMedia("(min-width: 1024px)").matches && slider.scrollWidth > slider.clientWidth) {
                 e.preventDefault();
                 slider.scrollLeft += e.deltaY;
             }

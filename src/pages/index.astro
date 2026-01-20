@@ -11,7 +11,6 @@ const WORKSHOP_IMAGE = "/images/workshop-process.jpg";
 const allProducts = await getCollection('products');
 const recentProducts = allProducts.slice(0, 4); 
 
-// Получаем категории для маппинга
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.slug] = cat.data.title;
@@ -19,34 +18,12 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 }, {} as Record<string, string>);
 ---
 
-<Layout title="Главная" hideHeader={true}>
+<Layout title="Главная">
   
   <!-- HERO SECTION -->
   <section id="hero-section" class="relative min-h-screen flex items-center overflow-hidden">
     
-    <!-- CUSTOM TRANSPARENT HEADER -->
-    <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-center animate-appear">
-        <a href="/" class="font-serif text-2xl md:text-3xl tracking-wide text-hyle-text hover:text-hyle-clay transition-colors">
-            Hyle Ceramics
-        </a>
-        
-        <div class="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.25em] text-hyle-text/80 font-medium">
-            <!-- Link updated -->
-            <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-            <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
-            <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
-        </div>
-
-        <button class="md:hidden text-hyle-text">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
-    </nav>
-
-    <!-- BACKGROUND (Parallax) -->
+    <!-- 1. BACKGROUND -->
     <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
         <img 
             id="hero-image"
@@ -56,41 +33,37 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             draggable="false" 
             onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
         />
-        <div class="absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
-        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
+        
+        <!-- Desktop Gradient -->
+        <div class="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
+        
+        <!-- FIX MOBILE GRADIENT: Clean solid color at bottom to prevent blur artifacts -->
+        <div class="absolute inset-0 bg-[#F9F8F6]/60 lg:hidden z-10 backdrop-blur-[1px]"></div>
+        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] via-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
     </div>
 
-    <!-- CONTENT LAYER -->
-    <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-20 lg:pt-0">
+    <!-- 2. CONTENT -->
+    <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-24 lg:pt-0">
         <div class="max-w-3xl animate-appear">
           <div class="relative mb-6">
-            <span class="absolute -top-8 -left-6 font-hand text-4xl text-hyle-text/20 -rotate-6 select-none mix-blend-multiply">
-                Est. 2026
-            </span>
-            <span class="text-[10px] uppercase tracking-[0.4em] text-hyle-text/60 pl-1 relative z-10">
-                Handmade Ceramics
-            </span>
+            <span class="absolute -top-8 -left-6 font-hand text-4xl text-hyle-text/20 -rotate-6 select-none mix-blend-multiply">Est. 2026</span>
+            <span class="text-[10px] uppercase tracking-[0.4em] text-hyle-text/60 pl-1 relative z-10">Handmade Ceramics</span>
           </div>
 
-          <h1 class="font-serif text-6xl md:text-8xl lg:text-[9rem] leading-[0.85] text-hyle-text mb-10 tracking-tight mix-blend-darken">
+          <h1 class="font-serif text-5xl md:text-8xl lg:text-[9rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
               Глина <br />
-              <span class="block ml-16 md:ml-32 relative">
-                  <span class="italic font-light text-hyle-clay block transform hover:translate-x-4 transition-transform duration-700 cursor-default">хранит</span>
+              <span class="block ml-12 lg:ml-32 relative">
+                  <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">хранит</span>
               </span>
               тепло рук.
           </h1>
 
-          <div class="flex flex-col md:flex-row gap-12 md:items-end pl-2">
-            <p class="text-lg md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed drop-shadow-sm">
+          <div class="flex flex-col md:flex-row gap-8 md:gap-12 md:items-end pl-2">
+            <p class="text-base md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed">
                 Вещи для тихих завтраков. <br/>
                 С несовершенствами, которые <br/> делают их живыми.
             </p>
-            
-            <!-- Link updated to /catalog -->
-            <a 
-              href="/catalog" 
-              class="group inline-flex items-center gap-3 font-hand text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2"
-            >
+            <a href="/catalog" class="group inline-flex items-center gap-3 font-hand text-2xl md:text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2">
               Смотреть каталог
               <span class="group-hover:translate-x-2 transition-transform font-sans text-sm mt-1">→</span>
             </a>
@@ -100,46 +73,32 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </section>
 
   <!-- GRID SECTION -->
-  <section class="py-24 md:py-32 relative z-20 bg-hyle-bg">
+  <section class="py-20 md:py-32 relative z-20 bg-hyle-bg">
     <div class="container-main relative">
       
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start">
         
-        <!-- LEFT: STICKY HEADER -->
-        <div class="lg:col-span-4 lg:sticky lg:top-32 self-start flex flex-col items-start text-left mb-12 lg:mb-0">
-            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">
-                Collection 2026
-            </span>
-            
-            <h2 class="font-serif text-5xl md:text-6xl text-hyle-text leading-[0.9] mb-8 relative inline-block">
+        <div class="lg:col-span-4 lg:sticky lg:top-32 self-start flex flex-col items-start text-left mb-8 lg:mb-0 scroll-reveal">
+            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">Collection 2026</span>
+            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[0.9] mb-6 relative inline-block">
                 Новое <br/> из печи
-                <span class="absolute -top-4 -right-10 font-hand text-4xl text-hyle-clay -rotate-12 opacity-90">New!</span>
+                <span class="absolute -top-4 -right-10 font-hand text-3xl text-hyle-clay -rotate-12 opacity-90">New!</span>
             </h2>
-            
-            <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-10 text-sm md:text-base">
-                Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром. Еще хранят тепло огня и прикосновений.
+            <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-8 text-sm md:text-base">
+                Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром.
             </p>
-
-            <!-- Link updated to /catalog -->
-            <a 
-              href="/catalog" 
-              class="group inline-flex items-center gap-2 font-hand text-2xl text-hyle-clay hover:text-hyle-text transition-colors"
-            >
+            <a href="/catalog" class="group inline-flex items-center gap-2 font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">
               Вся коллекция
               <span class="group-hover:translate-x-2 transition-transform font-sans text-sm">→</span>
             </a>
         </div>
 
-        <!-- RIGHT: PRODUCT GALLERY -->
         <div class="lg:col-span-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-12">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
                 {recentProducts.map((product) => {
-                    const catId = typeof product.data.category === 'object' 
-                        ? product.data.category.id 
-                        : product.data.category;
-
+                    const catId = typeof product.data.category === 'object' ? product.data.category.id : product.data.category;
                     return (
-                        <div class="transition-all duration-700 hover:-translate-y-2">
+                        <div class="scroll-reveal transition-all duration-700">
                              <ProductCard 
                                 product={product} 
                                 categoryName={categoryMap[catId]} 
@@ -155,27 +114,28 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </section>
 
   <!-- WORKSHOP DIARY -->
-  <section class="py-20 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
+  <section class="py-16 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
-        <div class="md:col-span-5 relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 hover:rotate-0 transition-transform duration-700">
+     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+        <!-- FIX: Added explicit height h-64 for mobile to prevent collapse -->
+        <div class="md:col-span-5 relative h-64 md:h-auto aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 scroll-reveal">
              <img 
                 src={WORKSHOP_IMAGE} 
                 alt="Процесс создания" 
-                class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+                class="w-full h-full object-cover grayscale"
                 onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
             />
         </div>
-        <div class="md:col-span-7 md:pl-12">
-            <span class="font-hand text-3xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
-            <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight text-[#F9F8F6]">
+        <div class="md:col-span-7 md:pl-12 scroll-reveal">
+            <span class="font-hand text-2xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
+            <h2 class="font-serif text-3xl md:text-6xl mb-6 leading-tight text-[#F9F8F6]">
                 Несовершенство — <br/>
                 это часть истории.
             </h2>
-            <p class="text-hyle-bg/60 text-lg font-light mb-10 leading-relaxed max-w-lg">
-                В блоге мы делимся процессом: как бесформенный кусок глины обретает характер, про долгие часы обжига и магию глазурей.
+            <p class="text-hyle-bg/60 text-base md:text-lg font-light mb-8 leading-relaxed max-w-lg">
+                В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.
             </p>
-            <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-2xl text-hyle-clay hover:text-white transition-colors">
+            <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-xl md:text-2xl text-hyle-clay hover:text-white transition-colors">
                 <span>Читать истории</span>
                 <span class="group-hover:translate-x-1 transition-transform font-sans text-sm">→</span>
             </a>
@@ -183,13 +143,14 @@ const categoryMap = allCategories.reduce((acc, cat) => {
      </div>
   </section>
 
-  <footer class="py-12 bg-[#F6F5F1] border-t border-hyle-text/5 text-center">
-      <p class="font-serif italic text-hyle-text/40 mb-4">Hyle Ceramics © 2026</p>
+  <footer class="py-8 md:py-12 bg-[#F6F5F1] border-t border-hyle-text/5 text-center">
+      <p class="font-serif italic text-hyle-text/40 mb-2 md:mb-4 text-sm md:text-base">Hyle Ceramics © 2026</p>
       <a href="/about" class="font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">О мастерской</a>
   </footer>
 </Layout>
 
 <script>
+  // 1. Mouse Parallax (Desktop)
   const heroSection = document.getElementById('hero-section');
   const heroImage = document.getElementById('hero-image');
 
@@ -204,4 +165,28 @@ const categoryMap = allCategories.reduce((acc, cat) => {
       }
     });
   }
+
+  // 2. Scroll Reveal Animation (Intersection Observer)
+  const revealElements = document.querySelectorAll('.scroll-reveal');
+  
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            revealObserver.unobserve(entry.target);
+        }
+    });
+  }, { threshold: 0.1 });
+
+  revealElements.forEach(el => {
+      el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-1000', 'ease-out');
+      revealObserver.observe(el);
+  });
+
+  // Add styles for revealed state
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .scroll-reveal.revealed { opacity: 1 !important; transform: translateY(0) !important; }
+  `;
+  document.head.appendChild(style);
 </script>

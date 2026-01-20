@@ -7,16 +7,12 @@ interface Props {
   categoryName?: string;
 }
 
-const { product, categoryName } = Astro.props;
+const { product } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
-// Второе фото для ховера
-const secondaryImage = images && images.length > 1 ? images[1] : null;
-
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
 
-// --- ЛОГИКА ---
 const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
@@ -26,14 +22,9 @@ const activeTags = (!isSold && !isReserved && tags && tags.length > 0) ? tags.sl
 const productUrl = `/products/${product.slug}`;
 ---
 
-<!-- 
-  ВАЖНО: Теперь это DIV, а не A. 
-  Мы разделяем зоны клика, чтобы вложить ссылку в ссылку.
-  Класс 'group' остается здесь, чтобы ховер на тексте триггерил эффект на картинке.
--->
 <div class="group relative w-full flex flex-col">
   
-  <!-- 1. ИЗОБРАЖЕНИЕ (Ссылка на товар) -->
+  <!-- 1. IMAGE -->
   <a href={productUrl} class="block relative overflow-hidden aspect-square bg-neutral-100 rounded-sm mb-3 cursor-pointer">
     {(isSold || isReserved) && (
       <div class="absolute top-2 left-2 z-30">
@@ -43,16 +34,6 @@ const productUrl = `/products/${product.slug}`;
       </div>
     )}
     
-    <!-- Второе изображение (Hover Reveal) -->
-    {secondaryImage && (
-        <img 
-          src={secondaryImage} 
-          alt={title} 
-          class="absolute inset-0 w-full h-full object-cover object-center transition-all duration-[1.2s] ease-out-expo opacity-0 group-hover:opacity-100 group-hover:scale-105 z-20"
-        />
-    )}
-
-    <!-- Основное изображение -->
     <img 
       src={mainImage} 
       alt={title} 
@@ -61,33 +42,30 @@ const productUrl = `/products/${product.slug}`;
     />
   </a>
 
-  <!-- 2. ИНФОРМАЦИЯ -->
+  <!-- 2. INFO -->
   <div class="flex justify-between items-start px-1 mt-auto">
     
-    <!-- Левая колонка: Заголовок + Тег -->
-    <div class="pr-4 flex flex-col items-start w-full">
-        <!-- Заголовок (Ссылка на товар) -->
+    <div class="pr-2 flex flex-col items-start w-full">
+        <!-- Title -->
         <a href={productUrl} class="block mb-1">
-            <h3 class="font-serif text-lg leading-snug text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2">
+            <!-- FIX: text-base for mobile, text-lg for desktop -->
+            <h3 class="font-serif text-base md:text-lg leading-snug text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 min-h-[1.3em]">
               {title}
             </h3>
         </a>
         
-        <!-- ТЕГ (Ссылка на каталог) -->
-        <!-- stop-propagation не нужен, так как ссылки разделены -->
         {activeTags && activeTags.map((tag: string) => (
             <a 
                 href={`/catalog?tag=${tag}`}
-                class="inline-block text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay hover:underline decoration-hyle-clay/30 underline-offset-2 transition-all z-10 relative"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
             >
                 #{tag}
             </a>
         ))}
     </div>
     
-    <!-- Правая колонка: Цена (Не ссылка, просто инфо) -->
-    <div class="flex flex-col items-end shrink-0 pl-2">
-        <span class="font-hand text-xl md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
+    <div class="flex flex-col items-end shrink-0 pl-1">
+        <span class="font-hand text-lg md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
           {formattedPrice}
         </span>
     </div>
