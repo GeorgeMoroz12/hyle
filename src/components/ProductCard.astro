@@ -17,7 +17,7 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// Берем только первый тег
+// Берем первый тег для отображения
 const activeTags = (!isSold && !isReserved && tags && tags.length > 0) ? tags.slice(0, 1) : null;
 const productUrl = `/products/${product.slug}`;
 ---
@@ -49,20 +49,20 @@ const productUrl = `/products/${product.slug}`;
         <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
             <!-- 
-                FIX TYPOGRAPHY (Буквы р, ф, ц):
-                pb-2: Добавил нижний отступ, чтобы хвостики не резались overflow.
-                leading-relaxed: Увеличил межстрочный интервал.
-                -mb-1: Компенсация лишнего отступа, чтобы визуально блок не был дырявым.
+                FIX TYPOGRAPHY: 
+                leading-normal (увеличен интервал) и pb-1.5 (отступ снизу) для "хвостов" р, ф, у.
+                line-clamp-2 обрезает лишнее.
             -->
-            <h3 class="font-serif text-base md:text-lg leading-relaxed text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-2 -mb-1">
+            <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
             </h3>
         </a>
         
+        <!-- TAGS RETURNED -->
         {activeTags && activeTags.map((tag: string) => (
             <a 
                 href={`/catalog?tag=${tag}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
             >
                 #{tag}
             </a>

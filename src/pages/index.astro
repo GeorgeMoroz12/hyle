@@ -21,11 +21,10 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   
   <!-- 
       HEADER (ABSOLUTE TOP) 
-      Не фиксирован (не ползет за скроллом).
   -->
   <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start animate-appear">
       
-      <!-- LOGO: TYPOGRAPHIC EMPHASIS -->
+      <!-- LOGO -->
       <a href="/" class="group flex flex-col items-start gap-1">
           <span class="font-serif text-4xl md:text-5xl tracking-tight text-hyle-text group-hover:text-hyle-clay transition-colors leading-none">
               Hyle.
@@ -52,8 +51,9 @@ const categoryMap = allCategories.reduce((acc, cat) => {
       </button>
   </nav>
 
-  <!-- HERO SECTION -->
-  <section id="hero-section" class="relative min-h-[90vh] flex items-center overflow-hidden">
+  <!-- SECTION 1: HERO (Full Screen) -->
+  <!-- min-h-screen обеспечивает высоту ровно в экран устройства -->
+  <section id="hero-section" class="relative min-h-screen flex items-center overflow-hidden w-full">
     
     <!-- BACKGROUND -->
     <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
@@ -75,13 +75,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-32 lg:pt-0">
         <div class="max-w-3xl animate-appear">
           
-          <!-- Декоративный элемент -->
-          <div class="relative mb-6">
-            <span class="absolute -top-8 -left-6 font-hand text-4xl text-hyle-text/20 -rotate-6 select-none mix-blend-multiply">
-                Est. 2026
-            </span>
-          </div>
-
           <h1 class="font-serif text-5xl md:text-8xl lg:text-[9rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
               Глина <br />
               <span class="block ml-12 lg:ml-32 relative">
@@ -104,9 +97,9 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- GRID SECTION -->
-  <section class="py-20 md:py-32 relative z-20 bg-hyle-bg">
-    <div class="container-main relative">
+  <!-- SECTION 2: GRID (Full Screen Min) -->
+  <section class="relative min-h-screen flex items-center py-20 bg-hyle-bg z-20">
+    <div class="container-main w-full">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start">
         
         <!-- Sticky Left Panel -->
@@ -147,12 +140,12 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- WORKSHOP DIARY -->
-  <section class="py-24 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
+  <!-- SECTION 3: WORKSHOP (Full Screen) -->
+  <section class="relative min-h-screen flex items-center py-24 bg-hyle-text text-hyle-bg overflow-hidden">
      <!-- Texture -->
      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
      
-     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center w-full">
         <div class="md:col-span-5 relative scroll-reveal">
              <div class="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 transform transition-transform duration-700 hover:rotate-0">
                  <img 
