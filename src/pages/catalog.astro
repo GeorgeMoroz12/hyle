@@ -2,27 +2,62 @@
 // src/pages/catalog.astro
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, getEntries } from 'astro:content';
 
+// 1. ПОЛУЧЕНИЕ КАТЕГОРИЙ (Для маппинга в карточках)
+// getCollection безопасен, так как читает сами файлы категорий, а не ссылки из товаров
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
-    acc[cat.slug] = cat.data.title;
+    acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
+// 2. ПОЛУЧЕНИЕ ТОВАРОВ
 const allProducts = await getCollection('products', ({ data }) => {
     return data.status !== 'archived';
 });
 
+// Сортировка (новые сверху)
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-const uniqueTags = Array.from(
-    new Set(
-        allProducts
-            .flatMap(p => p.data.tags || [])
-            .filter(Boolean)
-    )
-).sort();
+// 3. БЕЗОПАСНЫЙ СБОР ТЕГОВ (DEFENSIVE CODING)
+// Нам нужно собрать уникальные ID тегов, которые используются в товарах,
+// а затем получить их красивые названия (Title) из коллекции tags.
+
+// Шаг А: Извлекаем ID (учитываем, что это может быть String или Reference Object)
+const rawTagIds = allProducts.flatMap(product => {
+    const tags = product.data.tags || [];
+    return tags.map(tag => {
+        // Если это объект-ссылка (Relation), берем .id, иначе саму строку
+        return (typeof tag === 'object' && tag !== null) ? tag.id : tag;
+    });
+});
+
+// Шаг Б: Чистим от мусора (null, undefined, пустые строки)
+const cleanTagIds = [...new Set(rawTagIds)].filter(id => 
+    id && typeof id === 'string' && id.trim() !== ''
+);
+
+// Шаг В: Безопасно запрашиваем данные тегов
+let uniqueTags = []; // Массив объектов { id, title }
+
+if (cleanTagIds.length > 0) {
+    try {
+        // Формируем правильные объекты references для getEntries
+        const tagReferences = cleanTagIds.map(id => ({ collection: 'tags', id }));
+        const tagEntries = await getEntries(tagReferences);
+        
+        // Мапим в удобный формат для UI
+        uniqueTags = tagEntries.map(t => ({
+            id: t.id,
+            title: t.data.title // Название тега ("Новинка", "Sale")
+        }));
+    } catch (e) {
+        console.warn('⚠️ Catalog: Failed to fetch filter tags. Using fallback IDs.', e);
+        // Fallback: Если запрос упал, используем ID как название
+        uniqueTags = cleanTagIds.map(id => ({ id, title: id }));
+    }
+}
 
 const pageTitle = "Каталог";
 const pageDesc = "Полная коллекция керамики ручной работы Hyle.";
@@ -46,8 +81,7 @@ const pageDesc = "Полная коллекция керамики ручной 
             </p>
         </div>
 
-        <!-- FILTERS BAR (Sticky) -->
-        <!-- FIX: Removed negative margins (-mx-4) to prevent side scrolling issues -->
+        <!-- FILTERS BAR -->
         <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
             
             <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
@@ -63,27 +97,28 @@ const pageDesc = "Полная коллекция керамики ручной 
                 {uniqueTags.map(tag => (
                     <button 
                         class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                        data-tag={tag}
+                        data-tag={tag.id} 
                         data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
                         data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
                     >
-                        #{tag}
+                        #{tag.title}
                     </button>
                 ))}
             </div>
         </div>
 
         <!-- PRODUCTS GRID -->
-        <!-- FIX: gap-x-4 for mobile -->
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {
-                // Safe category check
+                // Безопасное получение ID категории и Тегов для дата-атрибутов
                 const catId = (product.data.category && typeof product.data.category === 'object') 
                     ? product.data.category.id 
                     : product.data.category;
                 
-                const tagsString = product.data.tags ? product.data.tags.join(',') : '';
+                // Собираем теги для JS-фильтрации (нужны ID)
+                const tagsList = (product.data.tags || []).map(t => (typeof t === 'object' ? t.id : t));
+                const tagsString = tagsList.join(',');
                 
                 return (
                     <div 

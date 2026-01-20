@@ -11,9 +11,11 @@ const WORKSHOP_IMAGE = "/images/workshop-process.jpg";
 const allProducts = await getCollection('products');
 const recentProducts = allProducts.slice(0, 4); 
 
+// Маппинг Категорий (Безопасный)
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
-    acc[cat.slug] = cat.data.title;
+    // Используем cat.id как ключ (в Astro 5 id и slug часто совпадают, но id надежнее)
+    acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 ---
@@ -34,10 +36,8 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
         />
         
-        <!-- Desktop Gradient -->
         <div class="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
         
-        <!-- FIX MOBILE GRADIENT: Clean solid color at bottom to prevent blur artifacts -->
         <div class="absolute inset-0 bg-[#F9F8F6]/60 lg:hidden z-10 backdrop-blur-[1px]"></div>
         <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] via-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
     </div>
@@ -96,12 +96,17 @@ const categoryMap = allCategories.reduce((acc, cat) => {
         <div class="lg:col-span-8">
             <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
                 {recentProducts.map((product) => {
-                    const catId = typeof product.data.category === 'object' ? product.data.category.id : product.data.category;
+                    // БЕЗОПАСНОЕ ПОЛУЧЕНИЕ ID КАТЕГОРИИ
+                    const catId = (product.data.category && typeof product.data.category === 'object') 
+                        ? product.data.category.id 
+                        : product.data.category;
+                        
                     return (
                         <div class="scroll-reveal transition-all duration-700">
                              <ProductCard 
                                 product={product} 
-                                categoryName={categoryMap[catId]} 
+                                // Передаем название, если нашли, или пустую строку
+                                categoryName={catId ? categoryMap[catId] : ''} 
                             />
                         </div>
                     );
@@ -117,12 +122,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   <section class="py-16 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
      <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-        <!-- FIX: Added explicit height h-64 for mobile to prevent collapse -->
         <div class="md:col-span-5 relative h-64 md:h-auto aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 scroll-reveal">
              <img 
                 src={WORKSHOP_IMAGE} 
                 alt="Процесс создания" 
-                class="w-full h-full object-cover grayscale"
+                class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
                 onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
             />
         </div>
@@ -150,7 +154,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 </Layout>
 
 <script>
-  // 1. Mouse Parallax (Desktop)
+  // Mouse Parallax Logic
   const heroSection = document.getElementById('hero-section');
   const heroImage = document.getElementById('hero-image');
 
@@ -166,9 +170,8 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     });
   }
 
-  // 2. Scroll Reveal Animation (Intersection Observer)
+  // Scroll Reveal Logic
   const revealElements = document.querySelectorAll('.scroll-reveal');
-  
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -183,7 +186,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
       revealObserver.observe(el);
   });
 
-  // Add styles for revealed state
   const style = document.createElement('style');
   style.innerHTML = `
     .scroll-reveal.revealed { opacity: 1 !important; transform: translateY(0) !important; }
