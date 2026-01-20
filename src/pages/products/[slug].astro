@@ -20,34 +20,39 @@ const { Content } = await entry.render();
 
 // --- 1. БЕЗОПАСНАЯ ОБРАБОТКА ДАННЫХ (RELATIONS) ---
 
-// Безопасное получение Категории
-// Проверяем, есть ли поле, прежде чем запрашивать
-const categoryEntry = entry.data.category 
+// 1. Безопасное получение Категории (Bulletproof)
+// Проверяем существование поля, чтобы не передать undefined в getEntry
+const categoryEntry = (entry.data.category) 
   ? await getEntry(entry.data.category) 
   : null;
 
 const categoryTitle = categoryEntry ? categoryEntry.data.title : 'Каталог';
 
-// Безопасное получение Тегов
-// Используем getEntries для массива ссылок + проверка на существование
-const tagEntries = (entry.data.tags && entry.data.tags.length > 0) 
-  ? await getEntries(entry.data.tags) 
+// 2. Безопасное получение Тегов (Filter garbage)
+// Сначала получаем "сырой" массив или пустой список
+const rawTags = entry.data.tags || [];
+// Фильтруем: убираем пустые строки, null и undefined, чтобы не сломать getEntries
+const validTags = rawTags.filter(tag => tag); 
+
+// Запрашиваем только если остались валидные теги
+const tagEntries = (validTags.length > 0) 
+  ? await getEntries(validTags) 
   : [];
 
 // --- 2. ПОХОЖИЕ ТОВАРЫ (RELATED PRODUCTS) ---
 const allProducts = await getCollection('products');
 
-// Фильтрация по категории с защитой от null
+// Фильтрация по категории с защитой от отсутствующих данных
 const relatedItems = allProducts.filter(p => {
-    // Если у текущего товара нет категории, не показываем похожие по этому критерию
+    // Если у текущего товара нет категории ИЛИ у проверяемого товара нет категории — пропускаем
     if (!categoryEntry || !p.data.category) return false;
     
-    // Сравниваем ID категорий (учитывая, что p.data.category тоже Reference)
+    // Сравниваем ID категорий (безопасно обращаемся к id, так как проверка выше прошла)
     const pCatId = p.data.category.id; 
     return pCatId === categoryEntry.id && p.id !== entry.id;
-}).slice(0, 6); // Берем до 6 штук для скролла
+}).slice(0, 6); 
 
-// Хелпер для получения названий категорий в карточках (если нужно)
+// Хелпер для получения названий категорий в карточках
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
@@ -83,7 +88,6 @@ const currentUrl = Astro.url.href;
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">
                 Каталог
              </a>
-             <!-- Показываем название товара, категорию скрываем визуально по ТЗ -->
              <span class="text-hyle-text/30">/</span>
              <span class="text-hyle-clay -rotate-1 cursor-default truncate max-w-[150px]">
                 {title}
@@ -141,7 +145,7 @@ const currentUrl = Astro.url.href;
                         <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
                     )}
                     
-                    <!-- TAGS (From Relations) -->
+                    <!-- TAGS (Safe Rendering) -->
                     {tagEntries.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
                             {tagEntries.slice(0, 3).map((tagEntry) => (
@@ -217,7 +221,7 @@ const currentUrl = Astro.url.href;
                 )}
             </div>
 
-            <!-- RELATED PRODUCTS (Horizontal Scroll) -->
+            <!-- RELATED PRODUCTS -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
@@ -231,7 +235,6 @@ const currentUrl = Astro.url.href;
                     class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
                 >
                     {relatedItems.map((item) => {
-                         // Получаем ID категории релейтед товара для маппинга
                          const relCatId = item.data.category ? item.data.category.id : null;
                          
                          return (
