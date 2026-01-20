@@ -6,6 +6,7 @@ import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
 import ProductCard from '../../components/ProductCard.astro';
 
+// 1. ПОЛУЧЕНИЕ ТЕКУЩЕГО ТОВАРА
 export async function getStaticPaths() {
   const products = await getCollection('products');
   return products.map(entry => ({
@@ -13,33 +14,47 @@ export async function getStaticPaths() {
     props: { entry },
   }));
 }
-
 const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. БЕЗОПАСНАЯ ОБРАБОТКА ДАННЫХ (RELATIONS) ---
+// --- НАЧАЛО БЕЗОПАСНОГО БЛОКА ---
 
-// 1. Безопасное получение Категории (Bulletproof)
-// Проверяем существование поля, чтобы не передать undefined в getEntry
-const categoryEntry = (entry.data.category) 
-  ? await getEntry(entry.data.category) 
-  : null;
+// 2. БЕЗОПАСНОЕ ПОЛУЧЕНИЕ КАТЕГОРИИ
+// Мы явно проверяем, что category - это не null, не undefined и не пустая строка
+let categoryEntry = null;
+if (entry.data.category && typeof entry.data.category === 'string') {
+  try {
+    categoryEntry = await getEntry('categories', entry.data.category);
+  } catch (e) {
+    console.warn(`⚠️ Warning: Category '${entry.data.category}' not found for product ${entry.slug}`);
+  }
+}
 
+// Получаем название категории для хлебных крошек (или дефолт)
 const categoryTitle = categoryEntry ? categoryEntry.data.title : 'Каталог';
 
-// 2. Безопасное получение Тегов (Filter garbage)
-// Сначала получаем "сырой" массив или пустой список
-const rawTags = entry.data.tags || [];
-// Фильтруем: убираем пустые строки, null и undefined, чтобы не сломать getEntries
-const validTags = rawTags.filter(tag => tag); 
+// 3. БЕЗОПАСНОЕ ПОЛУЧЕНИЕ ТЕГОВ
+// Очищаем массив от любого мусора перед запросом
+let tagEntries = [];
+const rawTags = entry.data.tags; // Может быть undefined
 
-// Запрашиваем только если остались валидные теги
-const tagEntries = (validTags.length > 0) 
-  ? await getEntries(validTags) 
-  : [];
+if (Array.isArray(rawTags)) {
+  // Оставляем только валидные строки-ID
+  const cleanTagIds = rawTags.filter(tag => tag && typeof tag === 'string' && tag.trim() !== '');
+  
+  if (cleanTagIds.length > 0) {
+    try {
+      tagEntries = await getEntries(cleanTagIds);
+    } catch (e) {
+      console.warn(`⚠️ Warning: Some tags failed to load for product ${entry.slug}`);
+    }
+  }
+}
 
-// --- 2. ПОХОЖИЕ ТОВАРЫ (RELATED PRODUCTS) ---
+// --- КОНЕЦ БЕЗОПАСНОГО БЛОКА ---
+
+// --- 4. ПОХОЖИЕ ТОВАРЫ (RELATED PRODUCTS) ---
 const allProducts = await getCollection('products');
 
 // Фильтрация по категории с защитой от отсутствующих данных
@@ -47,19 +62,22 @@ const relatedItems = allProducts.filter(p => {
     // Если у текущего товара нет категории ИЛИ у проверяемого товара нет категории — пропускаем
     if (!categoryEntry || !p.data.category) return false;
     
-    // Сравниваем ID категорий (безопасно обращаемся к id, так как проверка выше прошла)
-    const pCatId = p.data.category.id; 
+    // Сравниваем ID категорий (безопасно обрабатываем и строку, и объект-ссылку)
+    const pCatId = (typeof p.data.category === 'object' && p.data.category !== null) 
+        ? p.data.category.id 
+        : p.data.category;
+        
     return pCatId === categoryEntry.id && p.id !== entry.id;
 }).slice(0, 6); 
 
-// Хелпер для получения названий категорий в карточках
+// Хелпер для получения названий категорий в карточках (по ID)
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
-// --- 3. UI ПЕРЕМЕННЫЕ ---
+// --- 5. UI ПЕРЕМЕННЫЕ ---
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
@@ -235,7 +253,10 @@ const currentUrl = Astro.url.href;
                     class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
                 >
                     {relatedItems.map((item) => {
-                         const relCatId = item.data.category ? item.data.category.id : null;
+                         // Получаем ID категории релейтед товара для маппинга
+                         const relCatId = (typeof item.data.category === 'object' && item.data.category !== null) 
+                            ? item.data.category.id 
+                            : item.data.category;
                          
                          return (
                             <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
