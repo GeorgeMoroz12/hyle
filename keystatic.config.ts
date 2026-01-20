@@ -86,7 +86,8 @@ export default config({
         category: fields.relationship({
           label: 'Категория',
           collection: 'categories', // Ссылка на справочник категорий
-          validation: { isRequired: true }
+          // Убрали обязательность, чтобы можно было открыть старые товары и починить их
+          description: 'Выберите категорию из справочника.',
         }),
 
         tags: fields.array(
@@ -123,6 +124,11 @@ export default config({
           dividers: true,
           links: true,
         }),
+
+        // --- LEGACY (Вернули для совместимости) ---
+        care: fields.text({ label: '⚠️ Old care (Удалить после переноса)', multiline: true }),
+        inStock: fields.checkbox({ label: '⚠️ Old inStock (Удалить)' }),
+        isNew: fields.checkbox({ label: '⚠️ Old isNew (Удалить)' }),
       },
     }),
 
