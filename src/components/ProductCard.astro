@@ -18,34 +18,25 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ЛОГИКА ТЕГОВ (FILTER FIRST STRATEGY) ---
-
-// 1. Получаем сырые данные
-const rawTags = tags || [];
-
-// 2. ФИЛЬТРАЦИЯ И НОРМАЛИЗАЦИЯ
-// Проходим по ВСЕМУ массиву.
-// Если это объект-ссылка -> берем ID. Если строка -> берем строку.
-// Мусор (null, undefined, пустые строки) отсеивается.
-const validTagIds = Array.isArray(rawTags) 
-  ? rawTags.map(t => {
-      if (typeof t === 'string') return t;
-      if (typeof t === 'object' && t?.id) return t.id;
-      return null;
-    }).filter(t => typeof t === 'string' && t.trim().length > 0)
-  : [];
-
-// 3. ЗАГРУЗКА ДАННЫХ (getEntries)
+// --- ЛОГИКА ТЕГОВ (FINAL FIX: SOFT FILTER) ---
 let visibleTags = [];
-if (validTagIds.length > 0) {
-  try {
-    // Получаем реальные данные тегов (Title, и т.д.)
-    visibleTags = await getEntries(validTagIds);
-  } catch (e) {
-    // Silent fallback: если getEntries упал (битая ссылка), 
-    // используем ID как название, чтобы хоть что-то показать
-    console.warn(`Tag fetch warning for ${product.slug}`);
-    visibleTags = validTagIds.map(id => ({ id, data: { title: id } }));
+const rawTags = tags; // Берем данные как есть
+
+// ШАГ 1: Проверка на существование массива
+if (Array.isArray(rawTags) && rawTags.length > 0) {
+  
+  // ШАГ 2: МЯГКАЯ ФИЛЬТРАЦИЯ
+  // Оставляем всё, что не null/undefined. Astro сам разберется со строками и объектами.
+  const validTags = rawTags.filter(tag => tag !== null && tag !== undefined);
+
+  // ШАГ 3: Загрузка
+  if (validTags.length > 0) {
+    try {
+      // getEntries вернет массив полных объектов (с data.title)
+      visibleTags = await getEntries(validTags);
+    } catch (e) {
+      console.warn(`Tag load error for ${product.slug}:`, e);
+    }
   }
 }
 
@@ -83,7 +74,7 @@ const productUrl = `/products/${product.slug}`;
             </h3>
         </a>
         
-        <!-- TAGS RENDER -->
+        <!-- TAGS RENDER (Correct usage of loaded entries) -->
         {visibleTags.length > 0 && (
             <div class="flex flex-wrap gap-2 mt-1 relative z-20">
                 {visibleTags.slice(0, 1).map(tag => (
