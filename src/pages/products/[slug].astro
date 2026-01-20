@@ -1,6 +1,6 @@
 ---
 // src/pages/products/[slug].astro
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
@@ -15,43 +15,49 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { title, price, images, specs, status, relatedProducts, masterNote, care_instructions, category, tags } = entry.data;
+const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. ОБРАБОТКА ДАННЫХ (RELATIONS) ---
+// --- 1. БЕЗОПАСНАЯ ОБРАБОТКА ДАННЫХ (RELATIONS) ---
 
-// Категория: Нам нужен только ID для поиска похожих товаров. 
-// Название категории мы не выводим, поэтому getEntry не делаем (экономим ресурс).
-const currentCategoryId = category.id; 
+// Безопасное получение Категории
+// Проверяем, есть ли поле, прежде чем запрашивать
+const categoryEntry = entry.data.category 
+  ? await getEntry(entry.data.category) 
+  : null;
 
-// Теги: Это массив ссылок. Получаем полные объекты, чтобы достать названия (если они отличаются от ID)
-const tagEntries = tags ? await getEntries(tags) : [];
+const categoryTitle = categoryEntry ? categoryEntry.data.title : 'Каталог';
+
+// Безопасное получение Тегов
+// Используем getEntries для массива ссылок + проверка на существование
+const tagEntries = (entry.data.tags && entry.data.tags.length > 0) 
+  ? await getEntries(entry.data.tags) 
+  : [];
 
 // --- 2. ПОХОЖИЕ ТОВАРЫ (RELATED PRODUCTS) ---
 const allProducts = await getCollection('products');
-let relatedItems = [];
 
-// Логика Smart Fallback:
-// 1. Сначала ищем товары из той же категории (по ID ссылки)
-// 2. Исключаем текущий товар
-const categoryRelated = allProducts.filter(p => {
-    return p.data.category.id === currentCategoryId && p.slug !== entry.slug;
-});
+// Фильтрация по категории с защитой от null
+const relatedItems = allProducts.filter(p => {
+    // Если у текущего товара нет категории, не показываем похожие по этому критерию
+    if (!categoryEntry || !p.data.category) return false;
+    
+    // Сравниваем ID категорий (учитывая, что p.data.category тоже Reference)
+    const pCatId = p.data.category.id; 
+    return pCatId === categoryEntry.id && p.id !== entry.id;
+}).slice(0, 6); // Берем до 6 штук для скролла
 
-// Если набралось мало (меньше 4), можно добавить "Новинки" (просто последние добавленные)
-if (categoryRelated.length < 4) {
-    const newItems = allProducts
-        .filter(p => p.slug !== entry.slug && !categoryRelated.includes(p)) // Не дублировать
-        .slice(0, 4 - categoryRelated.length); // Добираем остаток
-    relatedItems = [...categoryRelated, ...newItems];
-} else {
-    relatedItems = categoryRelated.slice(0, 6); // Берем первые 6 релевантных
-}
+// Хелпер для получения названий категорий в карточках (если нужно)
+const allCategories = await getCollection('categories');
+const categoryMap = allCategories.reduce((acc, cat) => {
+    acc[cat.id] = cat.data.title;
+    return acc;
+}, {} as Record<string, string>);
 
-// Форматирование
+// --- 3. UI ПЕРЕМЕННЫЕ ---
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
-const isSoldOut = s === 'sold' || s === 'продано'; // Проверка статуса (можно добавить 'reserved')
+const isSoldOut = s === 'sold' || s === 'продано';
 const mainImage = images && images.length > 0 ? images[0] : '/placeholder.jpg';
 const noteText = masterNote || "Особенность этой серии — в несовершенстве формы. Следы пальцев оставлены намеренно.";
 const currentUrl = Astro.url.href;
@@ -62,15 +68,13 @@ const currentUrl = Astro.url.href;
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
     
     <!-- LEFT: PRODUCT STAGE -->
-    <!-- Mobile: Высота 60vh для фото. Desktop: Sticky на всю высоту -->
     <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex items-center justify-center p-6 lg:p-20 overflow-hidden">
         
-        <!-- Logo -->
         <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">
             Hyle.
         </a>
         
-        <!-- BREADCRUMBS (Simplified: Главная / Каталог / Название) -->
+        <!-- BREADCRUMBS -->
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/" class="hover:text-hyle-clay transition-colors hidden sm:inline">
                 Главная
@@ -79,13 +83,14 @@ const currentUrl = Astro.url.href;
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">
                 Каталог
              </a>
+             <!-- Показываем название товара, категорию скрываем визуально по ТЗ -->
              <span class="text-hyle-text/30">/</span>
              <span class="text-hyle-clay -rotate-1 cursor-default truncate max-w-[150px]">
                 {title}
              </span>
         </div>
 
-        <!-- Main Image with Zoom -->
+        <!-- Main Image -->
         <div class="zoom-container relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center cursor-zoom-in">
              <img 
                 src={mainImage} 
@@ -95,7 +100,7 @@ const currentUrl = Astro.url.href;
             />
         </div>
 
-        <!-- Desktop Thumbnails (Hidden on mobile) -->
+        <!-- Desktop Thumbnails -->
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm">
                 {images.map((img) => (
@@ -111,7 +116,6 @@ const currentUrl = Astro.url.href;
     </div>
 
     <!-- RIGHT: SIDEBAR -->
-    <!-- Mobile: p-6 padding. Desktop: p-12 -->
     <div class="w-full lg:w-[30%] min-h-[50vh] bg-white/80 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
@@ -120,7 +124,6 @@ const currentUrl = Astro.url.href;
             <div class="mt-2 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <!-- Mobile Font Fix: text-3xl instead of huge fonts -->
                         <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
                             <h1 class="font-serif text-3xl md:text-4xl lg:text-5xl text-hyle-text leading-[1.0] hyphens-auto break-words">
                                 {title}
@@ -218,7 +221,7 @@ const currentUrl = Astro.url.href;
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
-                        Вам может понравиться:
+                        {relatedItems.length > 0 ? "Вам может понравиться:" : "Другие изделия:"}
                     </h3>
                     <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
                 </div>
@@ -228,10 +231,15 @@ const currentUrl = Astro.url.href;
                     class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
                 >
                     {relatedItems.map((item) => {
-                         // Для карточки нам не нужно название категории, так как мы его не выводим
+                         // Получаем ID категории релейтед товара для маппинга
+                         const relCatId = item.data.category ? item.data.category.id : null;
+                         
                          return (
                             <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
-                                <ProductCard product={item} />
+                                <ProductCard 
+                                    product={item} 
+                                    categoryName={relCatId ? categoryMap[relCatId] : ''}
+                                />
                             </div>
                         );
                     })}
