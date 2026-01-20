@@ -9,9 +9,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  // Добавляем твой официальный домен
+  // Твой реальный домен
   site: 'https://hyle-w6he.vercel.app',
   
+  // Режим сервера обязателен для админки на Vercel
   output: 'server',
   
   adapter: vercel({
@@ -30,8 +31,4 @@ export default defineConfig({
       dedupe: ['react', 'react-dom'],
     },
   },
-
-  build: {
-    format: 'directory',
-  }
 });
