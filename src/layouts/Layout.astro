@@ -7,10 +7,10 @@ import Footer from '../components/Footer.astro';
 interface Props {
 	title: string;
 	description?: string;
-    hideHeader?: boolean; // Новый проп
+    hideHeader?: boolean;
 }
 
-const { title, description = "Авторская керамика.", hideHeader = false } = Astro.props;
+const { title, description = "Авторская керамика ручной работы.", hideHeader = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -23,10 +23,10 @@ const { title, description = "Авторская керамика.", hideHeader 
 		
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <!-- Добавил Caveat для рукописных заметок -->
         <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
-		<title>{title} | Hyle Ceramics</title>
+        <!-- Обновленный заголовок бренда -->
+		<title>{title} | Hyle Керамика ручной работы</title>
 	</head>
 	<body class="flex flex-col min-h-screen antialiased selection:bg-hyle-clay/20 selection:text-hyle-text">
 		

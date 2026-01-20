@@ -6,7 +6,7 @@ import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
 import ProductCard from '../../components/ProductCard.astro';
 
-// 1. Генерация путей (оставляем как есть)
+// ... (код getStaticPaths без изменений) ...
 export async function getStaticPaths() {
   const products = await getCollection('products');
   return products.map(entry => ({
@@ -18,9 +18,7 @@ const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- БЕЗОПАСНАЯ ЗАГРУЗКА ДАННЫХ (SECTION SAFETY) ---
-
-// 2. Текущая Категория
+// --- БЕЗОПАСНАЯ ЗАГРУЗКА ---
 let categoryEntry = null;
 if (entry.data.category && typeof entry.data.category === 'string') {
   try {
@@ -28,7 +26,6 @@ if (entry.data.category && typeof entry.data.category === 'string') {
   } catch (e) { console.warn('Cat error:', e); }
 }
 
-// 3. Текущие Теги
 let tagEntries = [];
 const rawTags = entry.data.tags;
 if (Array.isArray(rawTags)) {
@@ -40,47 +37,31 @@ if (Array.isArray(rawTags)) {
   }
 }
 
-// 4. Похожие товары (САМОЕ ОПАСНОЕ МЕСТО - FIXED)
+// RELATED PRODUCTS
 const allProducts = await getCollection('products');
-
-// Мы НЕ делаем getEntry внутри map/filter. Мы сравниваем только ID.
 const relatedProducts = allProducts.filter(p => {
-  // Исключаем текущий товар
   if (p.id === entry.id) return false;
-  
-  // Проверяем совпадение по ID категории (строка к строке), НЕ ЗАГРУЖАЯ объект
-  // Для надежности приводим к строке, если вдруг прилетел объект-ссылка
   const currentCatId = typeof entry.data.category === 'object' ? entry.data.category?.id : entry.data.category;
   const otherCatId = typeof p.data.category === 'object' ? p.data.category?.id : p.data.category;
-  
-  // Если у кого-то нет категории - не считаем их похожими
   if (!currentCatId || !otherCatId) return false;
-  
   return currentCatId === otherCatId;
-}).slice(0, 6); // Берем 6 для скролла
+}).slice(0, 6);
 
-// Если не набралось похожих, добиваем новинками (просто берем первые попавшиеся, кроме себя)
 if (relatedProducts.length < 4) {
   const leftovers = allProducts
     .filter(p => p.id !== entry.id && !relatedProducts.some(rp => rp.id === p.id))
     .slice(0, 6 - relatedProducts.length);
   relatedProducts.push(...leftovers);
 }
-
-// Алиас для шаблона (чтобы не ломать верстку ниже)
 const relatedItems = relatedProducts;
 
-// 5. Хелперы для UI
-const categoryTitle = categoryEntry ? categoryEntry.data.title : 'Каталог';
-
-// Маппинг категорий для карточек (безопасный reduce)
+// HELPERS
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
-// 6. UI Переменные
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
@@ -146,6 +127,7 @@ const currentUrl = Astro.url.href;
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
+                        <!-- Заголовок -->
                         <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
                             <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">
                                 {title}
@@ -156,7 +138,7 @@ const currentUrl = Astro.url.href;
                 </div>
                 
                 <div class="flex flex-col gap-2 mt-4 lg:mt-6 border-b border-hyle-text/5 pb-6">
-                    <span class="font-hand text-3xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
+                    <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
                         {formattedPrice}
                     </span>
                     {!isSoldOut && status !== 'В наличии' && (
@@ -178,9 +160,11 @@ const currentUrl = Astro.url.href;
                 </div>
             </div>
 
+            <!-- Master Note: Increased Max Height -->
             <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
-                 <ExpandableText maxHeight="80px" gradientFrom="from-[#F6F5F1]">
+                 <!-- FIX: Увеличена высота до 120px -->
+                 <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">
                         "{noteText}"
                     </p>
@@ -248,7 +232,7 @@ const currentUrl = Astro.url.href;
                         class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
                     >
                         {relatedItems.map((item) => {
-                             const cId = (item.data.category && typeof item.data.category === 'object') 
+                             const relCatId = (item.data.category && typeof item.data.category === 'object') 
                                 ? item.data.category.id 
                                 : item.data.category;
                              
@@ -256,7 +240,7 @@ const currentUrl = Astro.url.href;
                                 <div class="shrink-0 w-40 md:w-52 snap-start pointer-events-auto">
                                     <ProductCard 
                                         product={item} 
-                                        categoryName={cId ? categoryMap[cId] : ''} 
+                                        categoryName={relCatId ? categoryMap[relCatId] : ''} 
                                     />
                                 </div>
                             );
@@ -313,7 +297,6 @@ const currentUrl = Astro.url.href;
         });
     }
 
-    // Thumbnails Logic
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -325,7 +308,6 @@ const currentUrl = Astro.url.href;
         });
     });
 
-    // Horizontal Scroll Wheel (Desktop)
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
