@@ -1,0 +1,47 @@
+---
+// Секретная страница для проверки ключей
+const keys = {
+  CLIENT_ID: !!import.meta.env.KEYSTATIC_GITHUB_CLIENT_ID,
+  CLIENT_SECRET: !!import.meta.env.KEYSTATIC_GITHUB_CLIENT_SECRET,
+  SECRET: !!import.meta.env.KEYSTATIC_SECRET,
+  NODE_ENV: import.meta.env.MODE,
+  VERCEL_ENV: import.meta.env.VERCEL_ENV || 'not-vercel'
+};
+
+const allOk = keys.CLIENT_ID && keys.CLIENT_SECRET && keys.SECRET;
+---
+
+<html>
+  <head><title>Debug Hyle</title></head>
+  <body style="font-family: sans-serif; padding: 2rem; background: #f4f4f4;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <h1>Диагностика системы</h1>
+      <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0;">
+          ID: {keys.CLIENT_ID ? '✅ Найден' : '❌ ОТСУТСТВУЕТ'}
+        </li>
+        <li style="margin: 10px 0;">
+          Secret: {keys.CLIENT_SECRET ? '✅ Найден' : '❌ ОТСУТСТВУЕТ'}
+        </li>
+        <li style="margin: 10px 0;">
+          KeyStatic Secret: {keys.SECRET ? '✅ Найден' : '❌ ОТСУТСТВУЕТ'}
+        </li>
+      </ul>
+      <hr />
+      <p>Режим: <strong>{keys.NODE_ENV}</strong></p>
+      <p>Vercel: <strong>{keys.VERCEL_ENV}</strong></p>
+      
+      {allOk ? (
+        <div style="background: #e6fffa; color: #2c7a7b; padding: 10px; border-radius: 6px;">
+          🚀 Все ключи на месте. Проблема в настройках GitHub App.
+        </div>
+      ) : (
+        <div style="background: #fff5f5; color: #c53030; padding: 10px; border-radius: 6px;">
+          ⚠️ Ключи не найдены в Vercel! Админка не заработает.
+        </div>
+      )}
+      
+      <a href="/keystatic" style="display: block; margin-top: 20px; text-align: center; color: #3182ce;">Вернуться в админку</a>
+    </div>
+  </body>
+</html>
