@@ -22,17 +22,16 @@ const isReserved = s === 'reserved' || s === 'резерв';
 const rawTags = Array.isArray(tags) ? tags : [];
 
 // 2. Нормализуем в массив строк (ID)
+// Поддерживаем и старый формат (массив строк), и новый (массив ссылок)
 const normalizedTags = rawTags.map(tag => {
-    // Если это строка (старая база) -> возвращаем как есть
     if (typeof tag === 'string') return tag;
-    // Если это объект-ссылка (новая база) -> берем .id
     if (typeof tag === 'object' && tag !== null && 'id' in tag) return tag.id;
     return null;
-}).filter(Boolean); // Убираем null
+}).filter(Boolean); // Убираем пустые
 
-// 3. Берем первый тег для отображения (если товар не продан)
-// Если нужно показывать теги ДАЖЕ если продано - убери "!isSold && !isReserved"
-const displayTag = (!isSold && !isReserved && normalizedTags.length > 0) ? normalizedTags[0] : null;
+// 3. Вывод тега
+// FIX: Убрал проверку (!isSold && !isReserved). Теперь тег показывается ВСЕГДА, если он есть.
+const displayTag = (normalizedTags.length > 0) ? normalizedTags[0] : null;
 
 const productUrl = `/products/${product.slug}`;
 ---
