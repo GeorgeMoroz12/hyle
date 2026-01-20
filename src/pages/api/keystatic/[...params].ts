@@ -6,6 +6,8 @@ import keystaticConfig from '../../../../keystatic.config';
 // Запускай её как Serverless Function каждый раз, когда кто-то стучится."
 export const prerender = false;
 
-export const all = makeHandler({
+// ИСПРАВЛЕНИЕ: Astro требует писать названия методов ЗАГЛАВНЫМИ БУКВАМИ (ALL, GET, POST).
+// Раньше было 'all', и Astro не видел этот обработчик, выдавая 404.
+export const ALL = makeHandler({
   config: keystaticConfig,
 });
