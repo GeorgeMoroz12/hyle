@@ -1,28 +1,19 @@
 import { defineCollection, z } from 'astro:content';
 
-// 1. Товары (Products)
+// 1. Товары
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
-    
-    // 🔥 ФИКС ОШИБКИ "NaN"
-    // Принимаем число ИЛИ строку. Превращаем всё в число. Если не вышло — ставим 0.
-    price: z.union([z.number(), z.string(), z.null(), z.undefined()])
-      .transform((val) => {
-        const num = Number(val);
-        return isNaN(num) ? 0 : num;
-      })
-      .default(0),
-
+    price: z.number().min(0).default(0), 
     status: z.enum(['В наличии', 'Под заказ', 'Продано', 'Архив']).default('В наличии'),
     
-    // Категория: принимаем любую строку, чтобы не падать на старых/ручных данных
+    // Связи (Relationship сохраняет просто строку-slug)
     category: z.string().default('Другое'), 
-    
-    images: z.array(z.string()).default([]),
+    tags: z.array(z.string()).default([]),
     relatedProducts: z.array(z.string()).default([]),
 
+    images: z.array(z.string()).default([]),
     masterNote: z.string().optional(),
 
     specs: z.object({
@@ -31,12 +22,26 @@ const products = defineCollection({
       material: z.string().default('Шамот, глазурь'),
     }).default({}),
     
-    tags: z.array(z.string()).default([]),
     careInstructions: z.string().optional(),
   }),
 });
 
-// 2. Блог (Blog)
+// 2. Новая коллекция ТЕГОВ (для справочника)
+const tags = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+
+// 3. Новая коллекция КАТЕГОРИЙ (для справочника)
+const categories = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+  }),
+});
+
 const blog = defineCollection({
   type: 'content',
   schema: z.object({
@@ -47,7 +52,6 @@ const blog = defineCollection({
   }),
 });
 
-// 3. B2B
 const b2b = defineCollection({
   type: 'data',
   schema: z.object({
@@ -58,6 +62,8 @@ const b2b = defineCollection({
 
 export const collections = {
   products,
+  tags,         // <--- Добавили
+  categories,   // <--- Добавили
   blog,
   b2b,
 };
