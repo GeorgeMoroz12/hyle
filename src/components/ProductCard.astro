@@ -18,7 +18,8 @@ const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
 // Берем первый тег для отображения
-const activeTags = (!isSold && !isReserved && tags && tags.length > 0) ? tags.slice(0, 1) : null;
+// Дополнительная защита: убедимся, что tags существует и это массив
+const activeTags = (!isSold && !isReserved && Array.isArray(tags) && tags.length > 0) ? tags.slice(0, 1) : null;
 const productUrl = `/products/${product.slug}`;
 ---
 
@@ -58,15 +59,23 @@ const productUrl = `/products/${product.slug}`;
             </h3>
         </a>
         
-        <!-- TAGS RETURNED -->
-        {activeTags && activeTags.map((tag: string) => (
-            <a 
-                href={`/catalog?tag=${tag}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
-            >
-                #{tag}
-            </a>
-        ))}
+        <!-- TAGS RETURNED (FIXED OBJECT/STRING HANDLING) -->
+        {activeTags && activeTags.map((tag: any) => {
+            // Если tag это объект-ссылка, берем .id, иначе саму строку
+            const tagLabel = (typeof tag === 'object' && tag !== null) ? tag.id : tag;
+            
+            // Если вдруг tagLabel пустой или мусор - не рендерим
+            if (!tagLabel) return null;
+
+            return (
+                <a 
+                    href={`/catalog?tag=${tagLabel}`}
+                    class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
+                >
+                    #{tagLabel}
+                </a>
+            );
+        })}
     </div>
     
     <div class="flex flex-col items-end shrink-0 pl-1">
