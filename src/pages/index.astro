@@ -17,157 +17,175 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 }, {} as Record<string, string>);
 ---
 
-<Layout title="Главная">
+<Layout title="Главная" hideHeader={true}>
   
-  <!-- HERO SECTION -->
-  <section id="hero-section" class="relative min-h-screen flex items-center overflow-hidden">
-    <!-- BACKGROUND -->
-    <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
-        <img 
-            id="hero-image"
-            src={HERO_IMAGE} 
-            alt="Атмосфера мастерской" 
-            class="w-full h-full object-cover object-center pointer-events-none scale-110 transition-transform duration-700 ease-out will-change-transform" 
-            draggable="false" 
-            onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
-        />
-        <!-- Gradients -->
-        <div class="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
-        <div class="absolute inset-0 bg-[#F9F8F6]/60 lg:hidden z-10 backdrop-blur-[1px]"></div>
-        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] via-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
-    </div>
+  <!-- 
+      SCROLL SNAP CONTAINER 
+      h-screen + overflow-y-scroll: Создает окно просмотра высотой в экран.
+      snap-y snap-mandatory: Заставляет скролл "прилипать" к секциям.
+  -->
+  <div class="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth">
 
-    <!-- CONTENT -->
-    <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-24 lg:pt-0">
-        <div class="max-w-3xl animate-appear">
-          
-          <!-- FIX: Убрал английский текст -->
-          <div class="relative mb-6">
-            <span class="text-[10px] uppercase tracking-[0.4em] text-hyle-text/60 pl-1 relative z-10 border-l border-hyle-clay pl-3">
-                Hyle
-            </span>
-          </div>
-
-          <!-- FIX: Заголовок на русском -->
-          <h1 class="font-serif text-5xl md:text-8xl lg:text-[7rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
-              Керамика <br />
-              <span class="block ml-8 lg:ml-24 relative">
-                  <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">ручной</span>
-              </span>
-              работы.
-          </h1>
-
-          <div class="flex flex-col md:flex-row gap-8 md:gap-12 md:items-end pl-2">
-            <p class="text-base md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed">
-                Вещи для тихих завтраков. <br/>
-                С несовершенствами, которые <br/> делают их живыми.
-            </p>
-            <a href="/catalog" class="group inline-flex items-center gap-3 font-hand text-2xl md:text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2">
-              Смотреть каталог
-              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm mt-1">→</span>
-            </a>
-          </div>
-        </div>
-    </div>
-  </section>
-
-  <!-- GRID SECTION -->
-  <section class="py-20 md:py-32 relative z-20 bg-hyle-bg">
-    <div class="container-main relative">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start">
-        <div class="lg:col-span-4 lg:sticky lg:top-32 self-start flex flex-col items-start text-left mb-8 lg:mb-0 scroll-reveal">
-            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">Collection 2026</span>
-            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[0.9] mb-6 relative inline-block">
-                Новое <br/> из печи
-                <span class="absolute -top-4 -right-10 font-hand text-3xl text-hyle-clay -rotate-12 opacity-90">New!</span>
-            </h2>
-            <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-8 text-sm md:text-base">
-                Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром.
-            </p>
-            <a href="/catalog" class="group inline-flex items-center gap-2 font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">
-              Вся коллекция
-              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm">→</span>
-            </a>
-        </div>
-
-        <div class="lg:col-span-8">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
-                {recentProducts.map((product) => {
-                    const catId = (product.data.category && typeof product.data.category === 'object') 
-                        ? product.data.category.id 
-                        : product.data.category;
-                    return (
-                        <div class="scroll-reveal transition-all duration-700">
-                             <ProductCard 
-                                product={product} 
-                                categoryName={catId ? categoryMap[catId] : ''} 
-                            />
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- WORKSHOP DIARY -->
-  <section class="py-24 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
-     <!-- Texture -->
-     <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-     
-     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
-        <div class="md:col-span-5 relative scroll-reveal">
-             <div class="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 transform transition-transform duration-700 hover:rotate-0">
-                 <img 
-                    src={WORKSHOP_IMAGE} 
-                    alt="Процесс создания" 
-                    class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
-                    onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
-                />
-             </div>
-        </div>
-
-        <div class="md:col-span-7 md:pl-12 scroll-reveal">
-            <span class="font-hand text-2xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
-            <h2 class="font-serif text-3xl md:text-6xl mb-6 leading-tight text-[#F9F8F6]">
-                Несовершенство — <br/>
-                это часть истории.
-            </h2>
-            <p class="text-hyle-bg/60 text-base md:text-lg font-light mb-8 leading-relaxed max-w-lg">
-                В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.
-            </p>
-            <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-xl md:text-2xl text-hyle-clay hover:text-white transition-colors">
-                <span>Читать истории</span>
-                <span class="group-hover:translate-x-1 transition-transform font-sans text-sm">→</span>
-            </a>
-        </div>
-     </div>
-  </section>
-
-  <!-- FOOTER (DARK MODE) -->
-  <!-- FIX: Теперь это продолжение темы мастерской (Темный фон, текстура) -->
-  <footer class="py-12 bg-hyle-text text-hyle-bg relative overflow-hidden border-t border-white/5">
-      <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-      
-      <div class="container-main relative z-10 text-center flex flex-col items-center gap-6">
-          <a href="/" class="font-serif text-2xl tracking-wide text-[#F9F8F6] opacity-80 hover:opacity-100 transition-opacity">
-            Hyle.
+      <!-- 
+          CUSTOM HEADER (Fixed inside the scroll container or Absolute top) 
+          Здесь используем fixed, чтобы он был виден всегда, или absolute для первого экрана.
+          По ТЗ он был прозрачным на первом экране.
+      -->
+      <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-center animate-appear">
+          <!-- FIX: Текст изменен -->
+          <a href="/" class="font-serif text-xl md:text-2xl tracking-wide text-hyle-text hover:text-hyle-clay transition-colors leading-tight max-w-[200px] md:max-w-none">
+              Hyle керамика ручной работы
           </a>
           
-          <nav class="flex gap-6 text-[10px] uppercase tracking-[0.25em] text-white/40">
+          <div class="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.25em] text-hyle-text/80 font-medium">
               <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
               <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
               <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
-          </nav>
+          </div>
 
-          <div class="w-12 h-px bg-white/10"></div>
+          <button class="md:hidden text-hyle-text">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+          </button>
+      </nav>
 
-          <p class="font-hand text-xl text-hyle-clay/80">
-              Сделано руками. С любовью к материалу.
-          </p>
-      </div>
-  </footer>
+      <!-- SECTION 1: HERO (min-h-screen + snap-start) -->
+      <section id="hero-section" class="relative min-h-screen w-full flex items-center overflow-hidden snap-start">
+        
+        <!-- BACKGROUND -->
+        <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
+            <img 
+                id="hero-image"
+                src={HERO_IMAGE} 
+                alt="Атмосфера мастерской" 
+                class="w-full h-full object-cover object-center pointer-events-none scale-110 transition-transform duration-700 ease-out will-change-transform" 
+                draggable="false" 
+                onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
+            />
+            <div class="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
+            <div class="absolute inset-0 bg-[#F9F8F6]/60 lg:hidden z-10 backdrop-blur-[1px]"></div>
+            <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] via-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-24 lg:pt-0">
+            <div class="max-w-3xl animate-appear">
+              
+              <!-- FIX: Убрал блок с "Hyle", оставил только Est (или можно убрать и его для чистоты, но пока оставим Est как декор) -->
+              <!-- <div class="relative mb-6">...removed...</div> -->
+
+              <!-- MAIN TITLE: Вернул структуру -->
+              <h1 class="font-serif text-5xl md:text-8xl lg:text-[9rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
+                  Глина <br />
+                  <span class="block ml-12 lg:ml-32 relative">
+                      <!-- Анимация слова "хранит" -->
+                      <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">
+                        хранит
+                      </span>
+                  </span>
+                  тепло рук.
+              </h1>
+
+              <div class="flex flex-col md:flex-row gap-8 md:gap-12 md:items-end pl-2">
+                <p class="text-base md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed">
+                    Вещи для тихих завтраков. <br/>
+                    С несовершенствами, которые <br/> делают их живыми.
+                </p>
+                <a href="/catalog" class="group inline-flex items-center gap-3 font-hand text-2xl md:text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2">
+                  Смотреть каталог
+                  <span class="group-hover:translate-x-2 transition-transform font-sans text-sm mt-1">→</span>
+                </a>
+              </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: GRID (min-h-screen + snap-start) -->
+      <section class="relative min-h-screen w-full flex items-center py-20 md:py-0 bg-hyle-bg snap-start">
+        <div class="container-main relative w-full">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start">
+            <div class="lg:col-span-4 self-start flex flex-col items-start text-left mb-8 lg:mb-0 scroll-reveal">
+                <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">Collection 2026</span>
+                <h2 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[0.9] mb-6 relative inline-block">
+                    Новое <br/> из печи
+                    <span class="absolute -top-4 -right-10 font-hand text-3xl text-hyle-clay -rotate-12 opacity-90">New!</span>
+                </h2>
+                <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-8 text-sm md:text-base">
+                    Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром.
+                </p>
+                <a href="/catalog" class="group inline-flex items-center gap-2 font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">
+                  Вся коллекция
+                  <span class="group-hover:translate-x-2 transition-transform font-sans text-sm">→</span>
+                </a>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
+                    {recentProducts.map((product) => {
+                        const catId = (product.data.category && typeof product.data.category === 'object') 
+                            ? product.data.category.id 
+                            : product.data.category;
+                        return (
+                            <div class="scroll-reveal transition-all duration-700">
+                                 <ProductCard 
+                                    product={product} 
+                                    categoryName={catId ? categoryMap[catId] : ''} 
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: WORKSHOP (min-h-screen + snap-start) -->
+      <!-- Flex items-center центрирует контент по вертикали ровно в экран -->
+      <section class="relative min-h-screen w-full flex items-center bg-hyle-text text-hyle-bg overflow-hidden snap-start">
+         <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+         
+         <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+            <div class="md:col-span-5 relative scroll-reveal">
+                 <div class="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 transform transition-transform duration-700 hover:rotate-0">
+                     <img 
+                        src={WORKSHOP_IMAGE} 
+                        alt="Процесс создания" 
+                        class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+                        onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
+                    />
+                 </div>
+            </div>
+
+            <div class="md:col-span-7 md:pl-12 scroll-reveal">
+                <span class="font-hand text-2xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
+                <h2 class="font-serif text-3xl md:text-6xl mb-6 leading-tight text-[#F9F8F6]">
+                    Несовершенство — <br/>
+                    это часть истории.
+                </h2>
+                <p class="text-hyle-bg/60 text-base md:text-lg font-light mb-8 leading-relaxed max-w-lg">
+                    В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.
+                </p>
+                <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-xl md:text-2xl text-hyle-clay hover:text-white transition-colors">
+                    <span>Читать истории</span>
+                    <span class="group-hover:translate-x-1 transition-transform font-sans text-sm">→</span>
+                </a>
+            </div>
+         </div>
+      </section>
+
+      <!-- SECTION 4: FOOTER (snap-start) -->
+      <!-- Высота auto, но прилипает как отдельный слайд -->
+      <footer class="snap-start py-12 bg-hyle-stone/30 border-t border-hyle-text/5 text-center flex flex-col justify-center">
+          <p class="font-serif italic text-hyle-text/60 mb-2 text-sm">Hyle Керамика ручной работы</p>
+          <p class="text-[10px] uppercase tracking-widest text-hyle-text/30 mb-4">© 2026</p>
+          <a href="/about" class="font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">О мастерской</a>
+      </footer>
+
+  </div> <!-- End Scroll Container -->
 </Layout>
 
 <script>
@@ -187,7 +205,9 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     });
   }
 
-  // Scroll Reveal Logic
+  // Scroll Reveal Logic (With fix for snap container)
+  // Нам нужно наблюдать внутри контейнера скролла, если он не body
+  // Но IntersectionObserver по умолчанию использует viewport, что нам и нужно.
   const revealElements = document.querySelectorAll('.scroll-reveal');
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
