@@ -17,7 +17,7 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// Берем только первый тег для чистоты
+// Берем только первый тег
 const activeTags = (!isSold && !isReserved && tags && tags.length > 0) ? tags.slice(0, 1) : null;
 const productUrl = `/products/${product.slug}`;
 ---
@@ -45,15 +45,16 @@ const productUrl = `/products/${product.slug}`;
   <!-- 2. ИНФОРМАЦИЯ -->
   <div class="flex justify-between items-start px-1 mt-auto">
     
-    <div class="pr-2 flex flex-col items-start w-full">
+    <div class="pr-2 flex flex-col items-start w-full min-w-0">
         <!-- Title Link -->
-        <a href={productUrl} class="block mb-1 w-full">
+        <a href={productUrl} class="block mb-0.5 w-full">
             <!-- 
-                FIX TYPOGRAPHY: 
-                pb-1 - место для хвостиков букв (р, ф, щ).
-                leading-normal - чуть больше воздуха между строками.
+                FIX TYPOGRAPHY (Буквы р, ф, ц):
+                pb-2: Добавил нижний отступ, чтобы хвостики не резались overflow.
+                leading-relaxed: Увеличил межстрочный интервал.
+                -mb-1: Компенсация лишнего отступа, чтобы визуально блок не был дырявым.
             -->
-            <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 min-h-[1.4em] pb-1">
+            <h3 class="font-serif text-base md:text-lg leading-relaxed text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-2 -mb-1">
               {title}
             </h3>
         </a>
@@ -61,7 +62,7 @@ const productUrl = `/products/${product.slug}`;
         {activeTags && activeTags.map((tag: string) => (
             <a 
                 href={`/catalog?tag=${tag}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
             >
                 #{tag}
             </a>

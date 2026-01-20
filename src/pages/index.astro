@@ -40,19 +40,21 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     <!-- CONTENT -->
     <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-24 lg:pt-0">
         <div class="max-w-3xl animate-appear">
-          <!-- Useless text removed, kept only essential label -->
+          
+          <!-- FIX: Убрал английский текст -->
           <div class="relative mb-6">
             <span class="text-[10px] uppercase tracking-[0.4em] text-hyle-text/60 pl-1 relative z-10 border-l border-hyle-clay pl-3">
-                Handmade Ceramics
+                Hyle
             </span>
           </div>
 
-          <h1 class="font-serif text-5xl md:text-8xl lg:text-[9rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
-              Глина <br />
-              <span class="block ml-12 lg:ml-32 relative">
-                  <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">хранит</span>
+          <!-- FIX: Заголовок на русском -->
+          <h1 class="font-serif text-5xl md:text-8xl lg:text-[7rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
+              Керамика <br />
+              <span class="block ml-8 lg:ml-24 relative">
+                  <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">ручной</span>
               </span>
-              тепло рук.
+              работы.
           </h1>
 
           <div class="flex flex-col md:flex-row gap-8 md:gap-12 md:items-end pl-2">
@@ -110,17 +112,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </section>
 
   <!-- WORKSHOP DIARY -->
-  <!-- FIX: Увеличил паддинги (py-24), чтобы убрать белые полосы и дать воздуха -->
   <section class="py-24 md:py-32 bg-hyle-text text-hyle-bg relative overflow-hidden">
      <!-- Texture -->
      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
      
      <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
-        <!-- 
-            FIX: 
-            - Убрал обрезку контейнера h-64, пусть картинка решает размер.
-            - Вернул наклон -rotate-1.
-        -->
         <div class="md:col-span-5 relative scroll-reveal">
              <div class="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 transform transition-transform duration-700 hover:rotate-0">
                  <img 
@@ -149,12 +145,28 @@ const categoryMap = allCategories.reduce((acc, cat) => {
      </div>
   </section>
 
-  <!-- FOOTER -->
-  <!-- FIX: Серый фон (bg-hyle-stone/30) вместо белого -->
-  <footer class="py-12 bg-hyle-stone/30 border-t border-hyle-text/5 text-center">
-      <p class="font-serif italic text-hyle-text/60 mb-2 text-sm">Hyle Керамика ручной работы</p>
-      <p class="text-[10px] uppercase tracking-widest text-hyle-text/30 mb-4">© 2026</p>
-      <a href="/about" class="font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">О мастерской</a>
+  <!-- FOOTER (DARK MODE) -->
+  <!-- FIX: Теперь это продолжение темы мастерской (Темный фон, текстура) -->
+  <footer class="py-12 bg-hyle-text text-hyle-bg relative overflow-hidden border-t border-white/5">
+      <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+      
+      <div class="container-main relative z-10 text-center flex flex-col items-center gap-6">
+          <a href="/" class="font-serif text-2xl tracking-wide text-[#F9F8F6] opacity-80 hover:opacity-100 transition-opacity">
+            Hyle.
+          </a>
+          
+          <nav class="flex gap-6 text-[10px] uppercase tracking-[0.25em] text-white/40">
+              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+              <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
+              <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
+          </nav>
+
+          <div class="w-12 h-px bg-white/10"></div>
+
+          <p class="font-hand text-xl text-hyle-clay/80">
+              Сделано руками. С любовью к материалу.
+          </p>
+      </div>
   </footer>
 </Layout>
 
