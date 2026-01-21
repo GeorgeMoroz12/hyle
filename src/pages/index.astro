@@ -8,7 +8,6 @@ const HERO_IMAGE = "/images/hero-minimal.jpg";
 const WORKSHOP_IMAGE = "/images/workshop-process.jpg"; 
 
 const allProducts = await getCollection('products');
-// Берем больше товаров для длинной ленты
 const recentProducts = allProducts.slice(0, 8); 
 
 const allCategories = await getCollection('categories');
@@ -40,29 +39,32 @@ const categoryMap = allCategories.reduce((acc, cat) => {
       </button>
   </nav>
 
-  <!-- PARALLAX BACKGROUND -->
-  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-50">
-      <div class="parallax-element absolute top-[10%] right-[-5%] w-[40vw] h-[40vw] bg-hyle-clay/5 rounded-full blur-[100px]" data-speed="0.05"></div>
-      <div class="parallax-element absolute top-[60%] left-[-10%] w-[50vw] h-[50vw] bg-hyle-stone/30 rounded-full blur-[120px]" data-speed="-0.08"></div>
-  </div>
-
   <!-- HERO SECTION -->
-  <section class="relative min-h-screen w-full flex flex-col justify-center pt-24 pb-12 overflow-hidden bg-[#F5F4F0]">
-    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">H</div>
+  <section class="relative min-h-screen w-full overflow-hidden flex flex-col justify-center pt-24 pb-12 bg-[#F5F4F0]">
+    
+    <!-- DECOR -->
+    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">
+        H
+    </div>
 
     <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
+        
+        <!-- TEXT LAYER -->
         <div class="lg:col-span-5 relative z-20 order-2 lg:order-1 mt-[-40px] lg:mt-0">
             <div class="animate-appear">
                 <span class="font-hand text-3xl text-hyle-clay block mb-4 -rotate-3">Ручная работа</span>
+                
                 <h1 class="font-serif text-6xl md:text-8xl lg:text-[7rem] leading-[0.85] text-hyle-text mb-8 tracking-tight">
                     Глина <br/>
                     <span class="italic font-light ml-12 lg:ml-20 text-hyle-clay/90">дышит</span> <br/>
                     теплом.
                 </h1>
+
                 <p class="font-sans font-light text-sm md:text-base text-hyle-text/70 max-w-xs leading-relaxed mb-10 ml-2 border-l border-hyle-text/20 pl-4">
                     Керамика с характером. <br/>
                     Неидеальная форма, живая фактура.
                 </p>
+
                 <a href="/catalog" class="group inline-flex items-center gap-4 ml-2">
                     <div class="w-12 h-12 rounded-full border border-hyle-text/20 flex items-center justify-center group-hover:bg-hyle-clay group-hover:border-hyle-clay transition-all duration-300">
                         <span class="text-xl group-hover:text-white transition-colors">→</span>
@@ -74,19 +76,26 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             </div>
         </div>
 
+        <!-- IMAGE LAYER -->
         <div class="lg:col-span-7 relative order-1 lg:order-2">
             <div class="relative z-10 w-full aspect-[4/5] lg:aspect-[3/4] max-h-[80vh] lg:ml-auto lg:w-[90%]">
                 <div class="absolute inset-0 bg-hyle-stone/20 transform rotate-2 rounded-sm"></div>
                 <div class="absolute inset-0 overflow-hidden rounded-sm transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
-                    <img src={HERO_IMAGE} alt="Atmosphere" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'" />
+                    <img 
+                        src={HERO_IMAGE} 
+                        alt="Ceramic Atmosphere" 
+                        class="w-full h-full object-cover"
+                        onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'"
+                    />
                     <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
                 </div>
             </div>
         </div>
+
     </div>
   </section>
 
-  <!-- SECTION 2: HORIZONTAL SMOOTH SCROLL -->
+  <!-- SECTION 2: HORIZONTAL SCROLL (INTERACTIVE) -->
   <section class="py-24 md:py-32 bg-white relative z-20 overflow-hidden">
     <div class="container-main">
         
@@ -101,12 +110,12 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
         <!-- 
             CONTAINER
-            - snap-x оставлен только для мобильных (md:snap-none), чтобы на десктопе работал наш JS-смузи.
-            - pb-20 чтобы тени и ховеры не обрезались.
+            - overscroll-x-contain: Ключевой фикс! Запрещает браузеру скроллить страницу, когда мы тянем ленту.
+            - snap-x для мобильных, но отключаем его на md, чтобы JS-физика работала плавно.
         -->
         <div 
             id="horizontal-showcase" 
-            class="flex gap-8 overflow-x-auto pb-20 px-4 -mx-4 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide"
+            class="flex gap-8 overflow-x-auto pb-20 px-4 -mx-4 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
             style="scrollbar-width: none; -ms-overflow-style: none;"
         >
             {recentProducts.map((product, idx) => {
@@ -114,11 +123,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     ? product.data.category.id 
                     : product.data.category;
                 
-                // Ритм: смещение вниз для четных
+                // РИТМ: Смещаем каждый второй товар вниз
                 const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
 
                 return (
-                    // FIX: Увеличил ширину w-[450px] для крупных фото
+                    // w-[450px] для крупных "журнальных" карточек
                     <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
                          <ProductCard 
                             product={product} 
@@ -138,14 +147,13 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                  </a>
             </div>
             
-            <!-- Spacer for right padding -->
             <div class="w-12 shrink-0"></div>
         </div>
 
     </div>
   </section>
 
-  <!-- UNIFIED DARK SECTION -->
+  <!-- UNIFIED DARK SECTION: PHILOSOPHY + FOOTER -->
   <div class="bg-[#2C2B29] text-[#F9F8F6] relative overflow-hidden">
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
@@ -170,7 +178,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                   </h2>
                   <div class="space-y-6 text-white/60 font-light text-base md:text-lg leading-relaxed max-w-md">
                       <p>Каждая чашка проходит через 12 этапов и 2 обжига.</p>
-                      <p>Неровный край — это след дыхания глины в печи.</p>
+                      <p>Неровный край — это не брак. Это след дыхания глины в печи при 1200°C.</p>
                   </div>
                   <div class="mt-10">
                       <a href="/about" class="font-hand text-2xl text-hyle-clay hover:text-white transition-colors">О нашей мастерской →</a>
@@ -203,7 +211,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 </Layout>
 
 <script>
-    // --- INERTIA SCROLL LOGIC ---
+    // --- INERTIA SCROLL LOGIC (SMOOTH & STABLE) ---
     const showcase = document.getElementById('horizontal-showcase');
     
     // Переменные для физики
@@ -212,24 +220,29 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     let isAnimating = false;
 
     if (showcase) {
-        // Инициализация
+        // Инициализация при загрузке
         target = showcase.scrollLeft;
         current = showcase.scrollLeft;
 
         showcase.addEventListener('wheel', (evt) => {
-            // Только на десктопе, где нет тач-скролла
+            // Только на десктопе
             if (window.matchMedia("(min-width: 768px)").matches) {
                 const maxScroll = showcase.scrollWidth - showcase.clientWidth;
                 
-                // Если мы еще можем скроллить в этом направлении
-                if ((evt.deltaY > 0 && target < maxScroll) || (evt.deltaY < 0 && target > 0)) {
-                    evt.preventDefault();
+                // Проверяем возможность скролла с буфером 1px
+                const canScrollRight = target < maxScroll - 1;
+                const canScrollLeft = target > 1;
+
+                // Направление скролла мыши (deltaY > 0 это вниз)
+                const isGoingRight = evt.deltaY > 0;
+                const isGoingLeft = evt.deltaY < 0;
+
+                // Перехватываем только если можем скроллить в нужную сторону
+                if ((isGoingRight && canScrollRight) || (isGoingLeft && canScrollLeft)) {
+                    evt.preventDefault(); // Блокируем скролл страницы
                     
                     // Накапливаем цель (target)
-                    // deltaY * 3 = скорость/чувствительность
-                    target += evt.deltaY * 3;
-                    
-                    // Ограничиваем границы
+                    target += evt.deltaY * 2.5;
                     target = Math.max(0, Math.min(target, maxScroll));
 
                     if (!isAnimating) {
@@ -237,27 +250,26 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                         requestAnimationFrame(smoothScrollLoop);
                     }
                 }
+                // Если скроллить некуда - не вызываем preventDefault, 
+                // и страница скроллится вертикально (естественное поведение).
             }
         }, { passive: false });
     }
 
-    // Цикл анимации (Lerp)
+    // Цикл анимации
     function smoothScrollLoop() {
         if (!showcase) return;
 
-        // Плавное приближение Current к Target (Lerp factor 0.08)
-        // Чем меньше число, тем более "масляный" и медленный скролл
+        // Линейная интерполяция (Lerp)
         current += (target - current) * 0.08;
-        
         showcase.scrollLeft = current;
 
-        // Если почти доехали - останавливаемся
+        // Если почти приехали, останавливаемся
         if (Math.abs(target - current) > 0.5) {
             requestAnimationFrame(smoothScrollLoop);
         } else {
             isAnimating = false;
-            // Точное выравнивание в конце
-            showcase.scrollLeft = target;
+            showcase.scrollLeft = target; // Финальная точка
         }
     }
 </script>
