@@ -10,19 +10,18 @@ try {
     const rawPosts = await getCollection('blog');
     
     if (Array.isArray(rawPosts)) {
-        // 1. Фильтруем "битые" записи (где нет data или обязательного заголовка)
+        // Фильтруем битые записи
         const validPosts = rawPosts.filter(p => p && p.data && p.data.title);
 
-        // 2. Безопасная сортировка (защита от отсутствующей даты)
+        // Безопасная сортировка
         posts = validPosts.sort((a, b) => {
             const dateA = a.data.publishedDate ? new Date(a.data.publishedDate).valueOf() : 0;
             const dateB = b.data.publishedDate ? new Date(b.data.publishedDate).valueOf() : 0;
-            return dateB - dateA; // Свежие сверху
+            return dateB - dateA;
         });
     }
 } catch (e) {
     console.warn('⚠️ Critical: Failed to fetch blog posts.', e);
-    // posts останется пустым массивом [], страница отрендерится с "Скоро", но не упадет.
 }
 ---
 
@@ -47,7 +46,6 @@ try {
         <!-- POSTS GRID -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
             
-            {/* Проверка на пустоту массива */}
             {posts.length === 0 ? (
                 <div class="col-span-full py-20 text-center">
                     <p class="font-serif text-2xl text-hyle-text/40 mb-2">Тишина в эфире</p>
@@ -55,31 +53,58 @@ try {
                 </div>
             ) : (
                 posts.map((post, idx) => {
-                    // SAFE DATA PREPARATION INSIDE LOOP
-                    // 1. Safe Date
                     const dateStr = post.data.publishedDate 
                         ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU')
                         : '';
                     
-                    // 2. Safe Tag (check if array exists and has length)
                     const firstTag = (Array.isArray(post.data.tags) && post.data.tags.length > 0) 
                         ? post.data.tags[0] 
                         : null;
 
+                    // Получаем картинку (если есть)
+                    const coverImage = post.data.coverImage;
+
                     return (
                         <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
                             
-                            <!-- Meta -->
-                            <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
-                                <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
-                                    {dateStr}
-                                </span>
-                                {firstTag && (
-                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
-                                        #{firstTag}
+                            <!-- COVER IMAGE (NEW) -->
+                            {coverImage && (
+                                <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-neutral-100 mb-2 block relative">
+                                    <img 
+                                        src={coverImage} 
+                                        alt={post.data.title}
+                                        class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                                        loading="lazy"
+                                    />
+                                    {/* Tag Overlay on Image (Optional style) */}
+                                    {firstTag && (
+                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">
+                                            #{firstTag}
+                                        </span>
+                                    )}
+                                </a>
+                            )}
+
+                            <!-- Meta (Date only now, tag moved to image or kept here) -->
+                            {!coverImage && (
+                                <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
+                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
+                                        {dateStr}
                                     </span>
-                                )}
-                            </div>
+                                    {firstTag && (
+                                        <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
+                                            #{firstTag}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <!-- Если картинка есть, дату пишем под ней мелко -->
+                            {coverImage && (
+                                <div class="w-full flex justify-between items-baseline -mt-2">
+                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
+                                </div>
+                            )}
 
                             <!-- Content -->
                             <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
