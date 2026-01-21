@@ -3,11 +3,27 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-// 1. Получаем реальные данные из коллекции 'blog'
-// Сортируем по дате (от новых к старым)
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
-);
+// --- DEFENSIVE DATA FETCHING ---
+let posts = [];
+
+try {
+    const rawPosts = await getCollection('blog');
+    
+    if (Array.isArray(rawPosts)) {
+        // 1. Фильтруем "битые" записи (где нет data или обязательного заголовка)
+        const validPosts = rawPosts.filter(p => p && p.data && p.data.title);
+
+        // 2. Безопасная сортировка (защита от отсутствующей даты)
+        posts = validPosts.sort((a, b) => {
+            const dateA = a.data.publishedDate ? new Date(a.data.publishedDate).valueOf() : 0;
+            const dateB = b.data.publishedDate ? new Date(b.data.publishedDate).valueOf() : 0;
+            return dateB - dateA; // Свежие сверху
+        });
+    }
+} catch (e) {
+    console.warn('⚠️ Critical: Failed to fetch blog posts.', e);
+    // posts останется пустым массивом [], страница отрендерится с "Скоро", но не упадет.
+}
 ---
 
 <Layout title="Журнал" description="Заметки о керамике, процессе и вдохновении.">
@@ -31,43 +47,57 @@ const posts = (await getCollection('blog')).sort(
         <!-- POSTS GRID -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
             
+            {/* Проверка на пустоту массива */}
             {posts.length === 0 ? (
                 <div class="col-span-full py-20 text-center">
                     <p class="font-serif text-2xl text-hyle-text/40 mb-2">Тишина в эфире</p>
                     <p class="font-mono text-xs uppercase tracking-widest text-hyle-text/30">Скоро здесь появятся истории.</p>
                 </div>
             ) : (
-                posts.map((post, idx) => (
-                    <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
-                        
-                        <!-- Meta -->
-                        <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
-                            <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
-                                {post.data.publishedDate.toLocaleDateString('ru-RU')}
-                            </span>
-                            {post.data.tags && (
-                                <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
-                                    #{post.data.tags[0]}
+                posts.map((post, idx) => {
+                    // SAFE DATA PREPARATION INSIDE LOOP
+                    // 1. Safe Date
+                    const dateStr = post.data.publishedDate 
+                        ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU')
+                        : '';
+                    
+                    // 2. Safe Tag (check if array exists and has length)
+                    const firstTag = (Array.isArray(post.data.tags) && post.data.tags.length > 0) 
+                        ? post.data.tags[0] 
+                        : null;
+
+                    return (
+                        <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
+                            
+                            <!-- Meta -->
+                            <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
+                                <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
+                                    {dateStr}
                                 </span>
-                            )}
-                        </div>
+                                {firstTag && (
+                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
+                                        #{firstTag}
+                                    </span>
+                                )}
+                            </div>
 
-                        <!-- Content -->
-                        <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
-                            <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">
-                                {post.data.title}
-                            </h2>
-                            <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">
-                                {post.data.excerpt}
-                            </p>
-                        </a>
+                            <!-- Content -->
+                            <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
+                                <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">
+                                    {post.data.title}
+                                </h2>
+                                <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">
+                                    {post.data.excerpt || ''}
+                                </p>
+                            </a>
 
-                        <!-- Link -->
-                        <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">
-                            Читать далее
-                        </a>
-                    </article>
-                ))
+                            <!-- Link -->
+                            <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">
+                                Читать далее
+                            </a>
+                        </article>
+                    );
+                })
             )}
 
         </div>
