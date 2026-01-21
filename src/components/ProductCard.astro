@@ -5,44 +5,31 @@ import { getEntries } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
-  categoryName?: string;
 }
 
 const { product } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
-const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
+// Форматируем цену как "код": 4.500 RUB
+const formattedPrice = price > 0 
+    ? `${price.toLocaleString('ru-RU')} RUB` 
+    : 'ON REQUEST';
 
 const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
-const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ROBUST TAG LOGIC ---
+// --- DATA LOGIC (Safe) ---
+// Оставляем безопасную логику получения данных, меняем только визуал
 let visibleTags = [];
-const rawTags = tags; // Input can be anything
-
-// 1. Array check
+const rawTags = tags;
 if (Array.isArray(rawTags) && rawTags.length > 0) {
-  
-  // 2. Normalize to IDs (String[] | Object[])
-  const tagIds = rawTags.map(t => {
-      if (typeof t === 'string' && t.trim() !== '') return t;
-      if (typeof t === 'object' && t !== null && t.id) return t.id;
-      return null;
-  }).filter(Boolean); // Remove nulls
-
-  // 3. Fetch Data (if we have IDs)
-  if (tagIds.length > 0) {
+  const validTags = rawTags.filter(tag => tag !== null && tag !== undefined);
+  if (validTags.length > 0) {
     try {
-      // Try to fetch detailed data. Astro handles array of IDs nicely.
-      // If IDs are just legacy strings not in DB, this might throw or return partials.
-      // We wrap in try/catch to be safe.
-      const loaded = await getEntries(tagIds.map(id => ({ collection: 'tags', id })));
-      visibleTags = loaded.map(t => ({ id: t.id, title: t.data.title }));
+      visibleTags = await getEntries(validTags);
     } catch (e) {
-      // Fallback: If DB fetch fails (e.g. legacy tag "New" not in tags collection), use ID as title
-      visibleTags = tagIds.map(id => ({ id, title: id }));
+      console.warn(e);
     }
   }
 }
@@ -50,56 +37,81 @@ if (Array.isArray(rawTags) && rawTags.length > 0) {
 const productUrl = `/products/${product.slug}`;
 ---
 
-<div class="group relative w-full flex flex-col">
+<div class="group relative w-full flex flex-col gap-4">
   
-  <!-- 1. ИЗОБРАЖЕНИЕ -->
-  <a href={productUrl} class="block relative overflow-hidden aspect-square bg-neutral-100 rounded-sm mb-3 cursor-pointer">
-    {(isSold || isReserved) && (
-      <div class="absolute top-2 left-2 z-30">
-        <span class="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
-           {isSold ? 'Продано' : 'Резерв'}
-        </span>
+  <!-- 1. IMAGE: RAW & GRAINY -->
+  <a href={productUrl} class="block relative aspect-[4/5] overflow-hidden bg-[#111]">
+    
+    <!-- Status Stamp -->
+    {(isSold) && (
+      <div class="absolute top-4 left-0 z-30 bg-hyle-text text-hyle-ink px-3 py-1 font-stamp text-xs font-bold -rotate-2 mix-blend-hard-light">
+         SOLD OUT
       </div>
     )}
-    
+
+    <!-- Image with Filters -->
+    <!-- Grayscale по умолчанию, цвет при ховере. Scale резкий. -->
     <img 
       src={mainImage} 
       alt={title} 
       loading="lazy"
-      class={`w-full h-full object-cover object-center transition-transform duration-[1.2s] ease-out-expo group-hover:scale-105 z-10 relative ${isSold ? 'grayscale opacity-90' : ''}`}
+      class={`
+        w-full h-full object-cover object-center 
+        transition-all duration-500 ease-out
+        grayscale group-hover:grayscale-0 
+        group-hover:scale-105
+        ${isSold ? 'opacity-50' : 'opacity-90'}
+      `}
     />
+    
+    <!-- Inner Border (Рамка внутри фото, как на негативе) -->
+    <div class="absolute inset-0 border border-white/10 pointer-events-none group-hover:border-white/30 transition-colors"></div>
   </a>
 
-  <!-- 2. ИНФОРМАЦИЯ -->
-  <div class="flex justify-between items-start px-1 mt-auto">
+  <!-- 2. INFO: TECHNICAL & BRUTAL -->
+  <div class="flex flex-col gap-3">
     
-    <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
-        <!-- Title Link -->
-        <a href={productUrl} class="block mb-0.5 w-full">
-            <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
+    <!-- Header -->
+    <div class="flex justify-between items-start border-b border-white/20 pb-3">
+        <a href={productUrl} class="block max-w-[70%]">
+            <h3 class="font-sans font-black text-xl leading-none text-hyle-text uppercase hover:text-white transition-colors">
               {title}
             </h3>
         </a>
-        
-        <!-- TAGS RENDER -->
-        {visibleTags.length > 0 && (
-            <div class="flex flex-wrap gap-2 mt-1 relative z-20">
-                {visibleTags.slice(0, 1).map(tag => (
-                    <a 
-                        href={`/catalog?tag=${tag.id}`}
-                        class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 hover:text-hyle-clay transition-all"
-                    >
-                        #{tag.title}
-                    </a>
-                ))}
-            </div>
-        )}
-    </div>
-    
-    <div class="flex flex-col items-end shrink-0 pl-1">
-        <span class="font-hand text-lg md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
-          {formattedPrice}
+        <span class="font-stamp text-sm text-hyle-text/60">
+            {/* Генерация фейкового артикула для стиля, или ID */}
+            #{product.slug.substring(0, 4).toUpperCase()}
         </span>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="flex justify-between items-end">
+        <div class="flex flex-col gap-1">
+            <!-- Tags as Technical Specs -->
+            {visibleTags.length > 0 && (
+                <div class="flex gap-2">
+                    {visibleTags.slice(0, 2).map(tag => (
+                        <span class="font-stamp text-[10px] text-hyle-text/50 uppercase">
+                            [{tag.data.title}]
+                        </span>
+                    ))}
+                </div>
+            )}
+            <span class="font-stamp text-lg text-hyle-text font-bold tracking-tighter">
+                {formattedPrice}
+            </span>
+        </div>
+
+        <!-- THE STROKE BUTTON -->
+        <!-- Рваный край через clip-path -->
+        {!isSold && (
+            <a 
+                href={productUrl}
+                class="rough-edge bg-hyle-accent text-hyle-ink px-6 py-3 font-stamp text-xs font-bold uppercase hover:bg-white transition-colors"
+            >
+                Add +
+            </a>
+        )}
     </div>
 
   </div>

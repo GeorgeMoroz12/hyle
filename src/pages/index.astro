@@ -4,239 +4,40 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection } from 'astro:content';
 
-const HERO_IMAGE = "/images/hero-minimal.jpg";       
-const WORKSHOP_IMAGE = "/images/workshop-process.jpg"; 
-
 const allProducts = await getCollection('products');
-const recentProducts = allProducts.slice(0, 4); 
-
-const allCategories = await getCollection('categories');
-const categoryMap = allCategories.reduce((acc, cat) => {
-    acc[cat.id] = cat.data.title;
-    return acc;
-}, {} as Record<string, string>);
+// Берем больше товаров для теста сетки
+const recentProducts = allProducts.slice(0, 6); 
 ---
 
-<Layout title="Главная" hideHeader={true}>
+<Layout title="Brutal Collection">
   
-  <!-- 
-      HEADER (ABSOLUTE TOP) 
-  -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start animate-appear">
-      
-      <!-- LOGO -->
-      <a href="/" class="group flex flex-col items-start gap-1">
-          <span class="font-serif text-4xl md:text-5xl tracking-tight text-hyle-text group-hover:text-hyle-clay transition-colors leading-none">
-              Hyle.
-          </span>
-          <span class="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.35em] text-hyle-text/50 group-hover:text-hyle-clay/70 transition-colors pl-1">
-              керамика ручной работы
-          </span>
-      </a>
-      
-      <!-- NAV LINKS -->
-      <div class="hidden md:flex gap-8 text-[11px] uppercase tracking-[0.25em] text-hyle-text/80 font-medium pt-3">
-          <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-          <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
-          <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
-      </div>
-
-      <!-- MOBILE MENU ICON -->
-      <button class="md:hidden text-hyle-text pt-2">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-      </button>
-  </nav>
-
-  <!-- SECTION 1: HERO (Full Screen) -->
-  <!-- min-h-screen обеспечивает высоту ровно в экран устройства -->
-  <section id="hero-section" class="relative min-h-screen flex items-center overflow-hidden w-full">
-    
-    <!-- BACKGROUND -->
-    <div class="absolute top-0 right-0 w-full lg:w-[65%] h-full z-0 select-none overflow-hidden">
-        <img 
-            id="hero-image"
-            src={HERO_IMAGE} 
-            alt="Атмосфера мастерской" 
-            class="w-full h-full object-cover object-center pointer-events-none scale-110 transition-transform duration-700 ease-out will-change-transform" 
-            draggable="false" 
-            onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=2000&auto=format&fit=crop'"
-        />
+  <div class="min-h-screen pt-24 pb-20">
+    <div class="container-main">
         
-        <div class="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F9F8F6] via-[#F9F8F6]/40 to-transparent pointer-events-none z-10"></div>
-        <div class="absolute inset-0 bg-[#F9F8F6]/60 lg:hidden z-10 backdrop-blur-[1px]"></div>
-        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#F9F8F6] via-[#F9F8F6] to-transparent lg:hidden pointer-events-none z-10"></div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="container-main relative z-20 w-full h-full flex flex-col justify-center pt-32 lg:pt-0">
-        <div class="max-w-3xl animate-appear">
-          
-          <h1 class="font-serif text-5xl md:text-8xl lg:text-[9rem] leading-[0.9] text-hyle-text mb-8 tracking-tight mix-blend-darken break-words hyphens-auto">
-              Глина <br />
-              <span class="block ml-12 lg:ml-32 relative">
-                  <span class="italic font-light text-hyle-clay block transform lg:hover:translate-x-4 transition-transform duration-700 cursor-default">хранит</span>
-              </span>
-              тепло рук.
-          </h1>
-
-          <div class="flex flex-col md:flex-row gap-8 md:gap-12 md:items-end pl-2">
-            <p class="text-base md:text-xl text-hyle-text/80 max-w-sm font-light leading-relaxed">
-                Вещи для тихих завтраков. <br/>
-                С несовершенствами, которые <br/> делают их живыми.
-            </p>
-            <a href="/catalog" class="group inline-flex items-center gap-3 font-hand text-2xl md:text-3xl text-hyle-clay hover:text-hyle-text transition-colors duration-300 pb-2">
-              Смотреть каталог
-              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm mt-1">→</span>
-            </a>
-          </div>
-        </div>
-    </div>
-  </section>
-
-  <!-- SECTION 2: GRID (Full Screen Min) -->
-  <section class="relative min-h-screen flex items-center py-20 bg-hyle-bg z-20">
-    <div class="container-main w-full">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-20 items-start">
-        
-        <!-- Sticky Left Panel -->
-        <div class="lg:col-span-4 lg:sticky lg:top-32 self-start flex flex-col items-start text-left mb-8 lg:mb-0 scroll-reveal">
-            <span class="text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 mb-4 block">Collection 2026</span>
-            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[0.9] mb-6 relative inline-block">
-                Новое <br/> из печи
-                <span class="absolute -top-4 -right-10 font-hand text-3xl text-hyle-clay -rotate-12 opacity-90">New!</span>
-            </h2>
-            <p class="text-hyle-text/60 font-light leading-relaxed max-w-xs mb-8 text-sm md:text-base">
-                Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром.
-            </p>
-            <a href="/catalog" class="group inline-flex items-center gap-2 font-hand text-xl text-hyle-clay hover:text-hyle-text transition-colors">
-              Вся коллекция
-              <span class="group-hover:translate-x-2 transition-transform font-sans text-sm">→</span>
-            </a>
-        </div>
-
-        <!-- Product Grid -->
-        <div class="lg:col-span-8">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
-                {recentProducts.map((product) => {
-                    const catId = (product.data.category && typeof product.data.category === 'object') 
-                        ? product.data.category.id 
-                        : product.data.category;
-                    return (
-                        <div class="scroll-reveal transition-all duration-700">
-                             <ProductCard 
-                                product={product} 
-                                categoryName={catId ? categoryMap[catId] : ''} 
-                            />
-                        </div>
-                    );
-                })}
+        <!-- HEADER: THE MANIFESTO -->
+        <div class="mb-20 border-b-2 border-white/10 pb-8">
+            <h1 class="text-6xl md:text-9xl text-hyle-text mb-4 leading-[0.8]">
+                RAW <br/> MATTER.
+            </h1>
+            <div class="flex flex-col md:flex-row justify-between items-end gap-8">
+                <p class="font-mono text-sm md:text-base text-hyle-text/60 max-w-md uppercase leading-relaxed">
+                    [System_Log: 2026]<br/>
+                    Имперфекционизм. Грубая текстура. <br/>
+                    Отсутствие декора. Только функция и форма.
+                </p>
+                <div class="font-stamp text-xs text-hyle-text/40 rotate-90 md:rotate-0 origin-right">
+                    SCROLL DOWN ↓
+                </div>
             </div>
         </div>
-      </div>
+
+        <!-- GRID: STRICT & DENSE -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-16">
+            {recentProducts.map((product) => (
+                <ProductCard product={product} />
+            ))}
+        </div>
+
     </div>
-  </section>
-
-  <!-- SECTION 3: WORKSHOP (Full Screen) -->
-  <section class="relative min-h-screen flex items-center py-24 bg-hyle-text text-hyle-bg overflow-hidden">
-     <!-- Texture -->
-     <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-     
-     <div class="container-main relative z-10 grid grid-cols-1 md:grid-cols-12 gap-12 items-center w-full">
-        <div class="md:col-span-5 relative scroll-reveal">
-             <div class="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-sm opacity-90 shadow-2xl -rotate-1 transform transition-transform duration-700 hover:rotate-0">
-                 <img 
-                    src={WORKSHOP_IMAGE} 
-                    alt="Процесс создания" 
-                    class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
-                    onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
-                />
-             </div>
-        </div>
-
-        <div class="md:col-span-7 md:pl-12 scroll-reveal">
-            <span class="font-hand text-2xl text-hyle-clay mb-4 block -rotate-2">Дневник мастерской</span>
-            <h2 class="font-serif text-3xl md:text-6xl mb-6 leading-tight text-[#F9F8F6]">
-                Несовершенство — <br/>
-                это часть истории.
-            </h2>
-            <p class="text-hyle-bg/60 text-base md:text-lg font-light mb-8 leading-relaxed max-w-lg">
-                В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.
-            </p>
-            <a href="/blog" class="group inline-flex items-center gap-3 font-hand text-xl md:text-2xl text-hyle-clay hover:text-white transition-colors">
-                <span>Читать истории</span>
-                <span class="group-hover:translate-x-1 transition-transform font-sans text-sm">→</span>
-            </a>
-        </div>
-     </div>
-  </section>
-
-  <!-- FOOTER (DARK MODE) -->
-  <footer class="py-16 bg-hyle-text text-hyle-bg relative border-t border-white/5">
-      <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-      
-      <div class="container-main relative z-10 flex flex-col items-center text-center">
-          <a href="/" class="font-serif text-3xl tracking-wide text-[#F9F8F6] opacity-80 hover:opacity-100 transition-opacity mb-2">
-            Hyle.
-          </a>
-          <p class="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-8">керамика ручной работы</p>
-          
-          <nav class="flex flex-wrap justify-center gap-6 md:gap-10 text-xs uppercase tracking-[0.2em] text-white/60 mb-10">
-              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-              <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
-              <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
-              <a href="https://t.me/username" target="_blank" class="hover:text-hyle-clay transition-colors">Telegram</a>
-          </nav>
-
-          <div class="w-16 h-px bg-white/10 mb-8"></div>
-
-          <p class="font-hand text-xl text-hyle-clay/80 mb-2">
-              Сделано руками. С любовью к материалу.
-          </p>
-          <p class="text-[10px] text-white/20">© 2026 Hyle Ceramics</p>
-      </div>
-  </footer>
+  </div>
 </Layout>
-
-<script>
-  // Mouse Parallax Logic
-  const heroSection = document.getElementById('hero-section');
-  const heroImage = document.getElementById('hero-image');
-
-  if (heroSection && heroImage) {
-    heroSection.addEventListener('mousemove', (e) => {
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        const { clientX, clientY } = e;
-        const { innerWidth, innerHeight } = window;
-        const moveX = (clientX / innerWidth - 0.5) * 15;
-        const moveY = (clientY / innerHeight - 0.5) * 15;
-        heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.1)`;
-      }
-    });
-  }
-
-  // Scroll Reveal Logic
-  const revealElements = document.querySelectorAll('.scroll-reveal');
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('revealed');
-            revealObserver.unobserve(entry.target);
-        }
-    });
-  }, { threshold: 0.1 });
-
-  revealElements.forEach(el => {
-      el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-1000', 'ease-out');
-      revealObserver.observe(el);
-  });
-
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .scroll-reveal.revealed { opacity: 1 !important; transform: translateY(0) !important; }
-  `;
-  document.head.appendChild(style);
-</script>
