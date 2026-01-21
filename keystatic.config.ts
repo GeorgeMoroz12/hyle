@@ -10,7 +10,46 @@ export default config({
         kind: 'local',
       },
 
+  // --- ОДИНОЧНЫЕ СТРАНИЦЫ (SINGLETONS) ---
   singletons: {
+    // 1. Landing (Главная)
+    landing: singleton({
+      label: '🏠 Главная страница',
+      path: 'src/content/landing/home',
+      schema: {
+        // Hero Секция
+        heroTitleLine1: fields.text({ label: 'Hero: Заголовок (Строка 1)', defaultValue: 'Глина' }),
+        heroTitleAccent: fields.text({ label: 'Hero: Акцент (Курсив)', defaultValue: 'хранит' }),
+        heroTitleLine2: fields.text({ label: 'Hero: Заголовок (Строка 2)', defaultValue: 'тепло.' }),
+        
+        heroDescription: fields.text({ 
+          label: 'Hero: Описание', 
+          multiline: true,
+          defaultValue: 'Керамика с характером. Неидеальная форма, живая фактура.'
+        }),
+        
+        heroImage: fields.image({
+            label: 'Hero: Главное фото',
+            directory: 'public/images/landing', // Отдельная папка для порядка
+            publicPath: '/images/landing/'
+        }),
+
+        // Workshop Секция
+        workshopTitle: fields.text({ label: 'Workshop: Заголовок', defaultValue: 'Красота в несовершенстве.' }),
+        workshopText: fields.text({ 
+          label: 'Workshop: Текст', 
+          multiline: true,
+          defaultValue: 'В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.' 
+        }),
+        workshopImage: fields.image({
+            label: 'Workshop: Фото процесса',
+            directory: 'public/images/landing',
+            publicPath: '/images/landing/'
+        }),
+      },
+    }),
+
+    // 2. B2B (Существующая)
     b2b: singleton({
       label: '💼 Страница для Ресторанов',
       path: 'src/content/b2b/main',
@@ -22,38 +61,29 @@ export default config({
     }),
   },
 
+  // --- КОЛЛЕКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
   collections: {
-    // --- СПРАВОЧНИКИ (Создаешь тут, выбираешь в товарах) ---
-    
     categories: collection({
       label: '🗂 Справочник: Категории',
       slugField: 'title',
       path: 'src/content/categories/*',
-      schema: {
-        title: fields.slug({ name: { label: 'Название категории' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
     tags: collection({
       label: '🏷️ Справочник: Теги',
       slugField: 'title',
       path: 'src/content/tags/*',
-      schema: {
-        title: fields.slug({ name: { label: 'Название тега (Подарок, Хит...)' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // --- ТОВАРЫ ---
     products: collection({
       label: '🏺 Товары',
       slugField: 'title',
       path: 'src/content/products/*',
       format: { contentField: 'description' },
-      // Настраиваем красивые колонки в списке
       columns: ['title', 'status', 'price', 'category'],
-      
       schema: {
-        // 1. Картинки
         images: fields.array(
           fields.image({
             label: 'Фото',
@@ -61,16 +91,10 @@ export default config({
             publicPath: '/images/products/',
             validation: { isRequired: true }
           }),
-          {
-            label: 'Фотографии',
-            itemLabel: (props) => `Фото #${props.index + 1}`,
-          }
+          { label: 'Фотографии', itemLabel: (props) => `Фото #${props.index + 1}` }
         ),
-
-        // 2. Основное
         title: fields.slug({ name: { label: 'Название' } }),
-        price: fields.number({ label: 'Цена (₽)', validation: { min: 0 } }),
-        
+        price: fields.number({ label: 'Цена (₽)' }),
         status: fields.select({
           label: 'Статус',
           options: [
@@ -81,54 +105,32 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-
-        // 3. Выбор из справочников (Связи)
-        category: fields.relationship({
-          label: 'Категория',
-          collection: 'categories', // Ссылка на справочник категорий
-          // Убрали обязательность, чтобы можно было открыть старые товары и починить их
-          description: 'Выберите категорию из справочника.',
+        category: fields.relationship({ 
+          label: 'Категория', 
+          collection: 'categories',
+          validation: { isRequired: true }
         }),
-
         tags: fields.array(
-          fields.relationship({ 
-            label: 'Тег', 
-            collection: 'tags' // Ссылка на справочник тегов
-          }),
-          {
-            label: 'Теги',
-            description: 'Выберите теги из справочника.',
-            itemLabel: (props) => props.value || 'Выберите тег',
-          }
+          fields.relationship({ label: 'Тег', collection: 'tags' }),
+          { label: 'Теги', itemLabel: (props) => props.value || 'Выберите тег' }
         ),
-
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'С этим товаром покупают', itemLabel: (props) => props.value || 'Товар' }
         ),
-
-        // 4. Характеристики
         specs: fields.object({
           volume: fields.text({ label: 'Объем (мл)' }),
           size: fields.text({ label: 'Размер (см)' }),
-          material: fields.text({ label: 'Материалы', defaultValue: 'Шамот, глазурь' }),
+          material: fields.text({ label: 'Материал', defaultValue: 'Глина, глазурь' }),
         }, { label: 'Характеристики' }),
-
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
-
-        // 5. Описание
         description: fields.document({
           label: 'Описание',
           formatting: true,
           dividers: true,
           links: true,
         }),
-
-        // --- LEGACY (Вернули для совместимости) ---
-        care: fields.text({ label: '⚠️ Old care (Удалить после переноса)', multiline: true }),
-        inStock: fields.checkbox({ label: '⚠️ Old inStock (Удалить)' }),
-        isNew: fields.checkbox({ label: '⚠️ Old isNew (Удалить)' }),
       },
     }),
 

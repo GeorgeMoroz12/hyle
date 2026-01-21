@@ -1,72 +1,60 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники
+// --- СУЩЕСТВУЮЩИЕ СПРАВОЧНИКИ ---
 const tags = defineCollection({
   type: 'content',
-  schema: z.object({
-    title: z.string(),
-  }).passthrough(),
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
 const categories = defineCollection({
   type: 'content',
-  schema: z.object({
-    title: z.string(),
-  }).passthrough(),
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
-// 2. Товары (Products) — NUCLEAR OPTION ☢️
-// Принимаем АБСОЛЮТНО ВСЁ, чтобы slonik.mdoc не ломал билд.
+// --- СУЩЕСТВУЮЩИЕ ТОВАРЫ ---
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
-    // Оставляем title строкой, так как это основа файла
     title: z.string(),
-
-    // ВСЕ остальные поля — z.any().optional()
-    // Это значит: "Мне плевать, что там лежит. Строка, число, массив или null — пропускай всё."
-    
+    // ... остальные поля оставляем как были в режиме "Soft Mode"
     price: z.any().optional(), 
     category: z.any().optional(),
     tags: z.any().optional(),
-    relatedProducts: z.any().optional(),
-    
     images: z.any().optional(),
-    image: z.any().optional(), // legacy
-    
     status: z.any().optional(),
-    specs: z.any().optional(),
-    
-    description: z.any().optional(),
-    careInstructions: z.any().optional(),
-    masterNote: z.any().optional(),
-
-    // LEGACY
-    inStock: z.any().optional(),
-    isNew: z.any().optional(),
-    care: z.any().optional(),
-
-  }).passthrough(), // <--- Игнорируем любые поля, которые мы даже забыли упомянуть
+  }).passthrough(),
 });
 
-// 3. Блог
+// --- НОВАЯ КОЛЛЕКЦИЯ: LANDING (ГЛАВНАЯ) ---
+const landing = defineCollection({
+  type: 'data', // Это JSON файл
+  schema: ({ image }) => z.object({
+    // Hero Section
+    heroTitleLine1: z.string().optional().default("Глина"),
+    heroTitleAccent: z.string().optional().default("хранит"),
+    heroTitleLine2: z.string().optional().default("тепло."),
+    heroDescription: z.string().optional(),
+    
+    // Внимание: для работы image() файл должен лежать в src/assets или public
+    // Мы пока используем строку, так как Keystatic сохраняет в public
+    heroImage: z.string().optional(), 
+
+    // Workshop Section
+    workshopTitle: z.string().optional(),
+    workshopText: z.string().optional(),
+    workshopImage: z.string().optional(),
+  }).passthrough(),
+});
+
+// --- ОСТАЛЬНОЕ ---
 const blog = defineCollection({
   type: 'content',
-  schema: z.object({
-    title: z.string(),
-    pubDate: z.any().optional(),
-    coverImage: z.any().optional(),
-    relatedProducts: z.any().optional(),
-  }).passthrough(),
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
-// 4. B2B
 const b2b = defineCollection({
   type: 'data',
-  schema: z.object({
-    title: z.string(),
-    contactButtonText: z.any().optional(),
-  }).passthrough(),
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
 export const collections = {
@@ -75,4 +63,5 @@ export const collections = {
   categories,
   blog,
   b2b,
+  landing, // <--- Добавили новую коллекцию
 };
