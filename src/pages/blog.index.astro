@@ -1,0 +1,84 @@
+---
+// src/pages/blog/index.astro
+import Layout from '../../layouts/Layout.astro';
+
+// MOCK DATA (Позже заменим на getCollection('blog'))
+const posts = [
+    {
+        slug: 'slow-living',
+        title: 'Искусство медленной жизни',
+        excerpt: 'Почему в 2026 году мы снова тянемся к ручному труду и несовершенным формам.',
+        date: '24.05.2026',
+        tag: 'Philosophy'
+    },
+    {
+        slug: 'care-guide',
+        title: 'Как ухаживать за керамикой',
+        excerpt: 'Простые правила, чтобы ваша любимая чашка жила долго. Можно ли мыть в посудомойке?',
+        date: '20.05.2026',
+        tag: 'Guide'
+    },
+    {
+        slug: 'clay-process',
+        title: 'От комка глины до обжига',
+        excerpt: 'Фотоотчет из мастерской: 12 этапов, которые проходит каждое изделие.',
+        date: '15.05.2026',
+        tag: 'Process'
+    }
+];
+---
+
+<Layout title="Журнал" description="Заметки о керамике, процессе и вдохновении.">
+  
+  <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
+    <div class="container-main">
+        
+        <!-- HEADER -->
+        <div class="flex flex-col items-start gap-4 mb-16 md:mb-24 animate-appear">
+            <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">
+                Journal
+            </span>
+            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
+                Дневник
+            </h1>
+            <p class="text-hyle-text/60 font-light max-w-md mt-2">
+                Заметки о процессе, обжигах и философии быта.
+            </p>
+        </div>
+
+        <!-- POSTS GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            {posts.map((post, idx) => (
+                <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
+                    
+                    <!-- Meta -->
+                    <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
+                        <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
+                            {post.date}
+                        </span>
+                        <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
+                            #{post.tag}
+                        </span>
+                    </div>
+
+                    <!-- Content -->
+                    <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
+                        <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">
+                            {post.title}
+                        </h2>
+                        <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">
+                            {post.excerpt}
+                        </p>
+                    </a>
+
+                    <!-- Link -->
+                    <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">
+                        Читать далее
+                    </a>
+                </article>
+            ))}
+        </div>
+
+    </div>
+  </div>
+</Layout>

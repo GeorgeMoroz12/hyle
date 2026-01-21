@@ -1,27 +1,45 @@
 ---
 // src/components/Header.astro
+const pathname = new URL(Astro.request.url).pathname;
+const currentPath = pathname.slice(1); // remove the first "/"
 ---
 
-<header class="w-full py-6 sm:py-8 absolute top-0 z-50 bg-transparent">
-  <div class="container-main flex items-center justify-between">
-    <!-- Logo -->
-    <a href="/" class="font-serif text-2xl tracking-wide text-hyle-text hover:text-hyle-clay transition-colors duration-300">
-      Hyle Ceramics
+<nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start animate-appear">
+    
+    <!-- LOGO -->
+    <a href="/" class="group flex flex-col gap-0.5">
+        <span class="font-serif text-3xl md:text-4xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">
+            Hyle.
+        </span>
+        <span class="font-sans text-[10px] md:text-[11px] text-hyle-clay tracking-wider transition-colors pl-1 opacity-90">
+            керамика ручной работы
+        </span>
     </a>
+    
+    <!-- DESKTOP MENU -->
+    <div class="hidden md:flex gap-10 font-mono text-[12px] text-hyle-text/80 pt-2 mix-blend-multiply uppercase tracking-widest">
+        <a 
+            href="/catalog" 
+            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('catalog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
+        >
+            Каталог
+        </a>
+        <a 
+            href="/about" 
+            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('about') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
+        >
+            О мастере
+        </a>
+        <a 
+            href="/blog" 
+            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('blog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
+        >
+            Блог
+        </a>
+    </div>
 
-    <!-- Navigation -->
-    <nav class="hidden md:flex gap-8 text-[10px] uppercase tracking-[0.25em] font-medium text-hyle-text/80">
-      <!-- UPDATED LINK -->
-      <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-      <a href="/blog" class="hover:text-hyle-clay transition-colors">Блог</a>
-      <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
-    </nav>
-
-    <!-- Mobile Menu Button -->
-    <button class="md:hidden p-2 text-hyle-text" aria-label="Menu">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
-      </svg>
+    <!-- MOBILE MENU TOGGLE (Placeholder logic) -->
+    <button class="md:hidden text-hyle-text pt-1 group">
+        <span class="font-mono text-xs border-b border-hyle-text/30 group-hover:text-hyle-clay group-hover:border-hyle-clay transition-colors">меню</span>
     </button>
-  </div>
-</header>
+</nav>
