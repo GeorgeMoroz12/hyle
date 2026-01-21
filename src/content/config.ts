@@ -1,12 +1,12 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники (Теги и Категории)
-// Определяем их первыми, чтобы reference() работало корректно
+// 1. Справочники
+// Определяем их первыми, так как Products на них ссылаются
 const tags = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-  }).passthrough(), // Разрешаем любые дополнительные поля
+  }).passthrough(),
 });
 
 const categories = defineCollection({
@@ -16,71 +16,66 @@ const categories = defineCollection({
   }).passthrough(),
 });
 
-// 2. Товары (Products) - МАКСИМАЛЬНО ТОЛЕРАНТНАЯ СХЕМА
+// 2. Товары (Products) — SOFT MODE
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
-    // Title - единственное, что обязано быть
+    // Только заголовок обязан быть строкой. Остальное — опционально.
     title: z.string(),
 
-    // ЦЕНА: Берем что угодно, пытаемся сделать числом, если нет - 0
+    // ЦЕНА: Превращаем любой мусор в число 0
     price: z.any()
       .transform((val) => {
-        const num = Number(val);
-        return isNaN(num) ? 0 : num;
+        const n = Number(val);
+        return isNaN(n) ? 0 : n;
       })
       .optional(), 
 
-    // КАТЕГОРИЯ: Union позволяет и старую строку, и новую ссылку
+    // КАТЕГОРИЯ: Ссылка ИЛИ Строка ИЛИ Null
     category: z.union([
-        reference('categories'), // Новая связь
-        z.string(),              // Старая строка
-        z.null(),                // Пустота
-        z.undefined()
+        reference('categories'),
+        z.string(),
+        z.null()
     ]).optional(),
 
-    // ТЕГИ: Union массивов
+    // ТЕГИ: Ссылки ИЛИ Строки ИЛИ Null
     tags: z.union([
-        z.array(reference('tags')), // Новые связи
-        z.array(z.string()),        // Старые строки
-        z.null(),
-        z.undefined()
+        z.array(reference('tags')),
+        z.array(z.string()),
+        z.null()
     ]).optional(),
 
     // СВЯЗАННЫЕ ТОВАРЫ
     relatedProducts: z.union([
         z.array(reference('products')),
         z.array(z.string()),
-        z.null(),
-        z.undefined()
+        z.null()
     ]).optional(),
 
-    // КАРТИНКИ: Пытаемся взять массив, если там мусор - возвращаем пустой массив
-    images: z.array(z.string()).catch([]).optional(),
+    // СТАТУС: Пробуем Enum, если нет — просто строка
+    status: z.union([
+      z.enum(['В наличии', 'Под заказ', 'Продано', 'Архив']),
+      z.string()
+    ]).catch('В наличии').optional(),
 
-    // СТАТУС: Если там что-то левое, ставим 'В наличии'
-    status: z.enum(['В наличии', 'Под заказ', 'Продано', 'Архив'])
-      .catch('В наличии')
-      .default('В наличии'),
+    // КАРТИНКИ: Разрешаем всё (массив строк, одна строка, null)
+    images: z.any().optional(),
+    image: z.any().optional(), // Для старых файлов
 
-    // ТЕКСТЫ И СПЕЦИФИКАЦИИ (Все опционально)
+    // СПЕЦИФИКАЦИИ: Разрешаем любой объект или null
+    specs: z.any().optional(),
+
+    // ТЕКСТОВЫЕ ПОЛЯ
     description: z.any().optional(),
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
 
-    specs: z.object({
-      volume: z.string().optional(),
-      size: z.string().optional(),
-      material: z.string().optional(),
-    }).catch({}).optional(),
-
-    // LEGACY ПОЛЯ (Мусор) - принимаем как any
+    // LEGACY (Старые поля)
     inStock: z.any().optional(),
     isNew: z.any().optional(),
     care: z.any().optional(),
-    image: z.any().optional(), // На случай старых image вместо images
 
-  }).passthrough(), // <--- ВАЖНО: Игнорирует любые поля, не описанные в схеме
+  }).passthrough(), // <--- ГЛАВНЫЙ ФИКС: Игнорируем любые неизвестные поля
 });
 
 // 3. Блог
