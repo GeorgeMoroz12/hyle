@@ -8,7 +8,7 @@ const HERO_IMAGE = "/images/hero-minimal.jpg";
 const WORKSHOP_IMAGE = "/images/workshop-process.jpg"; 
 
 const allProducts = await getCollection('products');
-// Берем больше товаров (8 шт), чтобы горизонтальный скролл был длинным и интересным
+// Берем больше товаров для длинной ленты
 const recentProducts = allProducts.slice(0, 8); 
 
 const allCategories = await getCollection('categories');
@@ -22,48 +22,47 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   
   <!-- HEADER -->
   <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start">
-      <a href="/" class="relative z-50 group">
-          <span class="font-serif text-3xl md:text-4xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">Hyle.</span>
+      <a href="/" class="relative z-50 group flex flex-col gap-1">
+          <span class="font-serif text-4xl md:text-5xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">Hyle.</span>
+          <span class="font-sans text-[10px] uppercase tracking-[0.3em] text-hyle-text/50 group-hover:text-hyle-clay/80 transition-colors pl-1">
+              керамика ручной работы
+          </span>
       </a>
       
-      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] text-hyle-text/80 uppercase pt-2 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full border border-hyle-text/5">
+      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] text-hyle-text/80 uppercase pt-3 mix-blend-multiply">
           <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
           <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
           <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
       </div>
 
-      <button class="md:hidden text-hyle-text pt-1">
+      <button class="md:hidden text-hyle-text pt-2">
           <span class="font-mono text-xs uppercase border-b border-hyle-text">Меню</span>
       </button>
   </nav>
 
+  <!-- PARALLAX BACKGROUND -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-50">
+      <div class="parallax-element absolute top-[10%] right-[-5%] w-[40vw] h-[40vw] bg-hyle-clay/5 rounded-full blur-[100px]" data-speed="0.05"></div>
+      <div class="parallax-element absolute top-[60%] left-[-10%] w-[50vw] h-[50vw] bg-hyle-stone/30 rounded-full blur-[120px]" data-speed="-0.08"></div>
+  </div>
+
   <!-- HERO SECTION -->
-  <section class="relative min-h-screen w-full overflow-hidden flex flex-col justify-center pt-24 pb-12 bg-[#F5F4F0]">
-    
-    <!-- DECOR: Background Big Letter -->
-    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">
-        H
-    </div>
+  <section class="relative min-h-screen w-full flex flex-col justify-center pt-24 pb-12 overflow-hidden bg-[#F5F4F0]">
+    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">H</div>
 
     <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
-        
-        <!-- 1. TEXT LAYER (LEFT) -->
         <div class="lg:col-span-5 relative z-20 order-2 lg:order-1 mt-[-40px] lg:mt-0">
             <div class="animate-appear">
                 <span class="font-hand text-3xl text-hyle-clay block mb-4 -rotate-3">Ручная работа</span>
-                
                 <h1 class="font-serif text-6xl md:text-8xl lg:text-[7rem] leading-[0.85] text-hyle-text mb-8 tracking-tight">
                     Глина <br/>
                     <span class="italic font-light ml-12 lg:ml-20 text-hyle-clay/90">дышит</span> <br/>
                     теплом.
                 </h1>
-
                 <p class="font-sans font-light text-sm md:text-base text-hyle-text/70 max-w-xs leading-relaxed mb-10 ml-2 border-l border-hyle-text/20 pl-4">
                     Керамика с характером. <br/>
-                    Неидеальная форма, живая фактура, <br/>
-                    созданная для медленной жизни.
+                    Неидеальная форма, живая фактура.
                 </p>
-
                 <a href="/catalog" class="group inline-flex items-center gap-4 ml-2">
                     <div class="w-12 h-12 rounded-full border border-hyle-text/20 flex items-center justify-center group-hover:bg-hyle-clay group-hover:border-hyle-clay transition-all duration-300">
                         <span class="text-xl group-hover:text-white transition-colors">→</span>
@@ -75,35 +74,25 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             </div>
         </div>
 
-        <!-- 2. IMAGE LAYER (RIGHT / CENTER) -->
         <div class="lg:col-span-7 relative order-1 lg:order-2">
-            <!-- PHOTO -->
             <div class="relative z-10 w-full aspect-[4/5] lg:aspect-[3/4] max-h-[80vh] lg:ml-auto lg:w-[90%]">
                 <div class="absolute inset-0 bg-hyle-stone/20 transform rotate-2 rounded-sm"></div>
                 <div class="absolute inset-0 overflow-hidden rounded-sm transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
-                    <img 
-                        src={HERO_IMAGE} 
-                        alt="Ceramic Atmosphere" 
-                        class="w-full h-full object-cover"
-                        onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'"
-                    />
+                    <img src={HERO_IMAGE} alt="Atmosphere" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'" />
                     <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
                 </div>
             </div>
         </div>
-
     </div>
   </section>
 
-  <!-- SECTION 2: CATALOG (HORIZONTAL DYNAMIC SCROLL) -->
+  <!-- SECTION 2: HORIZONTAL SMOOTH SCROLL -->
   <section class="py-24 md:py-32 bg-white relative z-20 overflow-hidden">
     <div class="container-main">
         
-        <!-- Header -->
         <div class="text-center mb-16">
             <span class="font-hand text-2xl text-hyle-clay mb-2 block">Свежий обжиг</span>
             <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">Новинки</h2>
-            <!-- Подсказка о скролле -->
             <div class="mt-4 flex justify-center items-center gap-2 text-hyle-text/30 text-[10px] uppercase tracking-widest">
                 <span>Листайте</span>
                 <span class="text-lg">→</span>
@@ -111,25 +100,26 @@ const categoryMap = allCategories.reduce((acc, cat) => {
         </div>
 
         <!-- 
-            HORIZONTAL SCROLL CONTAINER 
-            FIX: Убрал 'scroll-smooth', чтобы JS-скролл колесом был мгновенным и не дерганым.
-            Нативная плавность (smooth) конфликтует с частыми ивентами wheel.
+            CONTAINER
+            - snap-x оставлен только для мобильных (md:snap-none), чтобы на десктопе работал наш JS-смузи.
+            - pb-20 чтобы тени и ховеры не обрезались.
         -->
         <div 
             id="horizontal-showcase" 
-            class="flex gap-8 overflow-x-auto pb-16 px-4 -mx-4 md:px-0 md:mx-0 snap-x snap-mandatory scrollbar-hide cursor-ew-resize"
-            style="scroll-behavior: auto;" 
+            class="flex gap-8 overflow-x-auto pb-20 px-4 -mx-4 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide"
+            style="scrollbar-width: none; -ms-overflow-style: none;"
         >
             {recentProducts.map((product, idx) => {
                 const catId = (product.data.category && typeof product.data.category === 'object') 
                     ? product.data.category.id 
                     : product.data.category;
                 
-                // ДИНАМИКА: Сдвигаем каждый второй элемент вниз (mt-12)
+                // Ритм: смещение вниз для четных
                 const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
 
                 return (
-                    <div class={`shrink-0 w-[280px] md:w-[320px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
+                    // FIX: Увеличил ширину w-[450px] для крупных фото
+                    <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
                          <ProductCard 
                             product={product} 
                             categoryName={catId ? categoryMap[catId] : ''} 
@@ -139,86 +129,62 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             })}
             
             <!-- "See All" Card -->
-            <div class="shrink-0 w-[200px] flex items-center justify-center snap-center">
+            <div class="shrink-0 w-[200px] flex items-center justify-center snap-center md:snap-align-none">
                  <a href="/catalog" class="group flex flex-col items-center gap-4 text-hyle-text/40 hover:text-hyle-clay transition-colors">
-                    <div class="w-16 h-16 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
-                        →
+                    <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="text-2xl">→</span>
                     </div>
                     <span class="font-mono text-xs uppercase tracking-widest">Все изделия</span>
                  </a>
             </div>
+            
+            <!-- Spacer for right padding -->
+            <div class="w-12 shrink-0"></div>
         </div>
 
     </div>
   </section>
 
-  <!-- UNIFIED DARK SECTION: PHILOSOPHY + FOOTER -->
-  <!-- FIX: Объединил цвета фона в #2C2B29 и убрал границы, чтобы это выглядело как один монолит -->
+  <!-- UNIFIED DARK SECTION -->
   <div class="bg-[#2C2B29] text-[#F9F8F6] relative overflow-hidden">
-      
-      <!-- Shared Texture for both sections -->
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
-      <!-- SECTION 3: PHILOSOPHY -->
       <section class="py-24 md:py-40 relative z-10">
-          <!-- Decor -->
           <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-hyle-clay/10 rounded-full blur-[100px] pointer-events-none"></div>
-
           <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-              
-              <!-- Image Collage -->
               <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
-                  <!-- Main Pic (CLEAN & FIXED) -->
                   <div class="relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[85%] border border-white/10 shadow-2xl">
                       <img 
                         src={WORKSHOP_IMAGE} 
                         class="w-full h-full object-cover hover:scale-105 transition-transform duration-[1.5s]" 
-                        alt="Workshop Process"
+                        alt="Workshop"
                         onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
                       />
                   </div>
-                  <!-- Decor Frame -->
                   <div class="absolute top-8 left-8 lg:left-[-20px] w-[85%] h-full border border-white/10 z-0 pointer-events-none"></div>
               </div>
-
-              <!-- Text -->
               <div class="order-1 lg:order-2">
                   <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-clay mb-6 block">Философия</span>
                   <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
                       Мы сохраняем <br/> <span class="italic text-white/50">отпечатки</span> времени.
                   </h2>
                   <div class="space-y-6 text-white/60 font-light text-base md:text-lg leading-relaxed max-w-md">
-                      <p>
-                          В мире штампованных вещей мы выбираем медленный путь. 
-                          Каждая чашка проходит через 12 этапов и 2 обжига.
-                      </p>
-                      <p>
-                          Неровный край — это не брак. Это след дыхания глины в печи при 1200°C.
-                      </p>
+                      <p>Каждая чашка проходит через 12 этапов и 2 обжига.</p>
+                      <p>Неровный край — это след дыхания глины в печи.</p>
                   </div>
-                  
                   <div class="mt-10">
-                      <a href="/about" class="font-hand text-2xl text-hyle-clay hover:text-white transition-colors">
-                          О нашей мастерской →
-                      </a>
+                      <a href="/about" class="font-hand text-2xl text-hyle-clay hover:text-white transition-colors">О нашей мастерской →</a>
                   </div>
               </div>
           </div>
       </section>
 
-      <!-- FOOTER -->
-      <!-- FIX: Убран border-t, чтобы слиться с секцией выше -->
       <footer class="pb-16 pt-0 relative z-10">
           <div class="container-main flex flex-col md:flex-row justify-between items-start gap-12">
-              
               <div class="max-w-xs">
                   <span class="font-serif text-2xl block mb-4">Hyle.</span>
-                  <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">
-                      Керамика ручной работы.<br/>
-                      Создано для жизни.
-                  </p>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">Керамика ручной работы.</p>
               </div>
-
               <div class="flex gap-12 text-sm font-light text-white/60">
                   <div class="flex flex-col gap-3">
                       <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Навигация</span>
@@ -226,13 +192,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                       <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
                       <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
                   </div>
-                  <div class="flex flex-col gap-3">
-                      <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Связь</span>
-                      <a href="#" class="hover:text-hyle-clay transition-colors">Telegram</a>
-                      <a href="#" class="hover:text-hyle-clay transition-colors">Instagram</a>
-                  </div>
               </div>
-
           </div>
           <div class="container-main mt-16 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] text-white/20 uppercase tracking-widest font-mono">
               <span>© 2026 Hyle Ceramics</span>
@@ -240,27 +200,64 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           </div>
       </footer>
   </div>
-
 </Layout>
 
 <script>
-    // WHEEL TO HORIZONTAL SCROLL
+    // --- INERTIA SCROLL LOGIC ---
     const showcase = document.getElementById('horizontal-showcase');
     
-    if (showcase) {
-        showcase.addEventListener('wheel', (evt) => {
-            const maxScroll = showcase.scrollWidth - showcase.clientWidth;
-            
-            if (maxScroll > 0) {
-                const atStart = showcase.scrollLeft <= 0;
-                const atEnd = showcase.scrollLeft >= maxScroll - 2;
+    // Переменные для физики
+    let target = 0;
+    let current = 0;
+    let isAnimating = false;
 
-                // Если крутим вниз/вправо и еще не в конце ИЛИ крутим вверх/влево и еще не в начале
-                if ((evt.deltaY > 0 && !atEnd) || (evt.deltaY < 0 && !atStart)) {
+    if (showcase) {
+        // Инициализация
+        target = showcase.scrollLeft;
+        current = showcase.scrollLeft;
+
+        showcase.addEventListener('wheel', (evt) => {
+            // Только на десктопе, где нет тач-скролла
+            if (window.matchMedia("(min-width: 768px)").matches) {
+                const maxScroll = showcase.scrollWidth - showcase.clientWidth;
+                
+                // Если мы еще можем скроллить в этом направлении
+                if ((evt.deltaY > 0 && target < maxScroll) || (evt.deltaY < 0 && target > 0)) {
                     evt.preventDefault();
-                    showcase.scrollLeft += evt.deltaY;
+                    
+                    // Накапливаем цель (target)
+                    // deltaY * 3 = скорость/чувствительность
+                    target += evt.deltaY * 3;
+                    
+                    // Ограничиваем границы
+                    target = Math.max(0, Math.min(target, maxScroll));
+
+                    if (!isAnimating) {
+                        isAnimating = true;
+                        requestAnimationFrame(smoothScrollLoop);
+                    }
                 }
             }
         }, { passive: false });
+    }
+
+    // Цикл анимации (Lerp)
+    function smoothScrollLoop() {
+        if (!showcase) return;
+
+        // Плавное приближение Current к Target (Lerp factor 0.08)
+        // Чем меньше число, тем более "масляный" и медленный скролл
+        current += (target - current) * 0.08;
+        
+        showcase.scrollLeft = current;
+
+        // Если почти доехали - останавливаемся
+        if (Math.abs(target - current) > 0.5) {
+            requestAnimationFrame(smoothScrollLoop);
+        } else {
+            isAnimating = false;
+            // Точное выравнивание в конце
+            showcase.scrollLeft = target;
+        }
     }
 </script>
