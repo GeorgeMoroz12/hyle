@@ -3,25 +3,33 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 
-// 1. Генерируем пути для ВСЕХ реальных постов
+// 1. ОБЯЗАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ SSG
+// Генерирует статические пути для всех статей
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
+  
   return posts.map(post => ({
     params: { slug: post.slug },
     props: { post },
   }));
 }
 
-// 2. Получаем данные поста
+// 2. ПОЛУЧЕНИЕ ДАННЫХ
 const { post } = Astro.props;
 const { Content } = await post.render();
 
-// Форматирование даты
-const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-});
+// 3. БЕЗОПАСНОЕ ФОРМАТИРОВАНИЕ ДАННЫХ
+// Дата (защита от undefined)
+const formattedDate = post.data.publishedDate 
+    ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : '';
+
+// Теги (защита от пустого массива)
+const firstTag = (post.data.tags && post.data.tags.length > 0) ? post.data.tags[0] : null;
 ---
 
 <Layout title={post.data.title} description={post.data.excerpt}>
@@ -33,10 +41,10 @@ const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
         <!-- Breadcrumbs / Tag -->
         <div class="flex items-center justify-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-hyle-text/40">
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
-            {post.data.tags && post.data.tags.length > 0 && (
+            {firstTag && (
                 <>
                     <span>/</span>
-                    <span class="text-hyle-clay">#{post.data.tags[0]}</span>
+                    <span class="text-hyle-clay">#{firstTag}</span>
                 </>
             )}
         </div>
@@ -50,7 +58,7 @@ const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
         </p>
     </div>
 
-    <!-- 2. COVER IMAGE -->
+    <!-- 2. COVER IMAGE (SAFE RENDER) -->
     {post.data.coverImage && (
         <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
             <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
@@ -65,9 +73,7 @@ const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
 
     <!-- 3. ARTICLE CONTENT -->
     <div class="container-main max-w-[680px] mx-auto animate-appear" style="animation-delay: 200ms;">
-        <!-- 
-            TYPOGRAPHY STYLES (Prose) 
-        -->
+        <!-- TYPOGRAPHY -->
         <div class="prose prose-stone prose-lg md:prose-xl 
             prose-headings:font-serif prose-headings:font-normal prose-headings:text-hyle-text 
             prose-p:font-sans prose-p:font-light prose-p:text-hyle-text/80 prose-p:leading-relaxed
@@ -79,14 +85,14 @@ const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
             
         </div>
 
-        <!-- 4. SIGNATURE / AUTHOR -->
+        <!-- 4. SIGNATURE -->
         <div class="mt-16 pt-12 border-t border-hyle-text/10 flex flex-col items-center text-center gap-4">
             <div class="w-12 h-12 rounded-full bg-hyle-stone/30 overflow-hidden">
-                <img src="/images/hero-minimal.jpg" class="w-full h-full object-cover grayscale" alt="Автор" />
+                <!-- Статичная картинка мастера или лого -->
+                <div class="w-full h-full bg-hyle-text flex items-center justify-center text-white font-serif text-xl">H</div>
             </div>
             <div>
                 <p class="font-serif text-lg text-hyle-text">Мастер Hyle</p>
-                <p class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40 mt-1">Автор блога</p>
             </div>
         </div>
 
