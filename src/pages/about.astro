@@ -4,30 +4,33 @@ import Layout from '../layouts/Layout.astro';
 import { getEntry } from 'astro:content';
 
 // 1. ПОЛУЧЕНИЕ ДАННЫХ ИЗ CMS
-let aboutData = {};
+let entry = null;
+let Content = null;
+let cmsData = null;
+
 try {
-    // Пытаемся найти запись 'main' в коллекции 'about'
-    const entry = await getEntry('about', 'main');
-    if (entry && entry.data) {
-        aboutData = entry.data;
+    entry = await getEntry('about', 'main');
+    if (entry) {
+        const rendered = await entry.render();
+        Content = rendered.Content;
+        cmsData = entry.data;
     }
 } catch (e) {
-    console.warn('About page content missing in CMS', e);
+    console.warn('CMS: About page content missing or invalid.', e);
 }
 
-// 2. ДАННЫЕ С ФОЛЛБЕКАМИ (Если в админке пусто, покажем это)
+// 2. ДАННЫЕ С ФОЛЛБЕКАМИ (Безопасные значения по умолчанию)
 const DATA = {
-    image: aboutData.image || "/images/workshop-process.jpg",
-    // Если заголовка нет в базе, берем дефолтный
-    title: aboutData.title || "Я верю, что вещи должны замедлять время.",
-    // Если контента нет, берем дефолтный
-    text: aboutData.content || `
+    image: cmsData?.image || "/images/workshop-process.jpg",
+    title: cmsData?.title || '"Я верю, что вещи должны замедлять время."',
+    est: cmsData?.est || "Est. 2026",
+    location: cmsData?.location || "Moscow, RU",
+    // Фоллбэк-текст, если в CMS пустое тело статьи
+    fallbackHTML: `
         <p>Привет. Меня зовут [Имя Мастера], и я создаю керамику Hyle.</p>
         <p>В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях. След пальца на ручке чашки, неровный край тарелки — всё это делает предмет живым.</p>
         <p>Моя керамика — это тактильный опыт. Это вес глины в руке, шероховатость терракоты и гладкость эмали.</p>
-    `,
-    est: aboutData.est || "Est. 2026",
-    location: aboutData.location || "Moscow, RU"
+    `
 };
 ---
 
@@ -71,13 +74,17 @@ const DATA = {
             <div class="lg:col-span-7 lg:pl-12 flex flex-col gap-10 animate-appear" style="animation-delay: 200ms;">
                 
                 <h2 class="font-serif text-3xl md:text-4xl text-hyle-text leading-tight">
-                    <!-- Рендерим HTML, чтобы поддерживать переносы строк из админки -->
-                    <Fragment set:html={DATA.title.replace(/\n/g, '<br/>')} />
+                    <!-- Заголовок из CMS -->
+                    {DATA.title}
                 </h2>
 
-                <div class="prose prose-stone prose-lg font-light text-hyle-text/70 leading-relaxed space-y-6">
-                    {/* Если это Rich Text или Markdown HTML */}
-                    <Fragment set:html={DATA.text} />
+                <!-- 
+                    CONTENT RENDER:
+                    Если есть Content из CMS — рендерим его (это дает поддержку Markdown/MDX).
+                    Если нет — выводим HTML-фоллбэк.
+                -->
+                <div class="prose prose-stone prose-lg font-light text-hyle-text/70 leading-relaxed space-y-6 prose-p:my-4 prose-a:text-hyle-clay prose-a:no-underline hover:prose-a:underline">
+                    {Content ? <Content /> : <Fragment set:html={DATA.fallbackHTML} />}
                 </div>
 
                 <!-- SIGNATURE -->
