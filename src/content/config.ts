@@ -1,6 +1,6 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// --- СУЩЕСТВУЮЩИЕ СПРАВОЧНИКИ ---
+// 1. Справочники
 const tags = defineCollection({
   type: 'content',
   schema: z.object({ title: z.string() }).passthrough(),
@@ -11,50 +11,54 @@ const categories = defineCollection({
   schema: z.object({ title: z.string() }).passthrough(),
 });
 
-// --- СУЩЕСТВУЮЩИЕ ТОВАРЫ ---
+// 2. Товары (Soft Mode - чтобы не ломалось на старых)
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
-    // ... остальные поля оставляем как были в режиме "Soft Mode"
     price: z.any().optional(), 
     category: z.any().optional(),
     tags: z.any().optional(),
     images: z.any().optional(),
+    relatedProducts: z.any().optional(),
+    specs: z.any().optional(),
     status: z.any().optional(),
   }).passthrough(),
 });
 
-// --- НОВАЯ КОЛЛЕКЦИЯ: LANDING (ГЛАВНАЯ) ---
-const landing = defineCollection({
-  type: 'data', // Это JSON файл
-  schema: ({ image }) => z.object({
-    // Hero Section
-    heroTitleLine1: z.string().optional().default("Глина"),
-    heroTitleAccent: z.string().optional().default("хранит"),
-    heroTitleLine2: z.string().optional().default("тепло."),
-    heroDescription: z.string().optional(),
-    
-    // Внимание: для работы image() файл должен лежать в src/assets или public
-    // Мы пока используем строку, так как Keystatic сохраняет в public
-    heroImage: z.string().optional(), 
-
-    // Workshop Section
-    workshopTitle: z.string().optional(),
-    workshopText: z.string().optional(),
-    workshopImage: z.string().optional(),
+// 3. Блог (НОВОЕ)
+const blog = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    pubDate: z.union([z.string(), z.date()]).transform((str) => new Date(str)), 
+    coverImage: z.string().optional(),
+    relatedProducts: z.any().optional(),
   }).passthrough(),
 });
 
-// --- ОСТАЛЬНОЕ ---
-const blog = defineCollection({
-  type: 'content',
-  schema: z.object({ title: z.string() }).passthrough(),
+// 4. О Мастере (НОВОЕ)
+const about = defineCollection({
+  type: 'content', 
+  schema: z.object({
+    title: z.string().default('О Мастере'),
+    heroImage: z.string().optional(),
+  }).passthrough(),
+});
+
+// 5. Одиночные страницы (Landing, B2B)
+const landing = defineCollection({
+  type: 'data',
+  schema: z.object({
+    heroTitleLine1: z.string().optional(),
+  }).passthrough(),
 });
 
 const b2b = defineCollection({
   type: 'data',
-  schema: z.object({ title: z.string() }).passthrough(),
+  schema: z.object({
+    title: z.string(),
+  }).passthrough(),
 });
 
 export const collections = {
@@ -62,6 +66,7 @@ export const collections = {
   tags,
   categories,
   blog,
+  about, 
+  landing,
   b2b,
-  landing, // <--- Добавили новую коллекцию
 };

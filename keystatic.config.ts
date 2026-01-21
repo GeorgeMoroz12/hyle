@@ -12,57 +12,107 @@ export default config({
 
   // --- ОДИНОЧНЫЕ СТРАНИЦЫ (SINGLETONS) ---
   singletons: {
-    // 1. Landing (Главная)
+    // 1. Главная страница
     landing: singleton({
       label: '🏠 Главная страница',
       path: 'src/content/landing/home',
       schema: {
-        // Hero Секция
         heroTitleLine1: fields.text({ label: 'Hero: Заголовок (Строка 1)', defaultValue: 'Глина' }),
         heroTitleAccent: fields.text({ label: 'Hero: Акцент (Курсив)', defaultValue: 'хранит' }),
         heroTitleLine2: fields.text({ label: 'Hero: Заголовок (Строка 2)', defaultValue: 'тепло.' }),
-        
-        heroDescription: fields.text({ 
-          label: 'Hero: Описание', 
-          multiline: true,
-          defaultValue: 'Керамика с характером. Неидеальная форма, живая фактура.'
-        }),
-        
+        heroDescription: fields.text({ label: 'Hero: Описание', multiline: true }),
         heroImage: fields.image({
             label: 'Hero: Главное фото',
-            directory: 'public/images/landing', // Отдельная папка для порядка
+            directory: 'public/images/landing',
             publicPath: '/images/landing/'
         }),
-
-        // Workshop Секция
-        workshopTitle: fields.text({ label: 'Workshop: Заголовок', defaultValue: 'Красота в несовершенстве.' }),
-        workshopText: fields.text({ 
-          label: 'Workshop: Текст', 
-          multiline: true,
-          defaultValue: 'В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.' 
-        }),
+        workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
+        workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
         workshopImage: fields.image({
-            label: 'Workshop: Фото процесса',
+            label: 'Workshop: Фото',
             directory: 'public/images/landing',
             publicPath: '/images/landing/'
         }),
       },
     }),
 
-    // 2. B2B (Существующая)
+    // 2. О Мастере (НОВОЕ)
+    about: singleton({
+      label: '👤 О Мастере',
+      path: 'src/content/about/main',
+      format: { contentField: 'content' },
+      schema: {
+        title: fields.text({ label: 'Заголовок страницы', defaultValue: 'О Мастере' }),
+        heroImage: fields.image({
+          label: 'Фото мастера или студии',
+          directory: 'public/images/about',
+          publicPath: '/images/about/',
+          validation: { isRequired: true }
+        }),
+        content: fields.document({
+          label: 'Текст / Манифест',
+          formatting: true,
+          dividers: true,
+          links: true,
+          images: {
+            directory: 'public/images/about/content',
+            publicPath: '/images/about/content/',
+          },
+        }),
+      },
+    }),
+
+    // 3. B2B (Рестораны)
     b2b: singleton({
       label: '💼 Страница для Ресторанов',
       path: 'src/content/b2b/main',
       schema: {
-        title: fields.text({ label: 'Заголовок', defaultValue: 'Сотрудничество' }),
+        title: fields.text({ label: 'Заголовок' }),
         content: fields.document({ label: 'Текст условий', formatting: true }),
-        contactButtonText: fields.text({ label: 'Текст кнопки', defaultValue: 'Написать нам' }),
+        contactButtonText: fields.text({ label: 'Текст кнопки' }),
       },
     }),
   },
 
-  // --- КОЛЛЕКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
+  // --- КОЛЛЕКЦИИ (СПИСКИ) ---
   collections: {
+    // 1. БЛОГ (НОВОЕ)
+    blog: collection({
+      label: '📰 Блог (Статьи)',
+      slugField: 'title',
+      path: 'src/content/blog/*',
+      format: { contentField: 'content' },
+      columns: ['title', 'pubDate'],
+      schema: {
+        title: fields.slug({ name: { label: 'Заголовок статьи' } }),
+        pubDate: fields.date({ 
+          label: 'Дата публикации', 
+          defaultValue: { kind: 'today' }
+        }),
+        coverImage: fields.image({
+          label: 'Обложка статьи',
+          directory: 'public/images/blog',
+          publicPath: '/images/blog/',
+          validation: { isRequired: true }
+        }),
+        relatedProducts: fields.array(
+          fields.relationship({ label: 'Товар', collection: 'products' }),
+          { label: 'Упомянутые товары', itemLabel: (props) => props.value || 'Товар' }
+        ),
+        content: fields.document({
+          label: 'Текст статьи',
+          formatting: true,
+          dividers: true,
+          links: true,
+          images: { 
+            directory: 'public/images/blog/content', 
+            publicPath: '/images/blog/content/' 
+          },
+        }),
+      },
+    }),
+
+    // ... Остальные справочники и товары
     categories: collection({
       label: '🗂 Справочник: Категории',
       slugField: 'title',
@@ -85,13 +135,8 @@ export default config({
       columns: ['title', 'status', 'price', 'category'],
       schema: {
         images: fields.array(
-          fields.image({
-            label: 'Фото',
-            directory: 'public/images/products',
-            publicPath: '/images/products/',
-            validation: { isRequired: true }
-          }),
-          { label: 'Фотографии', itemLabel: (props) => `Фото #${props.index + 1}` }
+          fields.image({ label: 'Фото', directory: 'public/images/products', publicPath: '/images/products/' }),
+          { label: 'Фотографии' }
         ),
         title: fields.slug({ name: { label: 'Название' } }),
         price: fields.number({ label: 'Цена (₽)' }),
@@ -105,58 +150,17 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-        category: fields.relationship({ 
-          label: 'Категория', 
-          collection: 'categories',
-          validation: { isRequired: true }
-        }),
-        tags: fields.array(
-          fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги', itemLabel: (props) => props.value || 'Выберите тег' }
-        ),
-        relatedProducts: fields.array(
-          fields.relationship({ label: 'Товар', collection: 'products' }),
-          { label: 'С этим товаром покупают', itemLabel: (props) => props.value || 'Товар' }
-        ),
+        category: fields.relationship({ label: 'Категория', collection: 'categories' }),
+        tags: fields.array(fields.relationship({ label: 'Тег', collection: 'tags' }), { label: 'Теги', itemLabel: (props) => props.value }),
+        relatedProducts: fields.array(fields.relationship({ label: 'Товар', collection: 'products' }), { label: 'С этим покупают' }),
         specs: fields.object({
-          volume: fields.text({ label: 'Объем (мл)' }),
-          size: fields.text({ label: 'Размер (см)' }),
-          material: fields.text({ label: 'Материал', defaultValue: 'Глина, глазурь' }),
+          volume: fields.text({ label: 'Объем' }),
+          size: fields.text({ label: 'Размер' }),
+          material: fields.text({ label: 'Материал' }),
         }, { label: 'Характеристики' }),
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
-        description: fields.document({
-          label: 'Описание',
-          formatting: true,
-          dividers: true,
-          links: true,
-        }),
-      },
-    }),
-
-    blog: collection({
-      label: '📰 Блог',
-      slugField: 'title',
-      path: 'src/content/blog/*',
-      format: { contentField: 'content' },
-      columns: ['title', 'pubDate'],
-      schema: {
-        title: fields.slug({ name: { label: 'Заголовок' } }),
-        pubDate: fields.date({ label: 'Дата', defaultValue: { kind: 'today' } }),
-        coverImage: fields.image({
-          label: 'Обложка',
-          directory: 'public/images/blog',
-          publicPath: '/images/blog/',
-        }),
-        relatedProducts: fields.array(
-          fields.relationship({ label: 'Товар', collection: 'products' }),
-          { label: 'Упомянутые товары', itemLabel: (props) => props.value || 'Товар' }
-        ),
-        content: fields.document({
-          label: 'Текст',
-          formatting: true,
-          images: { directory: 'public/images/blog/content', publicPath: '/images/blog/content/' },
-        }),
+        description: fields.document({ label: 'Описание', formatting: true }),
       },
     }),
   },
