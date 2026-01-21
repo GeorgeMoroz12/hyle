@@ -1,11 +1,30 @@
 ---
 // src/pages/index.astro
+import { getEntry } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection } from 'astro:content';
 
-const HERO_IMAGE = "/images/hero-minimal.jpg";       
-const WORKSHOP_IMAGE = "/images/workshop-process.jpg"; 
+// --- 1. DATA FETCHING (CMS READY) ---
+// Пытаемся получить данные для главной страницы из коллекции 'landing'
+// Если данных нет (пока DevOps не настроил), используем Fallback (значения по умолчанию)
+const landingEntry = await getEntry('landing', 'home');
+const data = landingEntry?.data || {};
+
+// Дефолтные значения (Fallback), если админка пустая
+const HERO = {
+    image: data.heroImage || "/images/hero-minimal.jpg",
+    titleLine1: data.heroTitleLine1 || "Глина",
+    titleAccent: data.heroTitleAccent || "хранит",
+    titleLine2: data.heroTitleLine2 || "тепло.",
+    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
+};
+
+const WORKSHOP = {
+    image: data.workshopImage || "/images/workshop-process.jpg",
+    title: data.workshopTitle || "Красота в несовершенстве.",
+    text: data.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
+};
 
 const allProducts = await getCollection('products');
 const recentProducts = allProducts.slice(0, 8); 
@@ -21,72 +40,80 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   
   <!-- HEADER -->
   <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start">
-      <a href="/" class="relative z-50 group flex flex-col gap-1">
+      <a href="/" class="relative z-50 group flex flex-col gap-0.5">
+          <!-- Logo -->
           <span class="font-serif text-4xl md:text-5xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">Hyle.</span>
-          <span class="font-sans text-[10px] uppercase tracking-[0.3em] text-hyle-text/50 group-hover:text-hyle-clay/80 transition-colors pl-1">
+          <!-- Subtitle: Lowercase, Clay Color -->
+          <span class="font-sans text-[11px] md:text-[12px] text-hyle-clay tracking-wider transition-colors pl-1 opacity-90">
               керамика ручной работы
           </span>
       </a>
       
-      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] text-hyle-text/80 uppercase pt-3 mix-blend-multiply">
-          <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-          <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
-          <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
+      <!-- Menu: Lowercase for cozy feel -->
+      <div class="hidden md:flex gap-12 font-mono text-[13px] text-hyle-text/80 pt-3 mix-blend-multiply">
+          <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
+          <a href="/about" class="hover:text-hyle-clay transition-colors">мастерская</a>
+          <a href="/blog" class="hover:text-hyle-clay transition-colors">журнал</a>
       </div>
 
       <button class="md:hidden text-hyle-text pt-2">
-          <span class="font-mono text-xs uppercase border-b border-hyle-text">Меню</span>
+          <span class="font-mono text-sm border-b border-hyle-text/30">меню</span>
       </button>
   </nav>
 
-  <!-- HERO SECTION -->
-  <section class="relative min-h-screen w-full overflow-hidden flex flex-col justify-center pt-24 pb-12 bg-[#F5F4F0]">
-    
-    <!-- DECOR -->
-    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">
-        H
-    </div>
+  <!-- PARALLAX BACKGROUND (Subtle Grain & Atmosphere) -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
+      <div class="parallax-element absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-hyle-clay/5 rounded-full blur-[120px]" data-speed="0.05"></div>
+      <div class="parallax-element absolute top-[50%] left-[-10%] w-[40vw] h-[40vw] bg-hyle-stone/40 rounded-full blur-[100px]" data-speed="-0.08"></div>
+  </div>
 
+  <!-- HERO SECTION -->
+  <section class="relative min-h-screen w-full flex flex-col justify-center pt-24 pb-12 overflow-hidden bg-[#F5F4F0]">
+    
     <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
         
         <!-- TEXT LAYER -->
         <div class="lg:col-span-5 relative z-20 order-2 lg:order-1 mt-[-40px] lg:mt-0">
             <div class="animate-appear">
-                <span class="font-hand text-3xl text-hyle-clay block mb-4 -rotate-3">Ручная работа</span>
+                <!-- Removed "Ручная работа" label as requested -->
                 
-                <h1 class="font-serif text-6xl md:text-8xl lg:text-[7rem] leading-[0.85] text-hyle-text mb-8 tracking-tight">
-                    Глина <br/>
-                    <span class="italic font-light ml-12 lg:ml-20 text-hyle-clay/90">дышит</span> <br/>
-                    теплом.
+                <!-- CMS-Driven Title -->
+                <h1 class="font-serif text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.85] text-hyle-text mb-10 tracking-tight mix-blend-darken">
+                    {HERO.titleLine1} <br/>
+                    <span class="italic font-light ml-16 text-hyle-clay relative inline-block">
+                        {HERO.titleAccent}
+                        <!-- Декоративный штрих -->
+                        <span class="absolute bottom-2 left-0 w-full h-px bg-hyle-clay/40"></span>
+                    </span> <br/>
+                    {HERO.titleLine2}
                 </h1>
 
-                <p class="font-sans font-light text-sm md:text-base text-hyle-text/70 max-w-xs leading-relaxed mb-10 ml-2 border-l border-hyle-text/20 pl-4">
-                    Керамика с характером. <br/>
-                    Неидеальная форма, живая фактура.
+                <p class="font-sans font-light text-base text-hyle-text/70 max-w-xs leading-relaxed mb-12 ml-2 pl-6 border-l border-hyle-text/10">
+                    {HERO.description}
                 </p>
 
-                <a href="/catalog" class="group inline-flex items-center gap-4 ml-2">
-                    <div class="w-12 h-12 rounded-full border border-hyle-text/20 flex items-center justify-center group-hover:bg-hyle-clay group-hover:border-hyle-clay transition-all duration-300">
-                        <span class="text-xl group-hover:text-white transition-colors">→</span>
-                    </div>
-                    <span class="font-mono text-xs uppercase tracking-widest text-hyle-text group-hover:text-hyle-clay transition-colors">
-                        В каталог
-                    </span>
-                </a>
+                <div class="ml-2 flex items-center gap-6">
+                    <a href="/catalog" class="group relative px-8 py-4 bg-hyle-text text-[#F9F8F6] overflow-hidden rounded-sm transition-all hover:rounded-xl duration-500">
+                        <span class="relative z-10 font-mono text-sm group-hover:text-hyle-clay transition-colors">в каталог</span>
+                        <div class="absolute inset-0 bg-[#2C2B29] group-hover:bg-[#F9F8F6] transition-colors duration-500 border border-hyle-text"></div>
+                    </a>
+                </div>
             </div>
         </div>
 
         <!-- IMAGE LAYER -->
-        <div class="lg:col-span-7 relative order-1 lg:order-2">
+        <div class="lg:col-span-7 relative order-1 lg:order-2 h-[50vh] lg:h-auto">
             <div class="relative z-10 w-full aspect-[4/5] lg:aspect-[3/4] max-h-[80vh] lg:ml-auto lg:w-[90%]">
                 <div class="absolute inset-0 bg-hyle-stone/20 transform rotate-2 rounded-sm"></div>
                 <div class="absolute inset-0 overflow-hidden rounded-sm transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
                     <img 
-                        src={HERO_IMAGE} 
+                        id="hero-img-parallax"
+                        src={HERO.image} 
                         alt="Ceramic Atmosphere" 
-                        class="w-full h-full object-cover"
+                        class="w-full h-full object-cover scale-110"
                         onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'"
                     />
+                    <!-- Grain Texture -->
                     <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
                 </div>
             </div>
@@ -95,24 +122,18 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- SECTION 2: HORIZONTAL SCROLL (INTERACTIVE) -->
+  <!-- SECTION 2: HORIZONTAL SCROLL SHOWCASE -->
   <section class="py-24 md:py-32 bg-white relative z-20 overflow-hidden">
     <div class="container-main">
         
         <div class="text-center mb-16">
-            <span class="font-hand text-2xl text-hyle-clay mb-2 block">Свежий обжиг</span>
-            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">Новинки</h2>
-            <div class="mt-4 flex justify-center items-center gap-2 text-hyle-text/30 text-[10px] uppercase tracking-widest">
-                <span>Листайте</span>
+            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">новинки</h2>
+            <div class="mt-4 flex justify-center items-center gap-2 text-hyle-text/30 text-[11px] tracking-widest font-mono">
+                <span>листайте</span>
                 <span class="text-lg">→</span>
             </div>
         </div>
 
-        <!-- 
-            CONTAINER
-            - overscroll-x-contain: Ключевой фикс! Запрещает браузеру скроллить страницу, когда мы тянем ленту.
-            - snap-x для мобильных, но отключаем его на md, чтобы JS-физика работала плавно.
-        -->
         <div 
             id="horizontal-showcase" 
             class="flex gap-8 overflow-x-auto pb-20 px-4 -mx-4 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
@@ -123,11 +144,9 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     ? product.data.category.id 
                     : product.data.category;
                 
-                // РИТМ: Смещаем каждый второй товар вниз
                 const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
 
                 return (
-                    // w-[450px] для крупных "журнальных" карточек
                     <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
                          <ProductCard 
                             product={product} 
@@ -143,10 +162,9 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
                         <span class="text-2xl">→</span>
                     </div>
-                    <span class="font-mono text-xs uppercase tracking-widest">Все изделия</span>
+                    <span class="font-mono text-xs">все изделия</span>
                  </a>
             </div>
-            
             <div class="w-12 shrink-0"></div>
         </div>
 
@@ -154,94 +172,103 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </section>
 
   <!-- UNIFIED DARK SECTION: PHILOSOPHY + FOOTER -->
-  <div class="bg-[#2C2B29] text-[#F9F8F6] relative overflow-hidden">
+  <!-- 
+      Общий темный контейнер #1F1E1C.
+      Текстура накладывается на всё сразу.
+  -->
+  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
+      
+      <!-- Shared Texture -->
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
+      <!-- SECTION 3: PHILOSOPHY -->
       <section class="py-24 md:py-40 relative z-10">
-          <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-hyle-clay/10 rounded-full blur-[100px] pointer-events-none"></div>
-          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+              
+              <!-- Image Layer (RESTORED INTERACTIVITY) -->
               <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
-                  <div class="relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[85%] border border-white/10 shadow-2xl">
+                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29]">
                       <img 
-                        src={WORKSHOP_IMAGE} 
-                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-[1.5s]" 
-                        alt="Workshop"
+                        src={WORKSHOP.image} 
+                        alt="Process" 
+                        class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-[1.5s] ease-out"
                         onerror="this.src='https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?q=80&w=1000&auto=format&fit=crop'"
                       />
                   </div>
-                  <div class="absolute top-8 left-8 lg:left-[-20px] w-[85%] h-full border border-white/10 z-0 pointer-events-none"></div>
               </div>
+
+              <!-- Text Layer -->
               <div class="order-1 lg:order-2">
-                  <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-clay mb-6 block">Философия</span>
+                  <span class="font-mono text-[11px] text-hyle-clay mb-6 block">философия</span>
                   <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
-                      Мы сохраняем <br/> <span class="italic text-white/50">отпечатки</span> времени.
+                      {WORKSHOP.title}
                   </h2>
-                  <div class="space-y-6 text-white/60 font-light text-base md:text-lg leading-relaxed max-w-md">
-                      <p>Каждая чашка проходит через 12 этапов и 2 обжига.</p>
-                      <p>Неровный край — это не брак. Это след дыхания глины в печи при 1200°C.</p>
+                  <div class="space-y-6 text-white/50 font-light text-lg leading-relaxed max-w-md border-l border-white/10 pl-6">
+                      <p>{WORKSHOP.text}</p>
                   </div>
-                  <div class="mt-10">
-                      <a href="/about" class="font-hand text-2xl text-hyle-clay hover:text-white transition-colors">О нашей мастерской →</a>
+                  
+                  <div class="mt-12">
+                      <a href="/about" class="font-mono text-sm border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors">
+                          о нашей мастерской
+                      </a>
                   </div>
               </div>
           </div>
       </section>
 
-      <footer class="pb-16 pt-0 relative z-10">
-          <div class="container-main flex flex-col md:flex-row justify-between items-start gap-12">
-              <div class="max-w-xs">
-                  <span class="font-serif text-2xl block mb-4">Hyle.</span>
-                  <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">Керамика ручной работы.</p>
-              </div>
-              <div class="flex gap-12 text-sm font-light text-white/60">
-                  <div class="flex flex-col gap-3">
-                      <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Навигация</span>
-                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-                      <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
-                      <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
+      <!-- FOOTER (Centered & Clean) -->
+      <footer class="pb-20 pt-0 relative z-10">
+          <div class="container-main flex flex-col items-center text-center">
+              
+              <div class="mb-10 opacity-30 w-full h-px bg-white"></div>
+
+              <div class="flex flex-col items-center gap-6">
+                  <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
+                  
+                  <nav class="flex gap-8 md:gap-12 font-mono text-[12px] text-white/60">
+                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
+                      <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
+                      <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
+                  </nav>
+
+                  <div class="flex gap-6 mt-2">
+                      <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40">
+                          <span class="sr-only">Telegram</span>
+                          Tg
+                      </a>
                   </div>
+                  
+                  <p class="mt-8 text-[10px] text-white/20 font-mono tracking-widest">
+                      © 2026 Moscow
+                  </p>
               </div>
-          </div>
-          <div class="container-main mt-16 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] text-white/20 uppercase tracking-widest font-mono">
-              <span>© 2026 Hyle Ceramics</span>
-              <span>Moscow</span>
           </div>
       </footer>
   </div>
 </Layout>
 
+<!-- SCROLL SCRIPT -->
 <script>
-    // --- INERTIA SCROLL LOGIC (SMOOTH & STABLE) ---
+    // --- INERTIA SCROLL LOGIC ---
     const showcase = document.getElementById('horizontal-showcase');
-    
-    // Переменные для физики
     let target = 0;
     let current = 0;
     let isAnimating = false;
 
     if (showcase) {
-        // Инициализация при загрузке
         target = showcase.scrollLeft;
         current = showcase.scrollLeft;
 
         showcase.addEventListener('wheel', (evt) => {
-            // Только на десктопе
             if (window.matchMedia("(min-width: 768px)").matches) {
                 const maxScroll = showcase.scrollWidth - showcase.clientWidth;
                 
-                // Проверяем возможность скролла с буфером 1px
-                const canScrollRight = target < maxScroll - 1;
-                const canScrollLeft = target > 1;
+                // Buffer +/- 2px
+                const canScrollRight = target < maxScroll - 2;
+                const canScrollLeft = target > 2;
 
-                // Направление скролла мыши (deltaY > 0 это вниз)
-                const isGoingRight = evt.deltaY > 0;
-                const isGoingLeft = evt.deltaY < 0;
-
-                // Перехватываем только если можем скроллить в нужную сторону
-                if ((isGoingRight && canScrollRight) || (isGoingLeft && canScrollLeft)) {
-                    evt.preventDefault(); // Блокируем скролл страницы
-                    
-                    // Накапливаем цель (target)
+                if ((evt.deltaY > 0 && canScrollRight) || (evt.deltaY < 0 && canScrollLeft)) {
+                    evt.preventDefault();
                     target += evt.deltaY * 2.5;
                     target = Math.max(0, Math.min(target, maxScroll));
 
@@ -250,26 +277,20 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                         requestAnimationFrame(smoothScrollLoop);
                     }
                 }
-                // Если скроллить некуда - не вызываем preventDefault, 
-                // и страница скроллится вертикально (естественное поведение).
             }
         }, { passive: false });
     }
 
-    // Цикл анимации
     function smoothScrollLoop() {
         if (!showcase) return;
-
-        // Линейная интерполяция (Lerp)
         current += (target - current) * 0.08;
         showcase.scrollLeft = current;
 
-        // Если почти приехали, останавливаемся
         if (Math.abs(target - current) > 0.5) {
             requestAnimationFrame(smoothScrollLoop);
         } else {
             isAnimating = false;
-            showcase.scrollLeft = target; // Финальная точка
+            showcase.scrollLeft = target;
         }
     }
 </script>
