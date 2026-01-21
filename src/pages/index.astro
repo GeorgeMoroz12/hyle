@@ -1,31 +1,58 @@
 ---
 // src/pages/index.astro
+import { getEntry, getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { getCollection } from 'astro:content';
 
-// --- 1. DATA FETCHING (CMS READY) ---
-const landingEntry = await getEntry('landing', 'home');
-const data = landingEntry?.data || {};
+// --- 1. DATA FETCHING (CMS READY & SAFE) ---
 
-// Дефолтные значения
+// Безопасное получение данных лендинга
+let landingData = {};
+try {
+    const landingEntry = await getEntry('landing', 'home');
+    if (landingEntry && landingEntry.data) {
+        landingData = landingEntry.data;
+    }
+} catch (e) {
+    console.warn('Landing content missing, using defaults');
+}
+
+// Дефолтные значения (Fallback)
 const HERO = {
-    image: data.heroImage || "/images/hero-minimal.jpg",
-    titleLine1: data.heroTitleLine1 || "Глина",
-    titleAccent: data.heroTitleAccent || "хранит", // Здесь больше нет декоративных элементов
-    titleLine2: data.heroTitleLine2 || "тепло.",
-    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
+    image: landingData.heroImage || "/images/hero-minimal.jpg",
+    titleLine1: landingData.heroTitleLine1 || "Глина",
+    titleAccent: landingData.heroTitleAccent || "хранит",
+    titleLine2: landingData.heroTitleLine2 || "тепло.",
+    description: landingData.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
 };
 
 const WORKSHOP = {
-    image: data.workshopImage || "/images/workshop-process.jpg",
-    title: data.workshopTitle || "Красота в несовершенстве.",
-    text: data.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
+    image: landingData.workshopImage || "/images/workshop-process.jpg",
+    title: landingData.workshopTitle || "Красота в несовершенстве.",
+    text: landingData.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
 };
 
-const allProducts = await getCollection('products');
-const recentProducts = allProducts.slice(0, 8); 
+// --- 2. PRODUCT DATA (AGGRESSIVE SAFETY) ---
 
+// Утилита нормализации ID (строка или объект -> строка)
+const resolveId = (item: any) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item.id) return item.id;
+    return null;
+};
+
+// Получаем товары и сразу фильтруем битые
+const allProductsRaw = await getCollection('products');
+const validProducts = allProductsRaw.filter(p => {
+    // Минимальная проверка валидности
+    return p && p.data && p.data.title; 
+});
+
+// Сортировка (новые сверху, если бы была дата) и срез
+const recentProducts = validProducts.slice(0, 8); 
+
+// Категории для маппинга (ID -> Title)
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
@@ -44,7 +71,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           </span>
       </a>
       
-      <!-- MENU: Updated Items -->
+      <!-- MENU -->
       <div class="hidden md:flex gap-12 font-mono text-[13px] text-hyle-text/80 pt-3 mix-blend-multiply uppercase tracking-widest">
           <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
           <a href="/about" class="hover:text-hyle-clay transition-colors">О мастере</a>
@@ -73,7 +100,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                 
                 <h1 class="font-serif text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.85] text-hyle-text mb-10 tracking-tight mix-blend-darken">
                     {HERO.titleLine1} <br/>
-                    <!-- FIXED: Убрал span с линией, оставил чистый текст -->
                     <span class="italic font-light ml-16 text-hyle-clay relative inline-block">
                         {HERO.titleAccent}
                     </span> <br/>
@@ -84,7 +110,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     {HERO.description}
                 </p>
 
-                <!-- FIXED BUTTON: Cleaner Look -->
                 <div class="ml-2">
                     <a href="/catalog" class="inline-block px-10 py-4 bg-hyle-text text-[#F9F8F6] font-mono text-xs uppercase tracking-widest rounded-sm hover:bg-hyle-clay transition-colors duration-500 shadow-xl shadow-hyle-text/10">
                         В каталог
@@ -117,7 +142,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   <section class="py-24 md:py-32 bg-white relative z-20 overflow-hidden">
     <div class="container-main">
         
-        <!-- HEADER: Restored "New from Kiln" + Description -->
         <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div class="max-w-lg">
                 <h2 class="font-serif text-4xl md:text-6xl text-hyle-text mb-4">
@@ -134,20 +158,14 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             </div>
         </div>
 
-        <!-- 
-            HORIZONTAL SCROLL CONTAINER 
-            FIX: Используем отрицательные марджины (-mx-5 md:-mx-12), равные паддингам контейнера,
-            чтобы лента визуально касалась краев экрана.
-        -->
         <div 
             id="horizontal-showcase" 
             class="flex gap-8 overflow-x-auto pb-20 px-5 -mx-5 md:px-12 md:-mx-12 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
             style="scrollbar-width: none; -ms-overflow-style: none;"
         >
             {recentProducts.map((product, idx) => {
-                const catId = (product.data.category && typeof product.data.category === 'object') 
-                    ? product.data.category.id 
-                    : product.data.category;
+                // БЕЗОПАСНОЕ ПОЛУЧЕНИЕ КАТЕГОРИИ
+                const catId = resolveId(product.data.category);
                 
                 const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
 
@@ -155,13 +173,13 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
                          <ProductCard 
                             product={product} 
+                            // Передаем название только если нашли ID в мапе
                             categoryName={catId ? categoryMap[catId] : ''} 
                         />
                     </div>
                 );
             })}
             
-            <!-- "See All" Card -->
             <div class="shrink-0 w-[200px] flex items-center justify-center snap-center md:snap-align-none">
                  <a href="/catalog" class="group flex flex-col items-center gap-4 text-hyle-text/40 hover:text-hyle-clay transition-colors">
                     <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -171,7 +189,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                  </a>
             </div>
             
-            <!-- Right Spacer for aesthetics -->
             <div class="w-4 shrink-0"></div>
         </div>
 
@@ -215,7 +232,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           </div>
       </section>
 
-      <!-- FOOTER -->
       <footer class="pb-20 pt-0 relative z-10">
           <div class="container-main flex flex-col items-center text-center">
               
@@ -246,7 +262,6 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </div>
 </Layout>
 
-<!-- SCROLL SCRIPT (Inertia) -->
 <script>
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
