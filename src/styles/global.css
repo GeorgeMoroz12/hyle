@@ -1,18 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* Палитра: Природная, приглушенная */
-  --color-hyle-bg: #F9F8F6;       /* Теплый белый (Яичная скорлупа) */
-  --color-hyle-text: #2C2B29;     /* Мягкий черный (Уголь) */
-  --color-hyle-clay: #B35A32;     /* Терракота (Акцент) */
-  --color-hyle-stone: #E5E0D8;    /* Светлый серый (Камень) */
+  --color-hyle-bg: #F9F8F6;
+  --color-hyle-text: #1F1E1C; /* Чуть глубже и холоднее */
+  --color-hyle-clay: #B35A32;
+  --color-hyle-stone: #E5E0D8;
   
-  /* Шрифты */
   --font-sans: "Inter", sans-serif;
   --font-serif: "Playfair Display", serif;
   --font-hand: "Caveat", cursive;
+  --font-mono: "Menlo", "Monaco", "Courier New", monospace; /* Технический шрифт */
   
-  /* Анимации */
+  --spacing-container: 1440px; /* Шире для журнального вида */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -23,29 +22,16 @@
     font-family: var(--font-sans);
     scroll-behavior: smooth;
     overflow-x: hidden;
-    /* Улучшает рендеринг шрифтов (делает их тоньше и четче) */
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* ЗАГОЛОВКИ (Voice) */
-  h1, h2, h3, h4 {
+  h1, h2, h3 {
     font-family: var(--font-serif);
-    font-weight: 400; /* В вебе Playfair лучше смотрится в Regular, не Bold */
-    color: var(--color-hyle-text);
+    font-weight: 400;
+    line-height: 1;
   }
 
-  /* Крупные заголовки должны быть плотными */
-  h1 {
-    letter-spacing: -0.02em; /* Чуть стягиваем буквы */
-  }
-
-  /* ОСНОВНОЙ ТЕКСТ (Logic) */
-  p, li, a {
-    font-weight: 300; /* Light для Inter выглядит "дороже" */
-  }
-
-  /* Текстура шума (Grain) - обязательно для тактильности */
+  /* Глобальная сетка-шум (более деликатная) */
   body::before {
     content: "";
     position: fixed;
@@ -54,39 +40,30 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 50;
-    opacity: 0.035; /* Чуть усилил для фактуры */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    mix-blend-mode: multiply;
+    z-index: 999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 }
 
 @layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  .text-label {
+    @apply font-mono text-[10px] uppercase tracking-widest text-hyle-text/50;
   }
   
-  /* Утилита для музейных подписей */
-  .text-label {
-    @apply font-sans text-[10px] uppercase tracking-[0.25em] text-hyle-text/60;
-  }
-
-  /* Анимация появления */
-  @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   .animate-appear {
-    animation: fade-in-up 1.2s var(--ease-out-expo) forwards;
+    animation: fade-up 1s var(--ease-out-expo) forwards;
+  }
+  
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
-/* Контейнер */
 @utility container-main {
-  /* На мобайле отступы меньше (px-5), на десктопе больше */
-  @apply max-w-[1400px] mx-auto px-5 md:px-12 lg:px-16;
+  @apply max-w-[var(--spacing-container)] mx-auto px-5 md:px-12;
 }
