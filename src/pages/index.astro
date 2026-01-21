@@ -19,180 +19,225 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 <Layout title="Главная" hideHeader={true}>
   
-  <!-- HEADER (Custom Absolute) -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-6 md:px-12 flex justify-between items-start mix-blend-difference text-hyle-text lg:mix-blend-normal">
-      <!-- Логотип -->
-      <a href="/" class="flex flex-col gap-1 group">
-          <span class="font-serif text-3xl md:text-4xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors">Hyle.</span>
+  <!-- HEADER -->
+  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start">
+      <a href="/" class="relative z-50 group">
+          <span class="font-serif text-3xl md:text-4xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">Hyle.</span>
       </a>
       
-      <!-- Десктоп меню -->
-      <div class="hidden md:flex gap-12 font-mono text-xs tracking-widest text-hyle-text/80 uppercase">
+      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] text-hyle-text/80 uppercase pt-2 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full border border-hyle-text/5">
           <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
           <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
+          <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
       </div>
 
-      <!-- Мобильное меню -->
-      <button class="md:hidden text-current">
-          <span class="font-mono text-xs uppercase">Menu</span>
+      <button class="md:hidden text-hyle-text pt-1">
+          <span class="font-mono text-xs uppercase border-b border-hyle-text">Меню</span>
       </button>
   </nav>
 
-  <!-- HERO SECTION: ARCHITECTURAL SPLIT -->
-  <section class="relative h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-hyle-bg">
+  <!-- 
+      HERO SECTION: ORGANIC LAYERS 
+      Концепция: Текст и Картинка переплетаются. 
+      Фон не белый, а теплый (hyle-bg).
+  -->
+  <section class="relative min-h-screen w-full overflow-hidden flex flex-col justify-center pt-24 pb-12 bg-[#F5F4F0]"> <!-- Чуть темнее белого для уюта -->
     
-    <!-- LEFT COLUMN: CONTENT (55%) -->
-    <div class="w-full lg:w-[55%] h-[60%] lg:h-full relative flex flex-col justify-end p-6 md:p-12 lg:p-16 border-r border-hyle-text/10">
+    <!-- DECOR: Background Big Letter -->
+    <div class="absolute top-[-10%] left-[-5%] text-[30vw] font-serif text-hyle-text/5 select-none pointer-events-none leading-none">
+        H
+    </div>
+
+    <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full">
         
-        <!-- Technical Label Top-Left -->
-        <div class="absolute top-32 left-6 md:left-12 lg:left-16 hidden lg:block">
-            <p class="font-mono text-[10px] text-hyle-text/40 flex flex-col gap-1">
-                <span>EST. 2026</span>
-                <span>MOSCOW, RU</span>
-                <span>CLAY / FIRE / HANDS</span>
-            </p>
-        </div>
-
-        <div class="animate-appear max-w-2xl z-10">
-            <!-- Main Title -->
-            <h1 class="font-serif text-6xl md:text-8xl lg:text-[7.5vw] leading-[0.9] lg:leading-[0.85] text-hyle-text mb-8 md:mb-12 tracking-tight">
-                Глина <br/>
-                <span class="italic text-hyle-clay font-light ml-12 lg:ml-24">хранит</span> <br/>
-                тепло.
-            </h1>
-
-            <!-- Description & CTA -->
-            <div class="flex flex-col md:flex-row gap-8 md:items-end border-t border-hyle-text/10 pt-8 w-full">
-                <p class="font-sans font-light text-sm md:text-base text-hyle-text/70 max-w-xs leading-relaxed">
-                    Посуда, созданная в тишине. <br/>
-                    С несовершенствами, которые делают ее живой.
-                </p>
+        <!-- 1. TEXT LAYER (LEFT) -->
+        <div class="lg:col-span-5 relative z-20 order-2 lg:order-1 mt-[-40px] lg:mt-0">
+            <div class="animate-appear">
+                <span class="font-hand text-3xl text-hyle-clay block mb-4 -rotate-3">Ручная работа</span>
                 
-                <a href="/catalog" class="group flex items-center gap-3">
-                    <span class="font-mono text-xs uppercase tracking-widest border-b border-hyle-text group-hover:border-hyle-clay group-hover:text-hyle-clay transition-all pb-1">
-                        Перейти в каталог
+                <h1 class="font-serif text-6xl md:text-8xl lg:text-[7rem] leading-[0.85] text-hyle-text mb-8 tracking-tight">
+                    Глина <br/>
+                    <span class="italic font-light ml-12 lg:ml-20 text-hyle-clay/90">дышит</span> <br/>
+                    теплом.
+                </h1>
+
+                <p class="font-sans font-light text-sm md:text-base text-hyle-text/70 max-w-xs leading-relaxed mb-10 ml-2 border-l border-hyle-text/20 pl-4">
+                    Керамика с характером. <br/>
+                    Неидеальная форма, живая фактура, <br/>
+                    созданная для медленной жизни.
+                </p>
+
+                <a href="/catalog" class="group inline-flex items-center gap-4 ml-2">
+                    <div class="w-12 h-12 rounded-full border border-hyle-text/20 flex items-center justify-center group-hover:bg-hyle-clay group-hover:border-hyle-clay transition-all duration-300">
+                        <span class="text-xl group-hover:text-white transition-colors">→</span>
+                    </div>
+                    <span class="font-mono text-xs uppercase tracking-widest text-hyle-text group-hover:text-hyle-clay transition-colors">
+                        В каталог
                     </span>
-                    <span class="text-hyle-clay transform group-hover:translate-x-1 transition-transform">→</span>
                 </a>
             </div>
         </div>
-    </div>
 
-    <!-- RIGHT COLUMN: IMAGE (45%) -->
-    <div class="w-full lg:w-[45%] h-[40%] lg:h-full relative overflow-hidden bg-hyle-stone/20">
-        <!-- Image: Hard Cut, No Gradient -->
-        <img 
-            src={HERO_IMAGE} 
-            alt="Ceramic Texture" 
-            class="w-full h-full object-cover object-center transform scale-105 transition-transform duration-[2s] hover:scale-100"
-            onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'"
-        />
-        
-        <!-- Decorative Sticker / Stamp -->
-        <div class="absolute bottom-6 left-6 bg-[#F9F8F6] p-4 max-w-[140px] hidden lg:block shadow-lg">
-            <p class="font-mono text-[9px] text-hyle-text/60 leading-tight uppercase">
-                Collection <br/>
-                <span class="text-hyle-text font-bold text-lg block my-1">Raw 26</span>
-                Limited Ed.
-            </p>
+        <!-- 2. IMAGE LAYER (RIGHT / CENTER) -->
+        <!-- Картинка не в край, а как "картина" с воздухом вокруг -->
+        <div class="lg:col-span-7 relative order-1 lg:order-2">
+            
+            <!-- STAMP (POTTER WHEEL) - Вращающийся элемент -->
+            <div class="absolute -top-12 -left-12 z-30 hidden lg:block animate-spin-slow">
+                <svg viewBox="0 0 100 100" width="140" height="140">
+                    <defs>
+                        <path id="circle" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" />
+                    </defs>
+                    <text font-size="11" font-family="monospace" letter-spacing="3">
+                        <textPath xlink:href="#circle" class="fill-hyle-text/40 uppercase">
+                            Hyle Ceramics • Est 2026 • Moscow •
+                        </textPath>
+                    </text>
+                </svg>
+            </div>
+
+            <!-- PHOTO -->
+            <div class="relative z-10 w-full aspect-[4/5] lg:aspect-[3/4] max-h-[80vh] lg:ml-auto lg:w-[90%]">
+                <div class="absolute inset-0 bg-hyle-stone/20 transform rotate-2 rounded-sm"></div> <!-- Shadow/Offset Block -->
+                <div class="absolute inset-0 overflow-hidden rounded-sm transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
+                    <img 
+                        src={HERO_IMAGE} 
+                        alt="Ceramic Atmosphere" 
+                        class="w-full h-full object-cover"
+                        onerror="this.src='https://images.unsplash.com/photo-1595180665183-c21d0a519894?q=80&w=1600&auto=format&fit=crop'"
+                    />
+                    <!-- Grain Overlay on Image Only -->
+                    <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
+                </div>
+            </div>
         </div>
-    </div>
 
+    </div>
   </section>
 
-  <!-- SECTION 2: CATALOG TEASER -->
-  <section class="py-24 md:py-32 relative bg-hyle-bg">
+  <!-- SECTION 2: CATALOG (ASYMMETRIC GRID) -->
+  <section class="py-24 md:py-32 bg-white relative z-20">
     <div class="container-main">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-6 border-b border-hyle-text/10 pb-6">
-            <div>
-                <span class="font-mono text-[10px] uppercase text-hyle-text/40 mb-2 block">01 / Showcase</span>
-                <h2 class="font-serif text-4xl md:text-5xl text-hyle-text">Новое из печи</h2>
-            </div>
-            <a href="/catalog" class="font-mono text-xs uppercase tracking-widest text-hyle-text/60 hover:text-hyle-clay transition-colors">
-                Смотреть всё [ {allProducts.length} ]
-            </a>
+        
+        <!-- Header: Centered & Calm -->
+        <div class="text-center mb-20">
+            <span class="font-hand text-2xl text-hyle-clay mb-2 block">Свежий обжиг</span>
+            <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">Новинки</h2>
         </div>
 
+        <!-- Grid: Clean -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-8">
-            {recentProducts.map((product) => {
+            {recentProducts.map((product, idx) => {
                 const catId = (product.data.category && typeof product.data.category === 'object') 
                     ? product.data.category.id 
                     : product.data.category;
+                
+                // Делаем вторую и четвертую карточку чуть ниже для ритма (на десктопе)
+                const offsetClass = idx % 2 !== 0 ? "lg:translate-y-12" : "";
+
                 return (
-                    <ProductCard 
-                        product={product} 
-                        categoryName={catId ? categoryMap[catId] : ''} 
-                    />
+                    <div class={`transition-all duration-700 ${offsetClass}`}>
+                         <ProductCard 
+                            product={product} 
+                            categoryName={catId ? categoryMap[catId] : ''} 
+                        />
+                    </div>
                 );
             })}
+        </div>
+
+        <div class="mt-24 text-center">
+             <a href="/catalog" class="inline-block border-b border-hyle-text/20 pb-1 font-mono text-xs uppercase tracking-widest hover:border-hyle-clay hover:text-hyle-clay transition-colors">
+                Смотреть всю коллекцию
+             </a>
         </div>
     </div>
   </section>
 
-  <!-- SECTION 3: ATMOSPHERE (Workshop) -->
-  <section class="bg-[#1A1918] text-[#F9F8F6] py-24 md:py-40 relative overflow-hidden">
-      <!-- Grain Overlay -->
-      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
-      
-      <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <!-- Text -->
-          <div class="order-2 lg:order-1 flex flex-col items-start">
-              <span class="font-mono text-xs text-hyle-clay mb-6">02 / Philosophy</span>
-              <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
-                  Красота в <br/> <span class="italic font-light opacity-80">несовершенстве.</span>
-              </h2>
-              <p class="font-sans font-light text-white/60 text-lg leading-relaxed max-w-md mb-10">
-                  Мы не прячем следы рук. Не зашлифовываем случайные линии. 
-                  Каждая трещинка глазури — это история обжига, которую нельзя повторить.
-              </p>
-              <a href="/about" class="inline-block border border-white/20 px-8 py-4 font-mono text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-colors duration-300">
-                  О мастерской
-              </a>
+  <!-- SECTION 3: PHILOSOPHY (Split Dark) -->
+  <section class="bg-[#2C2B29] text-[#F9F8F6] py-24 md:py-40 relative overflow-hidden">
+      <!-- Organic Shape Background -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-hyle-clay/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div class="container-main relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+          
+          <!-- Image Collage -->
+          <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
+              <!-- Main Pic -->
+              <div class="relative z-10 aspect-[4/5] overflow-hidden rounded-sm opacity-90 w-[85%] border border-white/5">
+                  <img src={WORKSHOP_IMAGE} class="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 transition-all duration-700" />
+              </div>
+              <!-- Decor Frame -->
+              <div class="absolute top-8 left-8 lg:left-[-20px] w-[85%] h-full border border-white/10 z-0 pointer-events-none"></div>
           </div>
 
-          <!-- Image -->
-          <div class="order-1 lg:order-2 relative aspect-[4/5] bg-white/5 p-2">
-              <div class="w-full h-full overflow-hidden relative">
-                  <img 
-                    src={WORKSHOP_IMAGE} 
-                    alt="Process" 
-                    class="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 hover:grayscale-0 transition-all duration-1000"
-                  />
-                  <!-- Vertical Line Decor -->
-                  <div class="absolute top-0 right-8 w-px h-full bg-white/10"></div>
+          <!-- Text -->
+          <div class="order-1 lg:order-2">
+              <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-clay mb-6 block">Философия</span>
+              <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
+                  Мы сохраняем <br/> <span class="italic text-white/50">отпечатки</span> времени.
+              </h2>
+              <div class="space-y-6 text-white/60 font-light text-base md:text-lg leading-relaxed max-w-md">
+                  <p>
+                      В мире штампованных вещей мы выбираем медленный путь. 
+                      Каждая чашка проходит через 12 этапов и 2 обжига.
+                  </p>
+                  <p>
+                      Неровный край — это не брак. Это след дыхания глины в печи при 1200°C.
+                  </p>
+              </div>
+              
+              <div class="mt-10">
+                  <a href="/about" class="font-hand text-2xl text-hyle-clay hover:text-white transition-colors">
+                      О нашей мастерской →
+                  </a>
               </div>
           </div>
       </div>
   </section>
 
-  <!-- FOOTER (Clean & Grey) -->
-  <footer class="bg-hyle-stone/20 py-16 border-t border-hyle-text/5">
-      <div class="container-main grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div class="md:col-span-2">
-              <a href="/" class="font-serif text-2xl block mb-6">Hyle.</a>
-              <p class="font-sans font-light text-sm text-hyle-text/60 max-w-xs">
-                  Керамика ручной работы, вдохновленная природой и тишиной.
+  <!-- FOOTER -->
+  <footer class="bg-[#262523] py-16 border-t border-white/5 text-[#F9F8F6]">
+      <div class="container-main flex flex-col md:flex-row justify-between items-start gap-12">
+          
+          <div class="max-w-xs">
+              <span class="font-serif text-2xl block mb-4">Hyle.</span>
+              <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">
+                  Керамика ручной работы.<br/>
+                  Создано для жизни.
               </p>
           </div>
-          
-          <div>
-              <h4 class="font-mono text-[10px] uppercase text-hyle-text/40 mb-4">Меню</h4>
-              <ul class="flex flex-col gap-3 text-sm font-light text-hyle-text/80">
-                  <li><a href="/catalog" class="hover:text-hyle-clay">Каталог</a></li>
-                  <li><a href="/about" class="hover:text-hyle-clay">Мастерская</a></li>
-                  <li><a href="/blog" class="hover:text-hyle-clay">Журнал</a></li>
-              </ul>
+
+          <div class="flex gap-12 text-sm font-light text-white/60">
+              <div class="flex flex-col gap-3">
+                  <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Навигация</span>
+                  <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+                  <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
+                  <a href="/about" class="hover:text-hyle-clay transition-colors">О нас</a>
+              </div>
+              <div class="flex flex-col gap-3">
+                  <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Связь</span>
+                  <a href="#" class="hover:text-hyle-clay transition-colors">Telegram</a>
+                  <a href="#" class="hover:text-hyle-clay transition-colors">Instagram</a>
+              </div>
           </div>
 
-          <div>
-              <h4 class="font-mono text-[10px] uppercase text-hyle-text/40 mb-4">Контакты</h4>
-              <ul class="flex flex-col gap-3 text-sm font-light text-hyle-text/80">
-                  <li><a href="#" class="hover:text-hyle-clay">Telegram</a></li>
-                  <li><a href="#" class="hover:text-hyle-clay">Instagram</a></li>
-                  <li class="mt-4 text-xs text-hyle-text/40">© 2026 Hyle Ceramics</li>
-              </ul>
-          </div>
+      </div>
+      <div class="container-main mt-16 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] text-white/20 uppercase tracking-widest font-mono">
+          <span>© 2026 Hyle Ceramics</span>
+          <span>Moscow</span>
       </div>
   </footer>
 
 </Layout>
+
+<style>
+    /* Spin Animation for the Stamp */
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+        animation: spin-slow 20s linear infinite;
+    }
+</style>
