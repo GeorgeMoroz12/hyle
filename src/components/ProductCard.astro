@@ -18,35 +18,34 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ГИБРИДНАЯ ЛОГИКА ТЕГОВ ---
+// --- ROBUST TAG LOGIC ---
 let visibleTags = [];
-const rawTags = Array.isArray(tags) ? tags : [];
+const rawTags = tags; // Input can be anything
 
-// 1. Отделяем строки (Legacy) и объекты (Refs)
-const stringTags = rawTags.filter(t => typeof t === 'string' && t.trim() !== '');
-const refTags = rawTags.filter(t => typeof t === 'object' && t !== null);
+// 1. Array check
+if (Array.isArray(rawTags) && rawTags.length > 0) {
+  
+  // 2. Normalize to IDs (String[] | Object[])
+  const tagIds = rawTags.map(t => {
+      if (typeof t === 'string' && t.trim() !== '') return t;
+      if (typeof t === 'object' && t !== null && t.id) return t.id;
+      return null;
+  }).filter(Boolean); // Remove nulls
 
-// 2. Загружаем Refs
-let loadedRefs = [];
-if (refTags.length > 0) {
+  // 3. Fetch Data (if we have IDs)
+  if (tagIds.length > 0) {
     try {
-        loadedRefs = await getEntries(refTags);
+      // Try to fetch detailed data. Astro handles array of IDs nicely.
+      // If IDs are just legacy strings not in DB, this might throw or return partials.
+      // We wrap in try/catch to be safe.
+      const loaded = await getEntries(tagIds.map(id => ({ collection: 'tags', id })));
+      visibleTags = loaded.map(t => ({ id: t.id, title: t.data.title }));
     } catch (e) {
-        console.warn(`Card Tag error for ${product.slug}`, e);
+      // Fallback: If DB fetch fails (e.g. legacy tag "New" not in tags collection), use ID as title
+      visibleTags = tagIds.map(id => ({ id, title: id }));
     }
+  }
 }
-
-// 3. Создаем заглушки для строк, чтобы формат был единым { id, data: { title } }
-const normalizedStrings = stringTags.map(str => ({ 
-    id: str, 
-    data: { title: str } 
-}));
-
-// 4. Объединяем (Сначала загруженные, потом строки, или наоборот - неважно)
-visibleTags = [...normalizedStrings, ...loadedRefs];
-
-// Берем первый тег для отображения
-const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
 
 const productUrl = `/products/${product.slug}`;
 ---
@@ -82,14 +81,18 @@ const productUrl = `/products/${product.slug}`;
             </h3>
         </a>
         
-        <!-- TAG RENDER -->
-        {displayTag && (
-            <a 
-                href={`/catalog?tag=${displayTag.id}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
-            >
-                #{displayTag.data.title}
-            </a>
+        <!-- TAGS RENDER -->
+        {visibleTags.length > 0 && (
+            <div class="flex flex-wrap gap-2 mt-1 relative z-20">
+                {visibleTags.slice(0, 1).map(tag => (
+                    <a 
+                        href={`/catalog?tag=${tag.id}`}
+                        class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 hover:text-hyle-clay transition-all"
+                    >
+                        #{tag.title}
+                    </a>
+                ))}
+            </div>
         )}
     </div>
     

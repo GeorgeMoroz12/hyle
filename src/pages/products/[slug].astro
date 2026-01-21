@@ -18,103 +18,87 @@ const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. HYBRID DATA NORMALIZATION (CATEGORY) ---
-let categoryId = null;
+// --- 1. УТИЛИТА НОРМАЛИЗАЦИИ (HELPER) ---
+// Превращает что угодно (строку, объект, мусор) в чистый ID или null
+const resolveId = (item: any) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item.id) return item.id;
+    return null;
+};
+
+// --- 2. БЕЗОПАСНАЯ КАТЕГОРИЯ ---
+const currentCategoryId = resolveId(entry.data.category);
 let categoryTitle = 'Каталог';
 
-const rawCat = entry.data.category;
-
-if (rawCat) {
-    if (typeof rawCat === 'string') {
-        // LEGACY: Это просто строка (ID или Название)
-        // Пробуем получить объект, если это ID. Если нет - используем как текст.
-        try {
-            const fetchedCat = await getEntry('categories', rawCat);
-            if (fetchedCat) {
-                categoryId = fetchedCat.id;
-                categoryTitle = fetchedCat.data.title;
-            } else {
-                // Это просто слово (Legacy Name)
-                categoryId = rawCat;
-                categoryTitle = rawCat; // "Вазы"
-            }
-        } catch (e) {
-            // Если упало - используем как есть
-            categoryId = rawCat;
-            categoryTitle = rawCat;
-        }
-    } else if (typeof rawCat === 'object' && rawCat.id) {
-        // NEW: Это Reference объект
-        categoryId = rawCat.id;
-        try {
-            const fetchedCat = await getEntry(rawCat); // getEntry умеет принимать объект-ссылку
-            if (fetchedCat) categoryTitle = fetchedCat.data.title;
-        } catch (e) { console.warn('Cat ref error', e); }
+// Если есть ID, пробуем получить красивое название. Если нет - fallback.
+if (currentCategoryId) {
+    try {
+        const catEntry = await getEntry('categories', currentCategoryId);
+        if (catEntry) categoryTitle = catEntry.data.title;
+    } catch (e) {
+        // Если категории нет в базе (удалена), используем ID как название
+        categoryTitle = currentCategoryId; 
     }
 }
 
-// --- 2. HYBRID DATA NORMALIZATION (TAGS) ---
-// Задача: Получить список названий тегов для отображения
+// --- 3. БЕЗОПАСНЫЕ ТЕГИ ---
+// Собираем массив ID из смешанных данных
+const rawTags = Array.isArray(entry.data.tags) ? entry.data.tags : [];
+const tagIdsToLoad = rawTags.map(resolveId).filter(id => id !== null); // Чистый список строк-ID
+
 let displayTags = [];
-const rawTags = entry.data.tags || [];
-
-// Отделяем мух от котлет
-const stringTags = rawTags.filter(t => typeof t === 'string' && t.trim() !== '');
-const refTags = rawTags.filter(t => typeof t === 'object' && t !== null);
-
-// Загружаем ссылки
-let loadedRefTags = [];
-if (refTags.length > 0) {
+if (tagIdsToLoad.length > 0) {
     try {
-        loadedRefTags = await getEntries(refTags);
-    } catch (e) { console.warn('Tags ref error', e); }
+        // Astro getEntries принимает массив строк ID для коллекции, если они валидны
+        // Но для надежности мапим их в объекты-ссылки
+        const tagRefs = tagIdsToLoad.map(id => ({ collection: 'tags', id }));
+        const loadedTags = await getEntries(tagRefs);
+        
+        // Превращаем в простой формат для верстки { id, title }
+        displayTags = loadedTags.map(t => ({ id: t.id, title: t.data.title }));
+    } catch (e) {
+        // Fallback: Если база упала, показываем просто ID
+        displayTags = tagIdsToLoad.map(id => ({ id, title: id }));
+    }
 }
 
-// Мержим в единый формат { id, title }
-const normalizedStringTags = stringTags.map(t => ({ id: t, data: { title: t } }));
-// Склеиваем массивы
-const allProductTags = [...normalizedStringTags, ...loadedRefTags];
-
-
-// --- 3. RELATED PRODUCTS (SAFE COMPARISON) ---
+// --- 4. ПОХОЖИЕ ТОВАРЫ (Safe Compare) ---
 const allProducts = await getCollection('products');
 
-const relatedItems = allProducts.filter(p => {
-    if (p.id === entry.id) return false; // Не я сам
+const relatedProducts = allProducts.filter(p => {
+    if (p.id === entry.id) return false;
 
-    // Нормализация категории соседа на лету
-    const pCatRaw = p.data.category;
-    let pCatId = null;
-
-    if (typeof pCatRaw === 'string') pCatId = pCatRaw;
-    else if (typeof pCatRaw === 'object' && pCatRaw !== null) pCatId = pCatRaw.id;
-
-    // Сравниваем ID. Если у кого-то нет категории - не матч.
-    if (!categoryId || !pCatId) return false;
+    // Нормализуем категорию соседа
+    const pCatId = resolveId(p.data.category);
     
-    return pCatId === categoryId;
+    // Если у кого-то нет категории — не матч
+    if (!currentCategoryId || !pCatId) return false;
+    
+    return pCatId === currentCategoryId;
 }).slice(0, 6);
 
-// Если мало похожих - добавляем новинки
+// Добивка (Fallback to recent)
+let relatedItems = relatedProducts;
 if (relatedItems.length < 4) {
     const leftovers = allProducts
-        .filter(p => p.id !== entry.id && !relatedItems.some(ri => ri.id === p.id))
+        .filter(p => p.id !== entry.id && !relatedItems.some(r => r.id === p.id))
         .slice(0, 6 - relatedItems.length);
-    relatedItems.push(...leftovers);
+    relatedItems = [...relatedItems, ...leftovers];
 }
 
-// Helper: Map for Related Products Cards (Only IDs needed there)
-// Строим Map только из реальных категорий
+// Маппинг категорий для карточек (нужен для UI карточек)
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
+// --- 5. UI VARS ---
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
-const mainImage = images && images.length > 0 ? images[0] : '/placeholder.jpg';
+const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
 const noteText = masterNote || "Особенность этой серии — в несовершенстве формы. Следы пальцев оставлены намеренно.";
 const currentUrl = Astro.url.href;
 ---
@@ -126,41 +110,26 @@ const currentUrl = Astro.url.href;
     <!-- LEFT: PRODUCT STAGE -->
     <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
         
-        <div class="w-full pt-6 px-6 pb-4 flex flex-col gap-2 z-30 lg:absolute lg:top-8 lg:left-8 lg:p-0">
-            <a href="/" class="font-serif text-2xl tracking-wide text-hyle-text/80 mix-blend-multiply">
-                Hyle.
-            </a>
-            
-            <div class="flex items-center gap-2 text-sm lg:text-xl font-hand text-hyle-text/50">
-                 <a href="/catalog" class="hover:text-hyle-clay transition-colors">
-                    Каталог
-                 </a>
-                 <span class="text-hyle-text/30">/</span>
-                 <span class="text-hyle-clay truncate max-w-[200px]">
-                    {title}
-                 </span>
-            </div>
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">
+            Hyle.
+        </a>
+        
+        <!-- BREADCRUMBS -->
+        <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
+             <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+             <span class="text-hyle-text/30">/</span>
+             <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
 
         <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
-             <img 
-                src={mainImage} 
-                alt={title} 
-                id="main-product-image"
-                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl"
-            />
-            <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">
-                Tap to zoom
-            </div>
+             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
+             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
 
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
-                    <button 
-                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn"
-                        data-src={img}
-                    >
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
                         <img src={img} class="w-full h-full object-cover" />
                     </button>
                 ))}
@@ -170,38 +139,29 @@ const currentUrl = Astro.url.href;
 
     <!-- RIGHT: SIDEBAR -->
     <div class="w-full lg:w-[30%] min-h-[50vh] bg-white/80 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
-        
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
-            
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
                         <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
-                            <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">
-                                {title}
-                            </h1>
+                            <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">{title}</h1>
                         </ExpandableText>
                     </div>
                     {isSoldOut && <span class="text-[10px] border border-hyle-text/20 px-2 py-1 uppercase tracking-widest opacity-50 mt-1 shrink-0">Архив</span>}
                 </div>
                 
                 <div class="flex flex-col gap-2 mt-4 lg:mt-6 border-b border-hyle-text/5 pb-6">
-                    <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
-                        {formattedPrice}
-                    </span>
+                    <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">{formattedPrice}</span>
                     {!isSoldOut && status !== 'В наличии' && (
                         <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
                     )}
                     
-                    <!-- TAGS (NORMALIZED) -->
-                    {allProductTags.length > 0 && (
+                    <!-- TAGS DISPLAY -->
+                    {displayTags.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
-                            {allProductTags.slice(0, 3).map((tagObj) => (
-                                <a 
-                                    href={`/catalog?tag=${tagObj.id}`}
-                                    class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0"
-                                >
-                                    #{tagObj.data.title}
+                            {displayTags.slice(0, 3).map((tag) => (
+                                <a href={`/catalog?tag=${tag.id}`} class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0">
+                                    #{tag.title}
                                 </a>
                             ))}
                         </div>
@@ -212,9 +172,7 @@ const currentUrl = Astro.url.href;
             <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
                  <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
-                    <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">
-                        "{noteText}"
-                    </p>
+                    <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">"{noteText}"</p>
                  </ExpandableText>
             </div>
 
@@ -235,60 +193,36 @@ const currentUrl = Astro.url.href;
                         ))}
                     </dl>
                 )}
-
                 {care_instructions && (
                     <details class="group cursor-pointer border-t border-hyle-text/10 pt-3">
                         <summary class="flex justify-between items-center list-none outline-none text-hyle-text/60 hover:text-hyle-clay transition-colors">
                             <span class="text-xs font-medium uppercase tracking-wider">Уход за изделием</span>
-                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">
-                                ↓
-                            </span>
+                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">↓</span>
                         </summary>
-                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">
-                            {care_instructions}
-                        </div>
+                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">{care_instructions}</div>
                     </details>
                 )}
             </div>
 
             <div class="mt-2">
                  {isSoldOut ? (
-                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">
-                        Изделие нашло свой дом
-                    </button>
+                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
                 ) : (
-                    <OrderButton 
-                        productName={title} 
-                        price={price} 
-                        url={currentUrl} 
-                    />
+                    <OrderButton productName={title} price={price} url={currentUrl} />
                 )}
             </div>
 
-            <!-- RELATED PRODUCTS -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
-                    <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
-                        Вам может понравиться:
-                    </h3>
+                    <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">Вам может понравиться:</h3>
                     <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
                 </div>
-                
-                <div 
-                    id="related-slider"
-                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
-                >
+                <div id="related-slider" class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth">
                     {relatedItems.map((item) => {
-                         // Безопасное извлечение категории для карточки
-                         const cRaw = item.data.category;
-                         const cId = (typeof cRaw === 'object' && cRaw !== null) ? cRaw.id : cRaw;
-                         
+                         const cId = resolveId(item.data.category);
                          return (
                             <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
-                                <ProductCard 
-                                    product={item} 
-                                    categoryName={cId ? categoryMap[cId] : ''} 
-                                />
+                                <ProductCard product={item} categoryName={cId ? categoryMap[cId] : ''} />
                             </div>
                         );
                     })}
@@ -300,10 +234,11 @@ const currentUrl = Astro.url.href;
 </Layout>
 
 <script>
+    // ... (Keep existing scripts: Zoom, Thumbnails, Scroll Wheel) ...
+    // Zoom logic
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
     let isZoomed = false;
-
     if (container && img) {
         container.addEventListener('mousemove', (e) => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
@@ -313,45 +248,34 @@ const currentUrl = Astro.url.href;
                 const x = ((e.clientX - left) / width) * 100;
                 // @ts-ignore
                 const y = ((e.clientY - top) / height) * 100;
-                
                 img.style.transformOrigin = `${x}% ${y}%`;
                 img.style.transform = 'scale(1.5)';
             }
         });
-
         container.addEventListener('mouseleave', () => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
                 img.style.transform = 'scale(1)';
-                setTimeout(() => {
-                    img.style.transformOrigin = 'center center';
-                }, 300);
+                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
             }
         });
-
         container.addEventListener('click', () => {
             if (window.matchMedia("(max-width: 1023px)").matches) {
-                if (isZoomed) {
-                    img.style.transform = 'scale(1)';
-                    isZoomed = false;
-                } else {
-                    img.style.transform = 'scale(1.5)';
-                    isZoomed = true;
-                }
+                if (isZoomed) { img.style.transform = 'scale(1)'; isZoomed = false; } 
+                else { img.style.transform = 'scale(1.5)'; isZoomed = true; }
             }
         });
     }
-
+    // Thumbnails
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
             if (img && src) img.setAttribute('src', src);
-            
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
-
+    // Wheel
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {

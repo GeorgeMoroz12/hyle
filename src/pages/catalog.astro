@@ -16,53 +16,37 @@ const allProducts = await getCollection('products', ({ data }) => {
 
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-// --- HYBRID TAG COLLECTION ---
-// 1. Собираем все ID, какие есть (и легаси строки, и ID референсов)
+// --- SAFE TAG COLLECTION ---
+// 1. Сбор всех ID (строки и рефы)
 const rawTagIds = allProducts.flatMap(product => {
     const tags = product.data.tags || [];
     return tags.map(tag => {
         if (typeof tag === 'string') return tag;
-        if (typeof tag === 'object' && tag !== null) return tag.id;
+        if (typeof tag === 'object' && tag !== null && tag.id) return tag.id;
         return null;
     });
-}).filter(t => t && typeof t === 'string'); // Убираем мусор
+}).filter(t => t && typeof t === 'string' && t.trim() !== '');
 
-// 2. Уникальные ID
 const uniqueTagIds = [...new Set(rawTagIds)];
 
-// 3. Пытаемся получить красивые названия для этих ID из коллекции Tags
-// (Если тег legacy, его может не быть в коллекции, тогда используем ID как имя)
+// 2. Загрузка названий
 let filterTags = [];
-
-// Подготовка массива ссылок для getEntries
-const refObjects = uniqueTagIds.map(id => ({ collection: 'tags', id }));
-
-try {
-    // getEntries вернет массив найденных записей.
-    // Если запись не найдена, в массиве на этом месте может быть undefined (зависит от версии Astro)
-    // или он просто вернет только найденные.
-    // В Astro 3/4 getEntries обычно возвращает то, что нашел.
-    const loadedTags = await getEntries(refObjects);
-    
-    // Создаем Map: ID -> Title
-    const titleMap = new Map();
-    loadedTags.forEach(t => {
-        if (t && t.data) titleMap.set(t.id, t.data.title);
-    });
-
-    // Формируем итоговый список
-    filterTags = uniqueTagIds.map(id => ({
-        id: id,
-        title: titleMap.get(id) || id // Если в базе нет, выводим сам ID (Legacy fallback)
-    }));
-
-} catch (e) {
-    // Если всё упало - просто используем ID
-    console.warn('Catalog tag fetch fail', e);
-    filterTags = uniqueTagIds.map(id => ({ id, title: id }));
+if (uniqueTagIds.length > 0) {
+    try {
+        const loadedTags = await getEntries(uniqueTagIds.map(id => ({ collection: 'tags', id })));
+        const titleMap = new Map();
+        loadedTags.forEach(t => {
+            if (t && t.data) titleMap.set(t.id, t.data.title);
+        });
+        filterTags = uniqueTagIds.map(id => ({
+            id: id,
+            title: titleMap.get(id) || id 
+        }));
+    } catch (e) {
+        // Fallback
+        filterTags = uniqueTagIds.map(id => ({ id, title: id }));
+    }
 }
-
-// Сортировка по алфавиту
 filterTags.sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
@@ -74,176 +58,91 @@ const pageDesc = "Полная коллекция керамики ручной 
   <div class="min-h-screen pt-20 md:pt-24 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
         
-        <!-- HEADER -->
         <div class="flex flex-col items-start gap-3 md:gap-4 mb-8 md:mb-12 animate-appear">
-            <span class="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">
-                Shop All
-            </span>
-            <h1 class="font-serif text-4xl md:text-5xl lg:text-7xl text-hyle-text leading-[0.9]">
-                Коллекция
-            </h1>
-            <p class="text-hyle-text/60 font-light max-w-md mt-1 text-sm md:text-base">
-                Все изделия, доступные к заказу.
-            </p>
+            <span class="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">Shop All</span>
+            <h1 class="font-serif text-4xl md:text-5xl lg:text-7xl text-hyle-text leading-[0.9]">Коллекция</h1>
+            <p class="text-hyle-text/60 font-light max-w-md mt-1 text-sm md:text-base">Все изделия, доступные к заказу.</p>
         </div>
 
-        <!-- FILTERS BAR -->
         <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
-            
             <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
-                <button 
-                    class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                    data-tag="all"
-                    data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
-                    data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
-                >
-                    Все
-                </button>
-
+                <button class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest" data-tag="all" data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text" data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay">Все</button>
                 {filterTags.map(tag => (
-                    <button 
-                        class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                        data-tag={tag.id} 
-                        data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
-                        data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
-                    >
-                        #{tag.title}
-                    </button>
+                    <button class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest" data-tag={tag.id} data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text" data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay">#{tag.title}</button>
                 ))}
             </div>
         </div>
 
-        <!-- PRODUCTS GRID -->
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
-            
             {sortedProducts.map((product) => {
-                // NORMALIZATION FOR DATA ATTRS
                 const catRaw = product.data.category;
                 const catId = (typeof catRaw === 'object' && catRaw !== null) ? catRaw.id : catRaw;
                 
-                const tagsRaw = product.data.tags || [];
-                const tagsList = tagsRaw.map(t => (typeof t === 'object' && t !== null) ? t.id : t).filter(Boolean);
+                const tagsList = (product.data.tags || []).map(t => (typeof t === 'object' && t !== null) ? t.id : t).filter(Boolean);
                 const tagsString = tagsList.join(',');
                 
                 return (
-                    <div 
-                        class="product-item transition-all duration-700 opacity-100 translate-y-0"
-                        data-tags={tagsString}
-                    >
-                        <ProductCard 
-                            product={product} 
-                            categoryName={catId ? categoryMap[catId] : ''} 
-                        />
+                    <div class="product-item transition-all duration-700 opacity-100 translate-y-0" data-tags={tagsString}>
+                        <ProductCard product={product} categoryName={catId ? categoryMap[catId] : ''} />
                     </div>
                 );
             })}
-
             <div id="empty-state" class="hidden col-span-full py-20 text-center">
                 <p class="font-serif text-2xl text-hyle-text/40 mb-4">Ничего не найдено</p>
-                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
-                    Сбросить
-                </button>
+                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">Сбросить</button>
             </div>
-
         </div>
 
     </div>
   </div>
 </Layout>
 
+<!-- Script remains same (initCatalog...) -->
 <script>
-    document.addEventListener('astro:page-load', () => {
-        initCatalog();
-    }, { once: false });
-
-    if (document.readyState === 'complete') {
-        initCatalog();
-    } else {
-        window.addEventListener('load', initCatalog);
-    }
-
+    document.addEventListener('astro:page-load', () => { initCatalog(); }, { once: false });
+    if (document.readyState === 'complete') { initCatalog(); } else { window.addEventListener('load', initCatalog); }
     function initCatalog() {
         const buttons = document.querySelectorAll('.filter-btn');
         const items = document.querySelectorAll('.product-item');
         const emptyState = document.getElementById('empty-state');
         const resetBtn = document.getElementById('reset-filters');
-
         if (!buttons.length || !items.length) return;
-
         const updateButtons = (activeTag) => {
             buttons.forEach(btn => {
                 const isActive = btn.getAttribute('data-tag') === activeTag;
                 const activeClass = btn.getAttribute('data-active-class');
                 const inactiveClass = btn.getAttribute('data-inactive-class');
-
-                if (isActive) {
-                    btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${activeClass}`;
-                } else {
-                    btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${inactiveClass}`;
-                }
+                if (isActive) { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${activeClass}`; } 
+                else { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${inactiveClass}`; }
             });
         };
-
         const filterGrid = (tag) => {
             let visibleCount = 0;
-
             items.forEach((item) => {
                 const itemTags = item.getAttribute('data-tags')?.split(',') || [];
                 const shouldShow = tag === 'all' || itemTags.includes(tag);
                 const element = item as HTMLElement;
-
                 if (shouldShow) {
                     element.classList.remove('hidden');
-                    requestAnimationFrame(() => {
-                        element.style.opacity = '1';
-                        element.style.transform = 'translateY(0)';
-                    });
+                    requestAnimationFrame(() => { element.style.opacity = '1'; element.style.transform = 'translateY(0)'; });
                     visibleCount++;
                 } else {
-                    element.style.opacity = '0';
-                    element.style.transform = 'translateY(20px)';
-                    element.classList.add('hidden');
+                    element.style.opacity = '0'; element.style.transform = 'translateY(20px)'; element.classList.add('hidden');
                 }
             });
-
-            if (visibleCount === 0 && emptyState) {
-                emptyState.classList.remove('hidden');
-            } else if (emptyState) {
-                emptyState.classList.add('hidden');
-            }
+            if (visibleCount === 0 && emptyState) { emptyState.classList.remove('hidden'); } else if (emptyState) { emptyState.classList.add('hidden'); }
         };
-
         const applyFilter = (tag) => {
-            updateButtons(tag);
-            filterGrid(tag);
-            
+            updateButtons(tag); filterGrid(tag);
             const url = new URL(window.location.href);
-            if (tag === 'all') {
-                url.searchParams.delete('tag');
-            } else {
-                url.searchParams.set('tag', tag);
-            }
+            if (tag === 'all') { url.searchParams.delete('tag'); } else { url.searchParams.set('tag', tag); }
             window.history.pushState({}, '', url);
         };
-
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tag = btn.getAttribute('data-tag') || 'all';
-                applyFilter(tag);
-            });
-        });
-
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => applyFilter('all'));
-        }
-
+        buttons.forEach(btn => { btn.addEventListener('click', () => { const tag = btn.getAttribute('data-tag') || 'all'; applyFilter(tag); }); });
+        if (resetBtn) { resetBtn.addEventListener('click', () => applyFilter('all')); }
         const params = new URLSearchParams(window.location.search);
         const initialTag = params.get('tag') || 'all';
         updateButtons(initialTag);
-        if (initialTag !== 'all') {
-            filterGrid(initialTag);
-        } else {
-            updateButtons('all');
-        }
+        if (initialTag !== 'all') { filterGrid(initialTag); } else { updateButtons('all'); }
     }
 </script>
