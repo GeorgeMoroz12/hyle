@@ -42,6 +42,7 @@ const about = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string().default('О Мастере'),
+    // Путь к фото (напр. "/images/about/me.jpg")
     heroImage: z.string().optional(),
   }).passthrough(),
 });
@@ -51,6 +52,11 @@ const landing = defineCollection({
   type: 'data',
   schema: z.object({
     heroTitleLine1: z.string().optional(),
+    // Явно добавляем поля картинок, чтобы фронтенд знал о них
+    heroImage: z.string().optional(), 
+    workshopTitle: z.string().optional(),
+    workshopText: z.string().optional(),
+    workshopImage: z.string().optional(),
   }).passthrough(),
 });
 
