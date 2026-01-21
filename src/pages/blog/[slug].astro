@@ -1,81 +1,30 @@
 ---
 // src/pages/blog/[slug].astro
+import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 
-// --- MOCK DATA (Временная база данных) ---
-// В будущем заменим на: const posts = await getCollection('blog');
+// 1. Генерируем пути для ВСЕХ реальных постов
 export async function getStaticPaths() {
-  const posts = [
-    {
-        slug: 'slow-living',
-        title: 'Искусство медленной жизни',
-        excerpt: 'Почему в 2026 году мы снова тянемся к ручному труду и несовершенным формам.',
-        date: '24.05.2026',
-        tag: 'Philosophy',
-        image: '/images/hero-minimal.jpg',
-        content: `
-            <p class="lead">В мире, где алгоритмы решают, что нам смотреть, а фабрики штампуют миллионы одинаковых копий, мы начинаем искать убежище в несовершенстве.</p>
-            
-            <p>Глина учит нас терпению. Она не терпит суеты. Если ты поспешишь на гончарном круге — форма разрушится. Если поспешишь с сушкой — изделие треснет в печи. Керамика — это физическое воплощение времени.</p>
-            
-            <h3>Почему мы выбираем тактильность?</h3>
-            <p>Наши пальцы привыкли к холодному стеклу смартфонов. Мы забываем ощущения шероховатости, тепла, тяжести натурального материала. Кружка ручной работы возвращает нас в "здесь и сейчас". Ты берешь её в руки и чувствуешь след пальца мастера. Это не баг, это мост между двумя людьми.</p>
-            
-            <p>Slow living — это не про лень. Это про осознанный выбор окружать себя вещами, у которых есть история.</p>
-        `
-    },
-    {
-        slug: 'care-guide',
-        title: 'Как ухаживать за керамикой',
-        excerpt: 'Простые правила, чтобы ваша любимая чашка жила долго. Можно ли мыть в посудомойке?',
-        date: '20.05.2026',
-        tag: 'Guide',
-        image: '/images/workshop-process.jpg',
-        content: `
-            <p>Керамика ручной работы — это живой материал. Она прошла огонь и воду, но требует любви в быту.</p>
-            
-            <h3>1. Температурный шок</h3>
-            <p>Никогда не наливайте кипяток в ледяную чашку (например, если принесли её с балкона зимой). И наоборот. Резкий перепад температур может вызвать микротрещины в глазури.</p>
-            
-            <h3>2. Посудомойка или руки?</h3>
-            <p>Мы рекомендуем ручную мойку. Агрессивная химия и вибрации посудомоечной машины могут со временем сделать глазурь мутной. Но если очень хочется — используйте деликатный режим.</p>
-            
-            <h3>3. Пятна от чая</h3>
-            <p>На светлой матовой керамике со временем может оставаться налет от чая или кофе. Это "патина времени". Если она вам не нравится — просто протрите содой.</p>
-        `
-    },
-    {
-        slug: 'clay-process',
-        title: 'От комка глины до обжига',
-        excerpt: 'Фотоотчет из мастерской: 12 этапов, которые проходит каждое изделие.',
-        date: '15.05.2026',
-        tag: 'Process',
-        image: '/images/hero-minimal.jpg',
-        content: `
-            <p>Многие думают, что гончар сел за круг, вытянул вазу за 5 минут, и готово. На самом деле, это путь длиною в 3 недели.</p>
-            <p>1. Подготовка массы (выбивание пузырьков воздуха).<br/>
-            2. Центровка на круге (самый физически сложный этап).<br/>
-            3. Вытягивание формы.<br/>
-            4. Сушка до состояния "кожетвердости".<br/>
-            5. Обточка (создание ножки и финализация формы).<br/>
-            6. Первый обжиг (Утильный, 900°C).<br/>
-            7. Глазуровка.<br/>
-            8. Второй обжиг (Политой, 1200°C).</p>
-            <p>И на каждом этапе что-то может пойти не так. Поэтому каждая выжившая чашка — это маленькое чудо.</p>
-        `
-    }
-  ];
-
+  const posts = await getCollection('blog');
   return posts.map(post => ({
     params: { slug: post.slug },
     props: { post },
   }));
 }
 
+// 2. Получаем данные поста
 const { post } = Astro.props;
+const { Content } = await post.render();
+
+// Форматирование даты
+const formattedDate = post.data.publishedDate.toLocaleDateString('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
 ---
 
-<Layout title={post.title} description={post.excerpt}>
+<Layout title={post.data.title} description={post.data.excerpt}>
   
   <article class="min-h-screen pt-32 pb-24 bg-[#FDFCF8]">
     
@@ -84,54 +33,56 @@ const { post } = Astro.props;
         <!-- Breadcrumbs / Tag -->
         <div class="flex items-center justify-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-hyle-text/40">
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
-            <span>/</span>
-            <span class="text-hyle-clay">#{post.tag}</span>
+            {post.data.tags && post.data.tags.length > 0 && (
+                <>
+                    <span>/</span>
+                    <span class="text-hyle-clay">#{post.data.tags[0]}</span>
+                </>
+            )}
         </div>
 
         <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl text-hyle-text leading-[1.1] mb-8">
-            {post.title}
+            {post.data.title}
         </h1>
 
         <p class="font-mono text-xs text-hyle-text/40 uppercase tracking-widest">
-            {post.date} • Время чтения: 3 мин
+            {formattedDate}
         </p>
     </div>
 
     <!-- 2. COVER IMAGE -->
-    <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
-        <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
-            <img 
-                src={post.image} 
-                alt={post.title} 
-                class="w-full h-full object-cover grayscale opacity-90 hover:grayscale-0 hover:opacity-100 transition-all duration-[2s]"
-            />
+    {post.data.coverImage && (
+        <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
+            <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
+                <img 
+                    src={post.data.coverImage} 
+                    alt={post.data.title} 
+                    class="w-full h-full object-cover grayscale opacity-90 hover:grayscale-0 hover:opacity-100 transition-all duration-[2s]"
+                />
+            </div>
         </div>
-        <div class="mt-4 text-center">
-            <span class="font-mono text-[9px] uppercase tracking-widest text-hyle-text/30">Фото из архива мастерской</span>
-        </div>
-    </div>
+    )}
 
     <!-- 3. ARTICLE CONTENT -->
     <div class="container-main max-w-[680px] mx-auto animate-appear" style="animation-delay: 200ms;">
         <!-- 
             TYPOGRAPHY STYLES (Prose) 
-            Настраиваем читаемость: высоту строк, отступы, шрифты.
         -->
         <div class="prose prose-stone prose-lg md:prose-xl 
             prose-headings:font-serif prose-headings:font-normal prose-headings:text-hyle-text 
             prose-p:font-sans prose-p:font-light prose-p:text-hyle-text/80 prose-p:leading-relaxed
             prose-a:text-hyle-clay prose-a:no-underline hover:prose-a:underline
-            prose-li:font-light prose-li:text-hyle-text/80">
+            prose-li:font-light prose-li:text-hyle-text/80
+            prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
-            <!-- Рендерим HTML из мока -->
-            <Fragment set:html={post.content} />
+            <Content />
             
         </div>
 
         <!-- 4. SIGNATURE / AUTHOR -->
         <div class="mt-16 pt-12 border-t border-hyle-text/10 flex flex-col items-center text-center gap-4">
             <div class="w-12 h-12 rounded-full bg-hyle-stone/30 overflow-hidden">
-                <img src="/images/hero-minimal.jpg" class="w-full h-full object-cover grayscale" />
+                <img src="/images/hero-minimal.jpg" class="w-full h-full object-cover grayscale" alt="Автор" />
             </div>
             <div>
                 <p class="font-serif text-lg text-hyle-text">Мастер Hyle</p>

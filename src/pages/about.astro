@@ -1,9 +1,29 @@
 ---
 // src/pages/about.astro
 import Layout from '../layouts/Layout.astro';
+import { getEntry } from 'astro:content';
 
-// Можно вынести в CMS позже
-const ABOUT_IMAGE = "/images/workshop-process.jpg"; // Используем существующую или новую
+// 1. Получаем данные из CMS (Singleton 'about' / entry 'main')
+// Если данных нет, используем Fallback
+let aboutData = {};
+try {
+    const entry = await getEntry('about', 'main');
+    if (entry) aboutData = entry.data;
+} catch (e) {
+    console.warn('About page content missing');
+}
+
+const DATA = {
+    image: aboutData.image || "/images/workshop-process.jpg",
+    title: aboutData.title || '"Я верю, что вещи должны замедлять время."',
+    text: aboutData.content || `
+        <p>Привет. Меня зовут [Имя Мастера], и я создаю керамику Hyle.</p>
+        <p>В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях. След пальца на ручке чашки, неровный край тарелки — всё это делает предмет живым.</p>
+        <p>Моя керамика — это тактильный опыт. Это вес глины в руке, шероховатость терракоты и гладкость эмали.</p>
+    `,
+    est: aboutData.est || "Est. 2026",
+    location: aboutData.location || "Moscow, RU"
+};
 ---
 
 <Layout title="О мастере" description="Философия Hyle Ceramics. О мастере и процессе создания.">
@@ -28,8 +48,8 @@ const ABOUT_IMAGE = "/images/workshop-process.jpg"; // Используем су
             <div class="lg:col-span-5 relative animate-appear" style="animation-delay: 100ms;">
                 <div class="relative aspect-[4/5] overflow-hidden rounded-sm bg-neutral-100 shadow-xl">
                     <img 
-                        src={ABOUT_IMAGE} 
-                        alt="Портрет мастера или процесс" 
+                        src={DATA.image} 
+                        alt="Портрет мастера" 
                         class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[1.5s]"
                     />
                     <!-- Decor Line -->
@@ -37,8 +57,8 @@ const ABOUT_IMAGE = "/images/workshop-process.jpg"; // Используем су
                 </div>
                 
                 <div class="mt-4 flex justify-between items-end font-mono text-[10px] text-hyle-text/40 uppercase tracking-widest">
-                    <span>Est. 2026</span>
-                    <span>Moscow, RU</span>
+                    <span>{DATA.est}</span>
+                    <span>{DATA.location}</span>
                 </div>
             </div>
 
@@ -46,24 +66,12 @@ const ABOUT_IMAGE = "/images/workshop-process.jpg"; // Используем су
             <div class="lg:col-span-7 lg:pl-12 flex flex-col gap-10 animate-appear" style="animation-delay: 200ms;">
                 
                 <h2 class="font-serif text-3xl md:text-4xl text-hyle-text leading-tight">
-                    "Я верю, что вещи должны <br/> 
-                    <span class="italic text-hyle-clay">замедлять</span> время."
+                    <Fragment set:html={DATA.title.replace(/\n/g, '<br/>')} />
                 </h2>
 
                 <div class="prose prose-stone prose-lg font-light text-hyle-text/70 leading-relaxed space-y-6">
-                    <p>
-                        Привет. Меня зовут [Имя Мастера], и я создаю керамику Hyle.
-                    </p>
-                    <p>
-                        В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях. 
-                        След пальца на ручке чашки, неровный край тарелки, уникальный рисунок глазури после обжига — 
-                        всё это делает предмет живым.
-                    </p>
-                    <p>
-                        Моя керамика — это не просто посуда. Это тактильный опыт. 
-                        Это вес глины в руке, шероховатость терракоты и гладкость эмали. 
-                        Это вещи, которые просят, чтобы их касались.
-                    </p>
+                    {/* Если контент пришел как HTML из Markdown или Rich Text */}
+                    <Fragment set:html={DATA.text} />
                 </div>
 
                 <!-- SIGNATURE -->
