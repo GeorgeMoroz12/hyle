@@ -11,31 +11,25 @@ export default config({
       },
 
   singletons: {
-    // 1. LANDING (Главная)
+    // --- 1. LANDING ---
     landing: singleton({
       label: '🏠 Главная страница',
       path: 'src/content/landing/home',
       schema: {
-        // Hero Section
         heroTitleLine1: fields.text({ label: 'Hero: Заголовок (Строка 1)', defaultValue: 'Глина' }),
         heroTitleAccent: fields.text({ label: 'Hero: Акцент (Курсив)', defaultValue: 'хранит' }),
         heroTitleLine2: fields.text({ label: 'Hero: Заголовок (Строка 2)', defaultValue: 'тепло.' }),
         heroDescription: fields.text({ label: 'Hero: Описание', multiline: true }),
         
-        // ВАЖНО: Настройка путей для Hero картинки
+        // ПРОВЕРКА: Путь для Landing
         heroImage: fields.image({
             label: 'Hero: Главное фото',
-            // Куда физически сохранить файл (в public, чтобы был доступен всем)
             directory: 'public/images/landing', 
-            // Какой путь записать в JSON (от корня сайта)
-            publicPath: '/images/landing/'
+            publicPath: '/images/landing/' // Со слэшем в начале!
         }),
 
-        // Workshop Section
         workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
         workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
-        
-        // ВАЖНО: Настройка путей для Workshop картинки
         workshopImage: fields.image({
             label: 'Workshop: Фото',
             directory: 'public/images/landing',
@@ -44,7 +38,7 @@ export default config({
       },
     }),
 
-    // 2. ABOUT (О Мастере)
+    // --- 2. ABOUT (О Мастере) ---
     about: singleton({
       label: '👤 О Мастере',
       path: 'src/content/about/main',
@@ -52,11 +46,11 @@ export default config({
       schema: {
         title: fields.text({ label: 'Заголовок страницы', defaultValue: 'О Мастере' }),
         
-        // ВАЖНО: Настройка путей для фото мастера
+        // ПРОВЕРКА: Путь для About
         heroImage: fields.image({
           label: 'Фото мастера',
-          directory: 'public/images/about',
-          publicPath: '/images/about/',
+          directory: 'public/images/about', // Физическая папка
+          publicPath: '/images/about/',     // Ссылка для сайта: /images/about/file.jpg
           validation: { isRequired: true }
         }),
 
@@ -66,7 +60,6 @@ export default config({
           dividers: true,
           links: true,
           images: {
-            // Картинки внутри текста статьи
             directory: 'public/images/about/content',
             publicPath: '/images/about/content/',
           },
@@ -74,7 +67,7 @@ export default config({
       },
     }),
 
-    // 3. B2B
+    // --- 3. B2B ---
     b2b: singleton({
       label: '💼 Страница для Ресторанов',
       path: 'src/content/b2b/main',
@@ -86,7 +79,6 @@ export default config({
     }),
   },
 
-  // --- КОЛЛЕКЦИИ (Оставляем без изменений) ---
   collections: {
     categories: collection({
       label: '🗂 Справочник: Категории',

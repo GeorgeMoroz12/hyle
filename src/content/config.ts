@@ -1,6 +1,5 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники
 const tags = defineCollection({
   type: 'content',
   schema: z.object({ title: z.string() }).passthrough(),
@@ -11,7 +10,6 @@ const categories = defineCollection({
   schema: z.object({ title: z.string() }).passthrough(),
 });
 
-// 2. Товары (Soft Mode - чтобы не ломалось на старых)
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
@@ -26,7 +24,6 @@ const products = defineCollection({
   }).passthrough(),
 });
 
-// 3. Блог (НОВОЕ)
 const blog = defineCollection({
   type: 'content',
   schema: z.object({
@@ -37,26 +34,24 @@ const blog = defineCollection({
   }).passthrough(),
 });
 
-// 4. О Мастере (НОВОЕ)
+// ПРОВЕРКА: About (Singleton)
 const about = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string().default('О Мастере'),
-    // Путь к фото (напр. "/images/about/me.jpg")
-    heroImage: z.string().optional(),
+    heroImage: z.string().optional(), // Ожидаем строку вида "/images/about/..."
   }).passthrough(),
 });
 
-// 5. Одиночные страницы (Landing, B2B)
+// ПРОВЕРКА: Landing (Singleton)
 const landing = defineCollection({
   type: 'data',
   schema: z.object({
     heroTitleLine1: z.string().optional(),
-    // Явно добавляем поля картинок, чтобы фронтенд знал о них
-    heroImage: z.string().optional(), 
+    heroImage: z.string().optional(), // Ожидаем строку
     workshopTitle: z.string().optional(),
     workshopText: z.string().optional(),
-    workshopImage: z.string().optional(),
+    workshopImage: z.string().optional(), // Ожидаем строку
   }).passthrough(),
 });
 
