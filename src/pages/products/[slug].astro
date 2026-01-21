@@ -6,7 +6,6 @@ import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
 import ProductCard from '../../components/ProductCard.astro';
 
-// ... (код getStaticPaths без изменений) ...
 export async function getStaticPaths() {
   const products = await getCollection('products');
   return products.map(entry => ({
@@ -14,48 +13,98 @@ export async function getStaticPaths() {
     props: { entry },
   }));
 }
+
 const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions } = entry.data;
 const { Content } = await entry.render();
 
-// --- БЕЗОПАСНАЯ ЗАГРУЗКА ---
-let categoryEntry = null;
-if (entry.data.category && typeof entry.data.category === 'string') {
-  try {
-    categoryEntry = await getEntry('categories', entry.data.category);
-  } catch (e) { console.warn('Cat error:', e); }
+// --- 1. HYBRID DATA NORMALIZATION (CATEGORY) ---
+let categoryId = null;
+let categoryTitle = 'Каталог';
+
+const rawCat = entry.data.category;
+
+if (rawCat) {
+    if (typeof rawCat === 'string') {
+        // LEGACY: Это просто строка (ID или Название)
+        // Пробуем получить объект, если это ID. Если нет - используем как текст.
+        try {
+            const fetchedCat = await getEntry('categories', rawCat);
+            if (fetchedCat) {
+                categoryId = fetchedCat.id;
+                categoryTitle = fetchedCat.data.title;
+            } else {
+                // Это просто слово (Legacy Name)
+                categoryId = rawCat;
+                categoryTitle = rawCat; // "Вазы"
+            }
+        } catch (e) {
+            // Если упало - используем как есть
+            categoryId = rawCat;
+            categoryTitle = rawCat;
+        }
+    } else if (typeof rawCat === 'object' && rawCat.id) {
+        // NEW: Это Reference объект
+        categoryId = rawCat.id;
+        try {
+            const fetchedCat = await getEntry(rawCat); // getEntry умеет принимать объект-ссылку
+            if (fetchedCat) categoryTitle = fetchedCat.data.title;
+        } catch (e) { console.warn('Cat ref error', e); }
+    }
 }
 
-let tagEntries = [];
-const rawTags = entry.data.tags;
-if (Array.isArray(rawTags)) {
-  const validTags = rawTags.filter(t => t && typeof t === 'string' && t.trim() !== '');
-  if (validTags.length > 0) {
+// --- 2. HYBRID DATA NORMALIZATION (TAGS) ---
+// Задача: Получить список названий тегов для отображения
+let displayTags = [];
+const rawTags = entry.data.tags || [];
+
+// Отделяем мух от котлет
+const stringTags = rawTags.filter(t => typeof t === 'string' && t.trim() !== '');
+const refTags = rawTags.filter(t => typeof t === 'object' && t !== null);
+
+// Загружаем ссылки
+let loadedRefTags = [];
+if (refTags.length > 0) {
     try {
-      tagEntries = await getEntries(validTags);
-    } catch (e) { console.warn('Tag error:', e); }
-  }
+        loadedRefTags = await getEntries(refTags);
+    } catch (e) { console.warn('Tags ref error', e); }
 }
 
-// RELATED PRODUCTS
+// Мержим в единый формат { id, title }
+const normalizedStringTags = stringTags.map(t => ({ id: t, data: { title: t } }));
+// Склеиваем массивы
+const allProductTags = [...normalizedStringTags, ...loadedRefTags];
+
+
+// --- 3. RELATED PRODUCTS (SAFE COMPARISON) ---
 const allProducts = await getCollection('products');
-const relatedProducts = allProducts.filter(p => {
-  if (p.id === entry.id) return false;
-  const currentCatId = typeof entry.data.category === 'object' ? entry.data.category?.id : entry.data.category;
-  const otherCatId = typeof p.data.category === 'object' ? p.data.category?.id : p.data.category;
-  if (!currentCatId || !otherCatId) return false;
-  return currentCatId === otherCatId;
+
+const relatedItems = allProducts.filter(p => {
+    if (p.id === entry.id) return false; // Не я сам
+
+    // Нормализация категории соседа на лету
+    const pCatRaw = p.data.category;
+    let pCatId = null;
+
+    if (typeof pCatRaw === 'string') pCatId = pCatRaw;
+    else if (typeof pCatRaw === 'object' && pCatRaw !== null) pCatId = pCatRaw.id;
+
+    // Сравниваем ID. Если у кого-то нет категории - не матч.
+    if (!categoryId || !pCatId) return false;
+    
+    return pCatId === categoryId;
 }).slice(0, 6);
 
-if (relatedProducts.length < 4) {
-  const leftovers = allProducts
-    .filter(p => p.id !== entry.id && !relatedProducts.some(rp => rp.id === p.id))
-    .slice(0, 6 - relatedProducts.length);
-  relatedProducts.push(...leftovers);
+// Если мало похожих - добавляем новинки
+if (relatedItems.length < 4) {
+    const leftovers = allProducts
+        .filter(p => p.id !== entry.id && !relatedItems.some(ri => ri.id === p.id))
+        .slice(0, 6 - relatedItems.length);
+    relatedItems.push(...leftovers);
 }
-const relatedItems = relatedProducts;
 
-// HELPERS
+// Helper: Map for Related Products Cards (Only IDs needed there)
+// Строим Map только из реальных категорий
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
@@ -127,7 +176,6 @@ const currentUrl = Astro.url.href;
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <!-- Заголовок -->
                         <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
                             <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">
                                 {title}
@@ -145,14 +193,15 @@ const currentUrl = Astro.url.href;
                         <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
                     )}
                     
-                    {tagEntries.length > 0 && (
+                    <!-- TAGS (NORMALIZED) -->
+                    {allProductTags.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
-                            {tagEntries.slice(0, 3).map((tagEntry) => (
+                            {allProductTags.slice(0, 3).map((tagObj) => (
                                 <a 
-                                    href={`/catalog?tag=${tagEntry.id}`}
+                                    href={`/catalog?tag=${tagObj.id}`}
                                     class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0"
                                 >
-                                    #{tagEntry.data.title}
+                                    #{tagObj.data.title}
                                 </a>
                             ))}
                         </div>
@@ -160,10 +209,8 @@ const currentUrl = Astro.url.href;
                 </div>
             </div>
 
-            <!-- Master Note: Increased Max Height -->
             <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
-                 <!-- FIX: Увеличена высота до 120px -->
                  <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">
                         "{noteText}"
@@ -218,43 +265,41 @@ const currentUrl = Astro.url.href;
                 )}
             </div>
 
-            {relatedItems.length > 0 && (
-                <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
-                    <div class="flex justify-between items-baseline mb-4">
-                        <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
-                            {relatedItems.length > 0 ? "Вам может понравиться:" : "Другие изделия:"}
-                        </h3>
-                        <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
-                    </div>
-                    
-                    <div 
-                        id="related-slider"
-                        class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
-                    >
-                        {relatedItems.map((item) => {
-                             const relCatId = (item.data.category && typeof item.data.category === 'object') 
-                                ? item.data.category.id 
-                                : item.data.category;
-                             
-                             return (
-                                <div class="shrink-0 w-40 md:w-52 snap-start pointer-events-auto">
-                                    <ProductCard 
-                                        product={item} 
-                                        categoryName={relCatId ? categoryMap[relCatId] : ''} 
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
+            <!-- RELATED PRODUCTS -->
+            <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
+                <div class="flex justify-between items-baseline mb-4">
+                    <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">
+                        Вам может понравиться:
+                    </h3>
+                    <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Scroll →</span>
                 </div>
-            )}
+                
+                <div 
+                    id="related-slider"
+                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth"
+                >
+                    {relatedItems.map((item) => {
+                         // Безопасное извлечение категории для карточки
+                         const cRaw = item.data.category;
+                         const cId = (typeof cRaw === 'object' && cRaw !== null) ? cRaw.id : cRaw;
+                         
+                         return (
+                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
+                                <ProductCard 
+                                    product={item} 
+                                    categoryName={cId ? categoryMap[cId] : ''} 
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
     </div>
   </div>
 </Layout>
 
 <script>
-    // --- MAIN IMAGE ZOOM (MOBILE & DESKTOP) ---
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
     let isZoomed = false;
@@ -283,7 +328,6 @@ const currentUrl = Astro.url.href;
             }
         });
 
-        // Mobile Tap Zoom
         container.addEventListener('click', () => {
             if (window.matchMedia("(max-width: 1023px)").matches) {
                 if (isZoomed) {

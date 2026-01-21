@@ -4,60 +4,66 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection, getEntries } from 'astro:content';
 
-// 1. ПОЛУЧЕНИЕ КАТЕГОРИЙ (Для маппинга в карточках)
-// getCollection безопасен, так как читает сами файлы категорий, а не ссылки из товаров
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
-// 2. ПОЛУЧЕНИЕ ТОВАРОВ
 const allProducts = await getCollection('products', ({ data }) => {
     return data.status !== 'archived';
 });
 
-// Сортировка (новые сверху)
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-// 3. БЕЗОПАСНЫЙ СБОР ТЕГОВ (DEFENSIVE CODING)
-// Нам нужно собрать уникальные ID тегов, которые используются в товарах,
-// а затем получить их красивые названия (Title) из коллекции tags.
-
-// Шаг А: Извлекаем ID (учитываем, что это может быть String или Reference Object)
+// --- HYBRID TAG COLLECTION ---
+// 1. Собираем все ID, какие есть (и легаси строки, и ID референсов)
 const rawTagIds = allProducts.flatMap(product => {
     const tags = product.data.tags || [];
     return tags.map(tag => {
-        // Если это объект-ссылка (Relation), берем .id, иначе саму строку
-        return (typeof tag === 'object' && tag !== null) ? tag.id : tag;
+        if (typeof tag === 'string') return tag;
+        if (typeof tag === 'object' && tag !== null) return tag.id;
+        return null;
     });
-});
+}).filter(t => t && typeof t === 'string'); // Убираем мусор
 
-// Шаг Б: Чистим от мусора (null, undefined, пустые строки)
-const cleanTagIds = [...new Set(rawTagIds)].filter(id => 
-    id && typeof id === 'string' && id.trim() !== ''
-);
+// 2. Уникальные ID
+const uniqueTagIds = [...new Set(rawTagIds)];
 
-// Шаг В: Безопасно запрашиваем данные тегов
-let uniqueTags = []; // Массив объектов { id, title }
+// 3. Пытаемся получить красивые названия для этих ID из коллекции Tags
+// (Если тег legacy, его может не быть в коллекции, тогда используем ID как имя)
+let filterTags = [];
 
-if (cleanTagIds.length > 0) {
-    try {
-        // Формируем правильные объекты references для getEntries
-        const tagReferences = cleanTagIds.map(id => ({ collection: 'tags', id }));
-        const tagEntries = await getEntries(tagReferences);
-        
-        // Мапим в удобный формат для UI
-        uniqueTags = tagEntries.map(t => ({
-            id: t.id,
-            title: t.data.title // Название тега ("Новинка", "Sale")
-        }));
-    } catch (e) {
-        console.warn('⚠️ Catalog: Failed to fetch filter tags. Using fallback IDs.', e);
-        // Fallback: Если запрос упал, используем ID как название
-        uniqueTags = cleanTagIds.map(id => ({ id, title: id }));
-    }
+// Подготовка массива ссылок для getEntries
+const refObjects = uniqueTagIds.map(id => ({ collection: 'tags', id }));
+
+try {
+    // getEntries вернет массив найденных записей.
+    // Если запись не найдена, в массиве на этом месте может быть undefined (зависит от версии Astro)
+    // или он просто вернет только найденные.
+    // В Astro 3/4 getEntries обычно возвращает то, что нашел.
+    const loadedTags = await getEntries(refObjects);
+    
+    // Создаем Map: ID -> Title
+    const titleMap = new Map();
+    loadedTags.forEach(t => {
+        if (t && t.data) titleMap.set(t.id, t.data.title);
+    });
+
+    // Формируем итоговый список
+    filterTags = uniqueTagIds.map(id => ({
+        id: id,
+        title: titleMap.get(id) || id // Если в базе нет, выводим сам ID (Legacy fallback)
+    }));
+
+} catch (e) {
+    // Если всё упало - просто используем ID
+    console.warn('Catalog tag fetch fail', e);
+    filterTags = uniqueTagIds.map(id => ({ id, title: id }));
 }
+
+// Сортировка по алфавиту
+filterTags.sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
 const pageDesc = "Полная коллекция керамики ручной работы Hyle.";
@@ -94,7 +100,7 @@ const pageDesc = "Полная коллекция керамики ручной 
                     Все
                 </button>
 
-                {uniqueTags.map(tag => (
+                {filterTags.map(tag => (
                     <button 
                         class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
                         data-tag={tag.id} 
@@ -111,13 +117,12 @@ const pageDesc = "Полная коллекция керамики ручной 
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {
-                // Безопасное получение ID категории и Тегов для дата-атрибутов
-                const catId = (product.data.category && typeof product.data.category === 'object') 
-                    ? product.data.category.id 
-                    : product.data.category;
+                // NORMALIZATION FOR DATA ATTRS
+                const catRaw = product.data.category;
+                const catId = (typeof catRaw === 'object' && catRaw !== null) ? catRaw.id : catRaw;
                 
-                // Собираем теги для JS-фильтрации (нужны ID)
-                const tagsList = (product.data.tags || []).map(t => (typeof t === 'object' ? t.id : t));
+                const tagsRaw = product.data.tags || [];
+                const tagsList = tagsRaw.map(t => (typeof t === 'object' && t !== null) ? t.id : t).filter(Boolean);
                 const tagsString = tagsList.join(',');
                 
                 return (
