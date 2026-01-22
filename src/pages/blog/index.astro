@@ -3,17 +3,11 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-// --- DEFENSIVE DATA FETCHING ---
 let posts = [];
-
 try {
     const rawPosts = await getCollection('blog');
-    
     if (Array.isArray(rawPosts)) {
-        // Фильтруем битые записи
         const validPosts = rawPosts.filter(p => p && p.data && p.data.title);
-
-        // Безопасная сортировка
         posts = validPosts.sort((a, b) => {
             const dateA = a.data.publishedDate ? new Date(a.data.publishedDate).valueOf() : 0;
             const dateB = b.data.publishedDate ? new Date(b.data.publishedDate).valueOf() : 0;
@@ -26,26 +20,14 @@ try {
 ---
 
 <Layout title="Журнал" description="Заметки о керамике, процессе и вдохновении.">
-  
   <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
-        
-        <!-- HEADER -->
         <div class="flex flex-col items-start gap-4 mb-16 md:mb-24 animate-appear">
-            <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">
-                Journal
-            </span>
-            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
-                Дневник
-            </h1>
-            <p class="text-hyle-text/60 font-light max-w-md mt-2">
-                Заметки о процессе, обжигах и философии быта.
-            </p>
+            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">Дневник</h1>
+            <p class="text-hyle-text/60 font-light max-w-md mt-2">Заметки о процессе, обжигах и философии быта.</p>
         </div>
 
-        <!-- POSTS GRID -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            
             {posts.length === 0 ? (
                 <div class="col-span-full py-20 text-center">
                     <p class="font-serif text-2xl text-hyle-text/40 mb-2">Тишина в эфире</p>
@@ -53,80 +35,41 @@ try {
                 </div>
             ) : (
                 posts.map((post, idx) => {
-                    const dateStr = post.data.publishedDate 
-                        ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU')
-                        : '';
-                    
-                    const firstTag = (Array.isArray(post.data.tags) && post.data.tags.length > 0) 
-                        ? post.data.tags[0] 
-                        : null;
-
-                    // Получаем картинку (если есть)
+                    const dateStr = post.data.publishedDate ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU') : '';
+                    const firstTag = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
                     const coverImage = post.data.coverImage;
 
                     return (
                         <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
-                            
-                            <!-- COVER IMAGE (NEW) -->
                             {coverImage && (
                                 <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-neutral-100 mb-2 block relative">
-                                    <img 
-                                        src={coverImage} 
-                                        alt={post.data.title}
-                                        class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
-                                        loading="lazy"
-                                    />
-                                    {/* Tag Overlay on Image (Optional style) */}
+                                    <img src={coverImage} alt={post.data.title} class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" />
                                     {firstTag && (
-                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">
-                                            #{firstTag}
-                                        </span>
+                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{firstTag}</span>
                                     )}
                                 </a>
                             )}
-
-                            <!-- Meta (Date only now, tag moved to image or kept here) -->
                             {!coverImage && (
                                 <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
-                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">
-                                        {dateStr}
-                                    </span>
-                                    {firstTag && (
-                                        <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">
-                                            #{firstTag}
-                                        </span>
-                                    )}
+                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
+                                    {firstTag && <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">#{firstTag}</span>}
                                 </div>
                             )}
-                            
-                            <!-- Если картинка есть, дату пишем под ней мелко -->
                             {coverImage && (
                                 <div class="w-full flex justify-between items-baseline -mt-2">
                                     <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
                                 </div>
                             )}
-
-                            <!-- Content -->
                             <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
-                                <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">
-                                    {post.data.title}
-                                </h2>
-                                <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">
-                                    {post.data.excerpt || ''}
-                                </p>
+                                <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">{post.data.title}</h2>
+                                <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">{post.data.excerpt || ''}</p>
                             </a>
-
-                            <!-- Link -->
-                            <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">
-                                Читать далее
-                            </a>
+                            <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">Читать далее</a>
                         </article>
                     );
                 })
             )}
-
         </div>
-
     </div>
   </div>
 </Layout>

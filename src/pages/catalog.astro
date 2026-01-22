@@ -16,8 +16,6 @@ const allProducts = await getCollection('products', ({ data }) => {
 
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-// --- SAFE TAG COLLECTION ---
-// 1. Сбор всех ID (строки и рефы)
 const rawTagIds = allProducts.flatMap(product => {
     const tags = product.data.tags || [];
     return tags.map(tag => {
@@ -29,7 +27,6 @@ const rawTagIds = allProducts.flatMap(product => {
 
 const uniqueTagIds = [...new Set(rawTagIds)];
 
-// 2. Загрузка названий
 let filterTags = [];
 if (uniqueTagIds.length > 0) {
     try {
@@ -43,7 +40,6 @@ if (uniqueTagIds.length > 0) {
             title: titleMap.get(id) || id 
         }));
     } catch (e) {
-        // Fallback
         filterTags = uniqueTagIds.map(id => ({ id, title: id }));
     }
 }
@@ -59,21 +55,40 @@ const pageDesc = "Полная коллекция керамики ручной 
     <div class="container-main">
         
         <div class="flex flex-col items-start gap-3 md:gap-4 mb-8 md:mb-12 animate-appear">
-            <span class="text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">Shop All</span>
-            <h1 class="font-serif text-4xl md:text-5xl lg:text-7xl text-hyle-text leading-[0.9]">Коллекция</h1>
-            <p class="text-hyle-text/60 font-light max-w-md mt-1 text-sm md:text-base">Все изделия, доступные к заказу.</p>
+            <h1 class="font-serif text-4xl md:text-5xl lg:text-7xl text-hyle-text leading-[0.9]">
+                Коллекция
+            </h1>
+            <p class="text-hyle-text/60 font-light max-w-md mt-1 text-sm md:text-base">
+                Все изделия, доступные к заказу.
+            </p>
         </div>
 
         <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
             <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
-                <button class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest" data-tag="all" data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text" data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay">Все</button>
+                <button 
+                    class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
+                    data-tag="all"
+                    data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                    data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                >
+                    Все
+                </button>
+
                 {filterTags.map(tag => (
-                    <button class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest" data-tag={tag.id} data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text" data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay">#{tag.title}</button>
+                    <button 
+                        class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
+                        data-tag={tag.id} 
+                        data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                        data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                    >
+                        #{tag.title}
+                    </button>
                 ))}
             </div>
         </div>
 
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
+            
             {sortedProducts.map((product) => {
                 const catRaw = product.data.category;
                 const catId = (typeof catRaw === 'object' && catRaw !== null) ? catRaw.id : catRaw;
@@ -82,22 +97,31 @@ const pageDesc = "Полная коллекция керамики ручной 
                 const tagsString = tagsList.join(',');
                 
                 return (
-                    <div class="product-item transition-all duration-700 opacity-100 translate-y-0" data-tags={tagsString}>
-                        <ProductCard product={product} categoryName={catId ? categoryMap[catId] : ''} />
+                    <div 
+                        class="product-item transition-all duration-700 opacity-100 translate-y-0"
+                        data-tags={tagsString}
+                    >
+                        <ProductCard 
+                            product={product} 
+                            categoryName={catId ? categoryMap[catId] : ''} 
+                        />
                     </div>
                 );
             })}
+
             <div id="empty-state" class="hidden col-span-full py-20 text-center">
-                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Ничего не найдено</p>
-                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">Сбросить</button>
+                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Здесь пока пусто</p>
+                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
+                    Сбросить
+                </button>
             </div>
+
         </div>
 
     </div>
   </div>
 </Layout>
 
-<!-- Script remains same (initCatalog...) -->
 <script>
     document.addEventListener('astro:page-load', () => { initCatalog(); }, { once: false });
     if (document.readyState === 'complete') { initCatalog(); } else { window.addEventListener('load', initCatalog); }
