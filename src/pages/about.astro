@@ -3,32 +3,27 @@
 import Layout from '../layouts/Layout.astro';
 import { getEntry } from 'astro:content';
 
-// 1. ПОЛУЧЕНИЕ ДАННЫХ ИЗ CMS (FIXED SLUG)
-let aboutPage = null;
+// 1. ПОЛУЧЕНИЕ ДАННЫХ ИЗ CMS
+let entry = null;
 let Content = null;
 let cmsData = null;
 
 try {
-    // CRITICAL FIX: Используем slug 'main', так как файл называется main.json/md
-    aboutPage = await getEntry('about', 'main');
-    
-    if (aboutPage) {
-        const rendered = await aboutPage.render();
+    entry = await getEntry('about', 'main');
+    if (entry) {
+        const rendered = await entry.render();
         Content = rendered.Content;
-        cmsData = aboutPage.data;
+        cmsData = entry.data;
     }
 } catch (e) {
-    console.warn('CMS: About page content missing or slug mismatch.', e);
+    console.warn('CMS: About page content missing.', e);
 }
 
 // 2. ДАННЫЕ С ФОЛЛБЕКАМИ
-// Надежная внешняя заглушка на случай проблем с путями
-const FALLBACK_IMG = "https://images.unsplash.com/photo-1565193566173-092e7f246457?q=80&w=1000&auto=format&fit=crop";
-// Локальная заглушка (если есть)
-const LOCAL_FALLBACK = "/images/workshop-process.jpg";
+const FALLBACK_IMG = "/images/workshop-process.jpg";
 
-// ПРЯМОЕ ИСПОЛЬЗОВАНИЕ ПУТИ ИЗ CMS
-let heroImage = cmsData?.image;
+// FIX: Используем правильное имя поля из схемы (heroImage)
+let heroImage = cmsData?.heroImage;
 
 // Страховка на случай объекта
 if (typeof heroImage === 'object' && heroImage !== null && 'src' in heroImage) {
@@ -36,7 +31,8 @@ if (typeof heroImage === 'object' && heroImage !== null && 'src' in heroImage) {
 }
 
 const DATA = {
-    image: heroImage || LOCAL_FALLBACK,
+    // Приоритет: 1. CMS (heroImage) -> 2. Локальная заглушка
+    image: heroImage || FALLBACK_IMG,
     title: cmsData?.title || '"Я верю, что вещи должны замедлять время."',
     est: cmsData?.est || "Est. 2026",
     location: cmsData?.location || "Moscow, RU",
