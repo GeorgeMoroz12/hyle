@@ -11,7 +11,7 @@ export default config({
       },
 
   singletons: {
-    // ... (Landing, About, B2B оставляем без изменений)
+    // 1. LANDING
     landing: singleton({
       label: '🏠 Главная страница',
       path: 'src/content/landing/home',
@@ -34,6 +34,8 @@ export default config({
         }),
       },
     }),
+
+    // 2. ABOUT
     about: singleton({
       label: '👤 О Мастере',
       path: 'src/content/about/main',
@@ -55,6 +57,8 @@ export default config({
         }),
       },
     }),
+
+    // 3. B2B
     b2b: singleton({
       label: '💼 Ресторанам (B2B)',
       path: 'src/content/b2b/main',
@@ -67,27 +71,22 @@ export default config({
   },
 
   collections: {
-    // 1. СПРАВОЧНИК: КАТЕГОРИИ
+    // СПРАВОЧНИКИ
     categories: collection({
       label: '🗂 Справочник: Категории',
-      slugField: 'name',
+      slugField: 'title',
       path: 'src/content/categories/*',
-      schema: {
-        name: fields.slug({ name: { label: 'Название категории' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // 2. СПРАВОЧНИК: ТЕГИ
     tags: collection({
       label: '🏷️ Справочник: Теги',
-      slugField: 'name',
+      slugField: 'title',
       path: 'src/content/tags/*',
-      schema: {
-        name: fields.slug({ name: { label: 'Название тега' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // 3. ТОВАРЫ (Связи)
+    // ТОВАРЫ
     products: collection({
       label: '🏺 Товары',
       slugField: 'title',
@@ -111,31 +110,20 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-
-        // RELATIONSHIP: Категория
-        category: fields.relationship({
-          label: 'Категория',
+        
+        // Связи
+        category: fields.relationship({ 
+          label: 'Категория', 
           collection: 'categories',
-          validation: { isRequired: false }, // false, чтобы можно было сохранить старые товары без выбора
-          description: 'Выберите категорию из справочника.',
+          validation: { isRequired: false } // false, чтобы старые товары без категории не ломались
         }),
-
-        // RELATIONSHIP: Теги (Множественный выбор)
         tags: fields.array(
-          fields.relationship({ 
-            label: 'Тег', 
-            collection: 'tags' 
-          }),
-          {
-            label: 'Теги',
-            itemLabel: (props) => props.value || 'Выберите тег',
-            description: 'Выберите теги из справочника.',
-          }
+          fields.relationship({ label: 'Тег', collection: 'tags' }),
+          { label: 'Теги', itemLabel: (props) => props.value }
         ),
-
         relatedProducts: fields.array(
-          fields.relationship({ label: 'Товар', collection: 'products' }),
-          { label: 'С этим покупают', itemLabel: (props) => props.value || 'Товар' }
+          fields.relationship({ label: 'Товар', collection: 'products' }), 
+          { label: 'С этим покупают' }
         ),
 
         specs: fields.object({
@@ -148,10 +136,24 @@ export default config({
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
         
         description: fields.document({ label: 'Описание', formatting: true }),
+
+        // --- LEGACY FIELDS (ВЕРНУЛИ, ЧТОБЫ ЧИНИТЬ СТАРЫЕ ФАЙЛЫ) ---
+        inStock: fields.checkbox({ 
+            label: '⚠️ Old: inStock (Удалить)', 
+            description: 'Это старое поле. Не используйте его.' 
+        }),
+        isNew: fields.checkbox({ 
+            label: '⚠️ Old: isNew (Удалить)', 
+            description: 'Это старое поле. Не используйте его.' 
+        }),
+        care: fields.text({ 
+            label: '⚠️ Old: care (Удалить)', 
+            multiline: true 
+        }),
       },
     }),
 
-    // 4. БЛОГ (Связи)
+    // БЛОГ
     blog: collection({
       label: '📰 Блог',
       slugField: 'title',
@@ -166,18 +168,10 @@ export default config({
           directory: 'public/images/blog',
           publicPath: '/images/blog/',
         }),
-        
-        // Добавили теги и в блог (полезно для фильтрации статей)
-        tags: fields.array(
-          fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги статьи', itemLabel: (props) => props.value }
-        ),
-
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
-          { label: 'Упомянутые товары', itemLabel: (props) => props.value || 'Товар' }
+          { label: 'Товары', itemLabel: (props) => props.value }
         ),
-        
         content: fields.document({
           label: 'Текст',
           formatting: true,
