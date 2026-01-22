@@ -3,7 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 import { getEntry } from 'astro:content';
 
-// 1. ПОЛУЧЕНИЕ ДАННЫХ ИЗ CMS
+// 1. ПОЛУЧЕНИЕ ДАННЫХ
 let entry = null;
 let Content = null;
 let cmsData = null;
@@ -19,23 +19,17 @@ try {
     console.warn('CMS: About page content missing.', e);
 }
 
-// 2. ДАННЫЕ С ФОЛЛБЕКАМИ
+// 2. ДАННЫЕ
 const FALLBACK_IMG = "/images/workshop-process.jpg";
 
-// FIX: Используем правильное имя поля из схемы (heroImage)
 let heroImage = cmsData?.heroImage;
-
-// Страховка на случай объекта
 if (typeof heroImage === 'object' && heroImage !== null && 'src' in heroImage) {
     heroImage = heroImage.src;
 }
 
 const DATA = {
-    // Приоритет: 1. CMS (heroImage) -> 2. Локальная заглушка
     image: heroImage || FALLBACK_IMG,
     title: cmsData?.title || '"Я верю, что вещи должны замедлять время."',
-    est: cmsData?.est || "Est. 2026",
-    location: cmsData?.location || "Moscow, RU",
     fallbackHTML: `
         <p>Привет. Меня зовут [Имя Мастера], и я создаю керамику Hyle.</p>
         <p>В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях. След пальца на ручке чашки, неровный край тарелки — всё это делает предмет живым.</p>
@@ -44,7 +38,7 @@ const DATA = {
 };
 ---
 
-<Layout title="О мастере" description="Философия Hyle Ceramics. О мастере и процессе создания.">
+<Layout title="О мастере" description="Философия Hyle Ceramics.">
   
   <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
@@ -54,7 +48,7 @@ const DATA = {
                 The Maker
             </span>
             <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
-                О мастерской
+                О мастере
             </h1>
         </div>
 
@@ -63,24 +57,20 @@ const DATA = {
             <!-- LEFT: IMAGE -->
             <div class="lg:col-span-5 relative animate-appear" style="animation-delay: 100ms;">
                 <div class="relative aspect-[4/5] overflow-hidden rounded-sm bg-neutral-100 shadow-xl">
-                    <!-- NATIVE IMG TAG -->
                     <img 
                         src={DATA.image} 
                         alt="Портрет мастера" 
                         class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[1.5s]"
-                        /* Fallback на внешний URL, если файл физически не найден */
                         onerror={`this.onerror=null; this.src='${FALLBACK_IMG}';`}
                     />
                     <!-- Decor Line -->
                     <div class="absolute inset-0 border border-white/20 m-4 pointer-events-none"></div>
                 </div>
                 
-                <div class="mt-4 flex flex-col gap-1 font-mono text-[10px] text-hyle-text/40 uppercase tracking-widest">
-                    <div class="flex justify-between">
-                        <span>{DATA.est}</span>
-                        <span>{DATA.location}</span>
-                    </div>
-                </div>
+                <!-- 
+                   FIX: Убрали блок с Est/Location под фото. 
+                   Теперь здесь чисто.
+                -->
             </div>
 
             <!-- RIGHT: TEXT -->
