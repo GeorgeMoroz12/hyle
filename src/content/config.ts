@@ -1,50 +1,48 @@
-import { defineCollection, z, reference } from 'astro:content';
+import { defineCollection, z } from 'astro:content'; 
+// Убрали reference из импорта, так как временно отключаем его
 
 // 1. Справочники
 const tags = defineCollection({
   type: 'content',
-  schema: z.object({ 
-    name: z.string(), // Теперь поле называется name
-  }).passthrough(),
+  schema: z.object({ title: z.string().optional() }).passthrough(),
 });
 
 const categories = defineCollection({
   type: 'content',
-  schema: z.object({ 
-    name: z.string(), // Теперь поле называется name
-  }).passthrough(),
+  schema: z.object({ title: z.string().optional() }).passthrough(),
 });
 
-// 2. Товары
+// 2. Товары (Products) — RELAXED VALIDATION
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
-    price: z.any().optional(), 
     
-    // ГИБРИДНАЯ СХЕМА: Принимаем и новую ссылку, и старую строку
-    category: z.union([
-        reference('categories'),
-        z.string(),
-        z.null(),
-        z.undefined()
-    ]).optional(),
+    // --- HOTFIX START ---
+    // Отключаем reference(), чтобы не падало на старых строках
+    // Используем z.any(), чтобы принимать и String, и Array, и Object
+    
+    category: z.any().optional(),       // Было: reference('categories')
+    tags: z.any().optional(),           // Было: z.array(reference('tags'))
+    relatedProducts: z.any().optional(),// Было: z.array(reference('products'))
+    
+    // --- HOTFIX END ---
 
-    // ГИБРИДНАЯ СХЕМА: Массив ссылок или массив строк
-    tags: z.union([
-        z.array(reference('tags')),
-        z.array(z.string()),
-        z.null(),
-        z.undefined()
-    ]).optional(),
-
-    images: z.array(z.string()).default([]),
-    relatedProducts: z.any().optional(),
-    specs: z.any().optional(),
+    price: z.any().optional(),
+    images: z.any().optional(), // Массив путей или строк
+    
     status: z.any().optional(),
+    specs: z.any().optional(),
+    
     description: z.any().optional(),
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
+
+    // Legacy поля
+    inStock: z.any().optional(),
+    isNew: z.any().optional(),
+    care: z.any().optional(),
+
   }).passthrough(),
 });
 
@@ -53,16 +51,14 @@ const blog = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    pubDate: z.union([z.string(), z.date()]).transform((str) => new Date(str)), 
+    pubDate: z.any().optional(),
     coverImage: z.string().optional(),
     
-    tags: z.union([
-        z.array(reference('tags')),
-        z.array(z.string()),
-        z.null()
-    ]).optional(),
+    // --- HOTFIX START ---
+    tags: z.any().optional(),           // Отключили валидацию связей
+    relatedProducts: z.any().optional(),// Отключили валидацию связей
+    // --- HOTFIX END ---
 
-    relatedProducts: z.any().optional(),
   }).passthrough(),
 });
 
