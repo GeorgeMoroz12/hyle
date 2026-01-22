@@ -4,8 +4,18 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
 let posts = [];
+let tagMap = {}; // ID -> Title
+
 try {
     const rawPosts = await getCollection('blog');
+    
+    // Получаем коллекцию тегов для перевода
+    const allTags = await getCollection('tags');
+    tagMap = allTags.reduce((acc, t) => {
+        acc[t.id] = t.data.title;
+        return acc;
+    }, {});
+
     if (Array.isArray(rawPosts)) {
         const validPosts = rawPosts.filter(p => p && p.data && p.data.title);
         posts = validPosts.sort((a, b) => {
@@ -15,11 +25,11 @@ try {
         });
     }
 } catch (e) {
-    console.warn('⚠️ Critical: Failed to fetch blog posts.', e);
+    console.warn('⚠️ Blog fetch error', e);
 }
 ---
 
-<Layout title="Журнал" description="Заметки о керамике, процессе и вдохновении.">
+<Layout title="Журнал" description="Заметки о керамике.">
   <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
         <div class="flex flex-col items-start gap-4 mb-16 md:mb-24 animate-appear">
@@ -31,28 +41,31 @@ try {
             {posts.length === 0 ? (
                 <div class="col-span-full py-20 text-center">
                     <p class="font-serif text-2xl text-hyle-text/40 mb-2">Тишина в эфире</p>
-                    <p class="font-mono text-xs uppercase tracking-widest text-hyle-text/30">Скоро здесь появятся истории.</p>
                 </div>
             ) : (
                 posts.map((post, idx) => {
                     const dateStr = post.data.publishedDate ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU') : '';
-                    const firstTag = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
                     const coverImage = post.data.coverImage;
+                    
+                    // Достаем первый тег (ID)
+                    const tagId = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
+                    // Переводим его в название
+                    const tagName = tagId ? (tagMap[tagId] || tagId) : null;
 
                     return (
                         <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
                             {coverImage && (
                                 <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-neutral-100 mb-2 block relative">
-                                    <img src={coverImage} alt={post.data.title} class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" />
-                                    {firstTag && (
-                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{firstTag}</span>
+                                    <img src={coverImage} alt={post.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                                    {tagName && (
+                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{tagName}</span>
                                     )}
                                 </a>
                             )}
                             {!coverImage && (
                                 <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
                                     <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
-                                    {firstTag && <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">#{firstTag}</span>}
+                                    {tagName && <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">#{tagName}</span>}
                                 </div>
                             )}
                             {coverImage && (
@@ -60,7 +73,7 @@ try {
                                     <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
                                 </div>
                             )}
-                            <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
+                            <a href={`/blog/${post.slug}`} class="block transition-opacity group-hover:opacity-70">
                                 <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">{post.data.title}</h2>
                                 <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">{post.data.excerpt || ''}</p>
                             </a>

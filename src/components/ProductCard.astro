@@ -18,31 +18,35 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ROBUST TAG LOGIC ---
+// --- ЛОГИКА ТЕГОВ (ID -> TITLE) ---
 let visibleTags = [];
-const rawTags = tags; // Input can be anything
+const rawTags = tags; 
 
-// 1. Array check
 if (Array.isArray(rawTags) && rawTags.length > 0) {
-  
-  // 2. Normalize to IDs (String[] | Object[])
-  const tagIds = rawTags.map(t => {
-      if (typeof t === 'string' && t.trim() !== '') return t;
-      if (typeof t === 'object' && t !== null && t.id) return t.id;
+  // 1. Нормализуем входные данные до массива ID
+  const validTagIds = rawTags.map(tag => {
+      if (typeof tag === 'string') return tag; // Если пришла строка (ID)
+      if (typeof tag === 'object' && tag !== null && tag.id) return tag.id; // Если пришел референс
       return null;
-  }).filter(Boolean); // Remove nulls
+  }).filter(t => typeof t === 'string' && t.trim().length > 0);
 
-  // 3. Fetch Data (if we have IDs)
-  if (tagIds.length > 0) {
+  // 2. Загружаем данные из коллекции tags
+  if (validTagIds.length > 0) {
     try {
-      // Try to fetch detailed data. Astro handles array of IDs nicely.
-      // If IDs are just legacy strings not in DB, this might throw or return partials.
-      // We wrap in try/catch to be safe.
-      const loaded = await getEntries(tagIds.map(id => ({ collection: 'tags', id })));
-      visibleTags = loaded.map(t => ({ id: t.id, title: t.data.title }));
+      // getEntries вернет массив объектов тегов
+      const loadedEntries = await getEntries(validTagIds.map(id => ({ collection: 'tags', id })));
+      
+      // Формируем чистый массив для рендера
+      visibleTags = loadedEntries.map(entry => ({
+          slug: entry.id,         // ID для ссылки (chashka)
+          label: entry.data.title // Название для людей (Чашка)
+      }));
     } catch (e) {
-      // Fallback: If DB fetch fails (e.g. legacy tag "New" not in tags collection), use ID as title
-      visibleTags = tagIds.map(id => ({ id, title: id }));
+      // Fallback: Если тега нет в базе, показываем ID, но с большой буквы
+      visibleTags = validTagIds.map(id => ({ 
+          slug: id, 
+          label: id.charAt(0).toUpperCase() + id.slice(1) 
+      }));
     }
   }
 }
@@ -74,7 +78,6 @@ const productUrl = `/products/${product.slug}`;
   <div class="flex justify-between items-start px-1 mt-auto">
     
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
-        <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
@@ -86,10 +89,10 @@ const productUrl = `/products/${product.slug}`;
             <div class="flex flex-wrap gap-2 mt-1 relative z-20">
                 {visibleTags.slice(0, 1).map(tag => (
                     <a 
-                        href={`/catalog?tag=${tag.id}`}
+                        href={`/catalog?tag=${tag.slug}`} 
                         class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 hover:text-hyle-clay transition-all"
                     >
-                        #{tag.title}
+                        #{tag.label}
                     </a>
                 ))}
             </div>

@@ -1,17 +1,18 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// ВАЖНО: Мы НЕ импортируем image из astro:content для схемы, 
-// потому что храним файлы в public, а не в src/assets.
-
 // 1. Справочники
 const tags = defineCollection({
   type: 'content',
-  schema: z.object({ title: z.string() }).passthrough(),
+  schema: z.object({ 
+    name: z.string(), // Теперь поле называется name
+  }).passthrough(),
 });
 
 const categories = defineCollection({
   type: 'content',
-  schema: z.object({ title: z.string() }).passthrough(),
+  schema: z.object({ 
+    name: z.string(), // Теперь поле называется name
+  }).passthrough(),
 });
 
 // 2. Товары
@@ -19,16 +20,31 @@ const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
-    // Картинки - это просто массив строк (путей)
-    images: z.array(z.string()).default([]), 
-    
-    // Остальные поля
     price: z.any().optional(), 
-    category: z.any().optional(),
-    tags: z.any().optional(),
+    
+    // ГИБРИДНАЯ СХЕМА: Принимаем и новую ссылку, и старую строку
+    category: z.union([
+        reference('categories'),
+        z.string(),
+        z.null(),
+        z.undefined()
+    ]).optional(),
+
+    // ГИБРИДНАЯ СХЕМА: Массив ссылок или массив строк
+    tags: z.union([
+        z.array(reference('tags')),
+        z.array(z.string()),
+        z.null(),
+        z.undefined()
+    ]).optional(),
+
+    images: z.array(z.string()).default([]),
     relatedProducts: z.any().optional(),
     specs: z.any().optional(),
     status: z.any().optional(),
+    description: z.any().optional(),
+    careInstructions: z.any().optional(),
+    masterNote: z.any().optional(),
   }).passthrough(),
 });
 
@@ -38,32 +54,35 @@ const blog = defineCollection({
   schema: z.object({
     title: z.string(),
     pubDate: z.union([z.string(), z.date()]).transform((str) => new Date(str)), 
-    // ИСПРАВЛЕНО: z.string(), а не image()
-    coverImage: z.string().optional(), 
+    coverImage: z.string().optional(),
+    
+    tags: z.union([
+        z.array(reference('tags')),
+        z.array(z.string()),
+        z.null()
+    ]).optional(),
+
     relatedProducts: z.any().optional(),
   }).passthrough(),
 });
 
-// 4. О Мастере (About)
+// 4. О Мастере
 const about = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string().default('О Мастере'),
-    // ИСПРАВЛЕНО: z.string(), так как файл лежит в public
-    heroImage: z.string().optional(), 
+    heroImage: z.string().optional(),
   }).passthrough(),
 });
 
-// 5. Landing
+// 5. Singletons
 const landing = defineCollection({
   type: 'data',
   schema: z.object({
     heroTitleLine1: z.string().optional(),
-    // ИСПРАВЛЕНО: z.string(), а не image()
-    heroImage: z.string().optional(), 
+    heroImage: z.string().optional(),
     workshopTitle: z.string().optional(),
     workshopText: z.string().optional(),
-    // ИСПРАВЛЕНО: z.string(), а не image()
     workshopImage: z.string().optional(),
   }).passthrough(),
 });

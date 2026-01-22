@@ -16,33 +16,41 @@ const allProducts = await getCollection('products', ({ data }) => {
 
 const sortedProducts = allProducts.sort((a, b) => 0);
 
+// --- СБОР ТЕГОВ (ID -> TITLE) ---
+// 1. Собираем все ID
 const rawTagIds = allProducts.flatMap(product => {
     const tags = product.data.tags || [];
     return tags.map(tag => {
         if (typeof tag === 'string') return tag;
-        if (typeof tag === 'object' && tag !== null && tag.id) return tag.id;
+        if (typeof tag === 'object' && tag !== null) return tag.id;
         return null;
     });
 }).filter(t => t && typeof t === 'string' && t.trim() !== '');
 
 const uniqueTagIds = [...new Set(rawTagIds)];
 
+// 2. Получаем названия из коллекции tags
 let filterTags = [];
 if (uniqueTagIds.length > 0) {
     try {
         const loadedTags = await getEntries(uniqueTagIds.map(id => ({ collection: 'tags', id })));
+        
+        // Создаем Map: ID -> Title
         const titleMap = new Map();
         loadedTags.forEach(t => {
             if (t && t.data) titleMap.set(t.id, t.data.title);
         });
+
+        // Собираем итоговый массив
         filterTags = uniqueTagIds.map(id => ({
-            id: id,
-            title: titleMap.get(id) || id 
+            id: id,                     // slug для фильтрации
+            title: titleMap.get(id) || id // Красивое название (или ID как фоллбэк)
         }));
     } catch (e) {
         filterTags = uniqueTagIds.map(id => ({ id, title: id }));
     }
 }
+// Сортируем по русскому алфавиту
 filterTags.sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
@@ -63,6 +71,7 @@ const pageDesc = "Полная коллекция керамики ручной 
             </p>
         </div>
 
+        <!-- FILTERS -->
         <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
             <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
                 <button 
@@ -87,12 +96,14 @@ const pageDesc = "Полная коллекция керамики ручной 
             </div>
         </div>
 
+        <!-- GRID -->
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {
                 const catRaw = product.data.category;
                 const catId = (typeof catRaw === 'object' && catRaw !== null) ? catRaw.id : catRaw;
                 
+                // Для data-tags нам нужны ID (slugs), чтобы скрипт фильтрации работал
                 const tagsList = (product.data.tags || []).map(t => (typeof t === 'object' && t !== null) ? t.id : t).filter(Boolean);
                 const tagsString = tagsList.join(',');
                 
@@ -117,7 +128,6 @@ const pageDesc = "Полная коллекция керамики ручной 
             </div>
 
         </div>
-
     </div>
   </div>
 </Layout>
@@ -131,6 +141,7 @@ const pageDesc = "Полная коллекция керамики ручной 
         const emptyState = document.getElementById('empty-state');
         const resetBtn = document.getElementById('reset-filters');
         if (!buttons.length || !items.length) return;
+        
         const updateButtons = (activeTag) => {
             buttons.forEach(btn => {
                 const isActive = btn.getAttribute('data-tag') === activeTag;
@@ -140,10 +151,12 @@ const pageDesc = "Полная коллекция керамики ручной 
                 else { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${inactiveClass}`; }
             });
         };
+
         const filterGrid = (tag) => {
             let visibleCount = 0;
             items.forEach((item) => {
                 const itemTags = item.getAttribute('data-tags')?.split(',') || [];
+                // Фильтруем по ID (slug), который лежит в data-tags
                 const shouldShow = tag === 'all' || itemTags.includes(tag);
                 const element = item as HTMLElement;
                 if (shouldShow) {
@@ -156,12 +169,14 @@ const pageDesc = "Полная коллекция керамики ручной 
             });
             if (visibleCount === 0 && emptyState) { emptyState.classList.remove('hidden'); } else if (emptyState) { emptyState.classList.add('hidden'); }
         };
+
         const applyFilter = (tag) => {
             updateButtons(tag); filterGrid(tag);
             const url = new URL(window.location.href);
             if (tag === 'all') { url.searchParams.delete('tag'); } else { url.searchParams.set('tag', tag); }
             window.history.pushState({}, '', url);
         };
+
         buttons.forEach(btn => { btn.addEventListener('click', () => { const tag = btn.getAttribute('data-tag') || 'all'; applyFilter(tag); }); });
         if (resetBtn) { resetBtn.addEventListener('click', () => applyFilter('all')); }
         const params = new URLSearchParams(window.location.search);
