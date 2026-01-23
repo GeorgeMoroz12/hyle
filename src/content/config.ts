@@ -30,10 +30,9 @@ const products = defineCollection({
         z.undefined()
     ]).optional(),
 
-    // ТЕГИ: Массив ссылок на справочник
+    // ТЕГИ: Массив ссылок, строк ИЛИ null внутри массива
     tags: z.union([
-        z.array(reference('tags')), // Новые правильные связи
-        z.array(z.string()),        // Старые строки (Legacy)
+        z.array(z.union([reference('tags'), z.string(), z.null()])), // Разрешаем смешанный контент и null
         z.null(),
         z.undefined()
     ]).optional(),
