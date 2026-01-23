@@ -11,9 +11,9 @@ export default config({
       },
 
   singletons: {
-    // 1. LANDING
+    // 1. Landing
     landing: singleton({
-      label: '🏠 Главная страница',
+      label: 'Главная страница', // Убрали 🏠
       path: 'src/content/landing/home',
       schema: {
         heroTitleLine1: fields.text({ label: 'Hero: Заголовок 1', defaultValue: 'Глина' }),
@@ -35,9 +35,9 @@ export default config({
       },
     }),
 
-    // 2. ABOUT
+    // 2. About
     about: singleton({
-      label: '👤 О Мастере',
+      label: 'О Мастере', // Убрали 👤
       path: 'src/content/about/main',
       format: { contentField: 'content' },
       schema: {
@@ -60,7 +60,7 @@ export default config({
 
     // 3. B2B
     b2b: singleton({
-      label: '💼 Ресторанам (B2B)',
+      label: 'Страница B2B', // Убрали 💼
       path: 'src/content/b2b/main',
       schema: {
         title: fields.text({ label: 'Заголовок' }),
@@ -73,14 +73,14 @@ export default config({
   collections: {
     // СПРАВОЧНИКИ
     categories: collection({
-      label: '🗂 Справочник: Категории',
+      label: 'Категории', // Убрали 🗂
       slugField: 'title',
       path: 'src/content/categories/*',
       schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
     tags: collection({
-      label: '🏷️ Справочник: Теги',
+      label: 'Теги', // Убрали 🏷️
       slugField: 'title',
       path: 'src/content/tags/*',
       schema: { title: fields.slug({ name: { label: 'Название' } }) },
@@ -88,7 +88,7 @@ export default config({
 
     // ТОВАРЫ
     products: collection({
-      label: '🏺 Товары',
+      label: 'Товары', // Убрали 🏺
       slugField: 'title',
       path: 'src/content/products/*',
       format: { contentField: 'description' },
@@ -111,16 +111,17 @@ export default config({
           defaultValue: 'В наличии',
         }),
         
-        // Связи
         category: fields.relationship({ 
           label: 'Категория', 
           collection: 'categories',
-          validation: { isRequired: false } // false, чтобы старые товары без категории не ломались
+          validation: { isRequired: false }
         }),
+        
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги', itemLabel: (props) => props.value }
+          { label: 'Теги' }
         ),
+        
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }), 
           { label: 'С этим покупают' }
@@ -137,25 +138,16 @@ export default config({
         
         description: fields.document({ label: 'Описание', formatting: true }),
 
-        // --- LEGACY FIELDS (ВЕРНУЛИ, ЧТОБЫ ЧИНИТЬ СТАРЫЕ ФАЙЛЫ) ---
-        inStock: fields.checkbox({ 
-            label: '⚠️ Old: inStock (Удалить)', 
-            description: 'Это старое поле. Не используйте его.' 
-        }),
-        isNew: fields.checkbox({ 
-            label: '⚠️ Old: isNew (Удалить)', 
-            description: 'Это старое поле. Не используйте его.' 
-        }),
-        care: fields.text({ 
-            label: '⚠️ Old: care (Удалить)', 
-            multiline: true 
-        }),
+        // LEGACY (Старые поля, пока не удалили из файлов)
+        inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
+        isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
+        care: fields.text({ label: '⚠️ Old: care', multiline: true }),
       },
     }),
 
     // БЛОГ
     blog: collection({
-      label: '📰 Блог',
+      label: 'Блог', // Убрали 📰
       slugField: 'title',
       path: 'src/content/blog/*',
       format: { contentField: 'content' },
@@ -170,7 +162,7 @@ export default config({
         }),
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
-          { label: 'Товары', itemLabel: (props) => props.value }
+          { label: 'Товары' }
         ),
         content: fields.document({
           label: 'Текст',
