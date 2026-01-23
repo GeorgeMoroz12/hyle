@@ -1,17 +1,17 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники
+// 1. Справочники (ТЕПЕРЬ ИЩЕМ TITLE)
 const tags = defineCollection({
   type: 'content',
   schema: z.object({ 
-    name: z.string(), // Русское название
+    title: z.string(), // БЫЛО: name, СТАЛО: title
   }).passthrough(),
 });
 
 const categories = defineCollection({
   type: 'content',
   schema: z.object({ 
-    name: z.string(), // Русское название
+    title: z.string(), // БЫЛО: name, СТАЛО: title
   }).passthrough(),
 });
 
@@ -22,17 +22,17 @@ const products = defineCollection({
     title: z.string(),
     price: z.any().optional(), 
     
-    // КАТЕГОРИЯ: Ссылка на справочник
+    // Категория: Ссылка (Object) или Строка (String) или Null
     category: z.union([
-        reference('categories'), // Новая правильная связь
-        z.string(),              // Старая строка (Legacy)
+        reference('categories'),
+        z.string(),
         z.null(),
         z.undefined()
     ]).optional(),
 
-    // ТЕГИ: Массив ссылок, строк ИЛИ null внутри массива
+    // Теги: Массив ссылок, строк или Null
     tags: z.union([
-        z.array(z.union([reference('tags'), z.string(), z.null()])), // Разрешаем смешанный контент и null
+        z.array(z.union([reference('tags'), z.string(), z.null()])),
         z.null(),
         z.undefined()
     ]).optional(),
@@ -45,7 +45,7 @@ const products = defineCollection({
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
     
-    // Legacy поля
+    // Legacy
     inStock: z.any().optional(),
     isNew: z.any().optional(),
     care: z.any().optional(),
@@ -60,6 +60,7 @@ const blog = defineCollection({
     pubDate: z.union([z.string(), z.date()]).transform((str) => new Date(str)), 
     coverImage: z.string().optional(),
     relatedProducts: z.any().optional(),
+    tags: z.any().optional(), // В блоге тоже теги
   }).passthrough(),
 });
 
