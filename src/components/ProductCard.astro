@@ -1,7 +1,7 @@
 ---
 // src/components/ProductCard.astro
 import type { CollectionEntry } from 'astro:content';
-import { getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
@@ -18,37 +18,31 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ЛОГИКА ТЕГОВ (ID -> TITLE) ---
-let visibleTags = [];
-const rawTags = tags; 
+// --- ROBUST TAG LOOKUP ---
+let visibleTag = null;
+const rawTags = Array.isArray(tags) ? tags : [];
 
-if (Array.isArray(rawTags) && rawTags.length > 0) {
-  // 1. Нормализуем входные данные до массива ID
-  const validTagIds = rawTags.map(tag => {
-      if (typeof tag === 'string') return tag; // Если пришла строка (ID)
-      if (typeof tag === 'object' && tag !== null && tag.id) return tag.id; // Если пришел референс
-      return null;
-  }).filter(t => typeof t === 'string' && t.trim().length > 0);
+// 1. Нормализуем ID
+const tagIds = rawTags.map(t => {
+    if (typeof t === 'string') return t;
+    if (typeof t === 'object' && t?.id) return t.id;
+    return null;
+}).filter(t => t && t.trim() !== '');
 
-  // 2. Загружаем данные из коллекции tags
-  if (validTagIds.length > 0) {
-    try {
-      // getEntries вернет массив объектов тегов
-      const loadedEntries = await getEntries(validTagIds.map(id => ({ collection: 'tags', id })));
-      
-      // Формируем чистый массив для рендера
-      visibleTags = loadedEntries.map(entry => ({
-          slug: entry.id,         // ID для ссылки (chashka)
-          label: entry.data.title // Название для людей (Чашка)
-      }));
-    } catch (e) {
-      // Fallback: Если тега нет в базе, показываем ID, но с большой буквы
-      visibleTags = validTagIds.map(id => ({ 
-          slug: id, 
-          label: id.charAt(0).toUpperCase() + id.slice(1) 
-      }));
-    }
-  }
+// 2. Если есть теги, ищем их названия
+if (tagIds.length > 0) {
+    // Берем первый ID
+    const firstId = tagIds[0];
+    
+    // Пытаемся найти в коллекции (для SSG это ок, коллекция кэшируется)
+    // В идеале этот Map передавать пропсом, но для надежности загрузим здесь
+    const allTags = await getCollection('tags');
+    const foundTag = allTags.find(t => t.id === firstId);
+    
+    visibleTag = {
+        slug: firstId,
+        label: foundTag ? foundTag.data.title : (firstId.charAt(0).toUpperCase() + firstId.slice(1))
+    };
 }
 
 const productUrl = `/products/${product.slug}`;
@@ -84,18 +78,14 @@ const productUrl = `/products/${product.slug}`;
             </h3>
         </a>
         
-        <!-- TAGS RENDER -->
-        {visibleTags.length > 0 && (
-            <div class="flex flex-wrap gap-2 mt-1 relative z-20">
-                {visibleTags.slice(0, 1).map(tag => (
-                    <a 
-                        href={`/catalog?tag=${tag.slug}`} 
-                        class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 hover:text-hyle-clay transition-all"
-                    >
-                        #{tag.label}
-                    </a>
-                ))}
-            </div>
+        {/* TAG LINK */}
+        {visibleTag && (
+            <a 
+                href={`/catalog?tag=${visibleTag.slug}`}
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
+            >
+                #{visibleTag.label}
+            </a>
         )}
     </div>
     

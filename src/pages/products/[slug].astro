@@ -1,6 +1,6 @@
 ---
 // src/pages/products/[slug].astro
-import { getCollection, getEntry, getEntries } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
@@ -18,63 +18,38 @@ const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. LOOKUP КАТЕГОРИИ (ID -> Name) ---
-// Нормализуем входные данные (строка или ссылка -> ID)
-const categoryId = (typeof category === 'object' && category !== null) ? category.id : category;
-let categoryTitle = 'Каталог'; // Fallback
+// --- 1. GLOBAL LOOKUP MAPS ---
+const allCategories = await getCollection('categories');
+const categoryMap = new Map(allCategories.map(c => [c.id, c.data.title]));
 
-if (categoryId) {
-    try {
-        // Ищем в коллекции 'categories' документ с этим ID
-        const catEntry = await getEntry('categories', categoryId);
-        if (catEntry) {
-            categoryTitle = catEntry.data.title; // "Вазы" вместо "vases"
-        }
-    } catch (e) {
-        // Если категории нет в базе, оставляем ID или дефолт
-        console.warn(`Category lookup failed for ${categoryId}`);
-    }
-}
+const allTags = await getCollection('tags');
+const tagMap = new Map(allTags.map(t => [t.id, t.data.title]));
 
-// --- 2. LOOKUP ТЕГОВ (ID -> Name) ---
-// Нормализуем массив тегов в массив чистых ID
-const rawTags = Array.isArray(tags) ? tags : [];
-const tagIds = rawTags.map(t => {
-    if (typeof t === 'string') return t;
-    if (typeof t === 'object' && t !== null) return t.id;
+const resolveId = (item: any) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item.id) return item.id;
     return null;
-}).filter(Boolean);
+};
 
-let displayTags = [];
+// --- 2. CURRENT CATEGORY & TAGS ---
+const categoryId = resolveId(category);
+const categoryTitle = categoryId ? (categoryMap.get(categoryId) || categoryId) : null;
 
-if (tagIds.length > 0) {
-    try {
-        // Запрашиваем сразу пачку тегов из коллекции 'tags'
-        // getEntries принимает массив объектов { collection, id }
-        const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
-        const loadedTags = await getEntries(tagRefs);
-        
-        // Мапим результат в удобный формат: { slug, label }
-        displayTags = loadedTags.map(tagDoc => ({
-            slug: tagDoc.id,         // chashka (для ссылки)
-            label: tagDoc.data.title // Чашка (для отображения)
-        }));
+const rawTags = Array.isArray(tags) ? tags : [];
+const tagIds = rawTags.map(resolveId).filter(Boolean);
 
-    } catch (e) {
-        // Fallback: Если лукап не сработал, показываем ID с большой буквы
-        displayTags = tagIds.map(id => ({ 
-            slug: id, 
-            label: id.charAt(0).toUpperCase() + id.slice(1) 
-        }));
-    }
-}
+// Формируем список тегов для отображения
+const displayTags = tagIds.map(id => ({
+    id,
+    title: tagMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
+})).slice(0, 3); // Limit 3
 
 // --- 3. RELATED PRODUCTS ---
-// (Логика остается прежней, используем categoryId для фильтрации)
 const allProducts = await getCollection('products');
 const relatedProducts = allProducts.filter(p => {
     if (p.id === entry.id) return false;
-    const pCatId = typeof p.data.category === 'object' ? p.data.category?.id : p.data.category;
+    const pCatId = resolveId(p.data.category);
     if (!categoryId || !pCatId) return false;
     return pCatId === categoryId;
 }).slice(0, 6);
@@ -86,12 +61,6 @@ if (relatedItems.length < 4) {
         .slice(0, 6 - relatedItems.length);
     relatedItems = [...relatedItems, ...leftovers];
 }
-
-const allCategories = await getCollection('categories');
-const categoryMap = allCategories.reduce((acc, cat) => {
-    acc[cat.id] = cat.data.title;
-    return acc;
-}, {} as Record<string, string>);
 
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
@@ -107,32 +76,31 @@ const specMap: Record<string, string> = {
 ---
 
 <Layout title={title} hideHeader={true}>
-  
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
     
     <!-- LEFT -->
     <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
         <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
         
-        <!-- ХЛЕБНЫЕ КРОШКИ С LOOKUP -->
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-             
-             {categoryTitle && categoryTitle !== 'Каталог' && (
+             {categoryTitle && (
                 <>
                     <span class="text-hyle-text/30">/</span>
-                    <a href={`/catalog?tag=${categoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors cursor-pointer">
+                    <a href={`/catalog?tag=${categoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">
                         {categoryTitle}
                     </a>
                 </>
              )}
+             <span class="text-hyle-text/30">/</span>
+             <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
 
         <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
              <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
+             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
-        
-        <!-- Thumbs logic skipped for brevity -->
+        <!-- Thumbs skipped for brevity -->
     </div>
 
     <!-- RIGHT -->
@@ -154,15 +122,11 @@ const specMap: Record<string, string> = {
                         <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
                     )}
                     
-                    <!-- ВЫВОД ТЕГОВ (LOOKUP) -->
                     {displayTags.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
-                            {displayTags.slice(0, 3).map((tag) => (
-                                <a 
-                                    href={`/catalog?tag=${tag.slug}`}
-                                    class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0"
-                                >
-                                    #{tag.label}
+                            {displayTags.map((tag) => (
+                                <a href={`/catalog?tag=${tag.id}`} class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0">
+                                    #{tag.title}
                                 </a>
                             ))}
                         </div>
@@ -170,23 +134,22 @@ const specMap: Record<string, string> = {
                 </div>
             </div>
 
-            <!-- Note, Desc, Specs, CTA skipped (same as before) -->
-             <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
+            <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
                  <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">"{noteText}"</p>
                  </ExpandableText>
             </div>
-            
+
             <ExpandableText maxHeight="140px" gradientFrom="from-white/80">
                 <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80 text-justify">
                     <Content />
                 </div>
             </ExpandableText>
-            
+
             <div class="border-t border-hyle-text/10 pt-4 lg:pt-6">
                 {specs && (
-                     <dl class="text-xs grid grid-cols-2 gap-y-3 opacity-70 mb-4">
+                    <dl class="text-xs grid grid-cols-2 gap-y-3 opacity-70 mb-4">
                         {Object.entries(specs).map(([key, value]) => (
                             <>
                                 <dt class="font-medium uppercase tracking-wider text-hyle-text/60">{specMap[key.toLowerCase()] || key}</dt>
@@ -195,9 +158,10 @@ const specMap: Record<string, string> = {
                         ))}
                     </dl>
                 )}
-                 {/* Care instructions ... */}
+                {/* Care ... */}
             </div>
-             <div class="mt-2">
+
+            <div class="mt-2">
                  {isSoldOut ? (
                     <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
                 ) : (
@@ -205,17 +169,17 @@ const specMap: Record<string, string> = {
                 )}
             </div>
 
-            <!-- RELATED PRODUCTS -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">Вам может понравиться:</h3>
+                    <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Листайте →</span>
                 </div>
                 <div id="related-slider" class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth">
                     {relatedItems.map((item) => {
-                         const catId = typeof item.data.category === 'object' ? item.data.category?.id : item.data.category;
+                         const cId = resolveId(item.data.category);
                          return (
                             <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
-                                <ProductCard product={item} categoryName={catId ? categoryMap[catId] : ''} />
+                                <ProductCard product={item} categoryName={cId ? (categoryMap.get(cId) || '') : ''} />
                             </div>
                         );
                     })}
