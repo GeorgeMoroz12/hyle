@@ -4,54 +4,57 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection, getEntries } from 'astro:content';
 
+// --- 1. ЗАГРУЗКА СПРАВОЧНИКОВ (Русские названия) ---
 const allCategories = await getCollection('categories');
+const allTagsCollection = await getCollection('tags');
+
+// Создаем Map для быстрого перевода ID -> Русское название
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
     return acc;
 }, {} as Record<string, string>);
 
+const tagMap = allTagsCollection.reduce((acc, tag) => {
+    acc[tag.id] = tag.data.title;
+    return acc;
+}, {} as Record<string, string>);
+
+// --- 2. ЗАГРУЗКА ТОВАРОВ И НОРМАЛИЗАЦИЯ ДАННЫХ ---
 const allProducts = await getCollection('products', ({ data }) => {
     return data.status !== 'archived';
 });
 
+// Сортировка: новые сверху (опционально)
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-// --- СБОР ТЕГОВ (ID -> TITLE) ---
-// 1. Собираем все ID
-const rawTagIds = allProducts.flatMap(product => {
-    const tags = product.data.tags || [];
-    return tags.map(tag => {
-        if (typeof tag === 'string') return tag;
-        if (typeof tag === 'object' && tag !== null) return tag.id;
-        return null;
-    });
-}).filter(t => t && typeof t === 'string' && t.trim() !== '');
+// Хелпер: извлекает чистый ID из смешанных данных (String | Reference)
+const resolveId = (item: any) => {
+    if (!item) return null;
+    if (typeof item === 'string') return item; // Legacy
+    if (typeof item === 'object' && item.id) return item.id; // New Reference
+    return null;
+};
 
-const uniqueTagIds = [...new Set(rawTagIds)];
+// --- 3. СБОР АКТИВНЫХ ФИЛЬТРОВ (Только те, что есть у товаров) ---
+// Собираем ID категорий, которые реально используются в товарах
+const usedCategoryIds = new Set(sortedProducts.map(p => resolveId(p.data.category)).filter(Boolean));
 
-// 2. Получаем названия из коллекции tags
-let filterTags = [];
-if (uniqueTagIds.length > 0) {
-    try {
-        const loadedTags = await getEntries(uniqueTagIds.map(id => ({ collection: 'tags', id })));
-        
-        // Создаем Map: ID -> Title
-        const titleMap = new Map();
-        loadedTags.forEach(t => {
-            if (t && t.data) titleMap.set(t.id, t.data.title);
-        });
+// Собираем ID тегов
+const usedTagIds = new Set(sortedProducts.flatMap(p => {
+    const tags = p.data.tags || [];
+    return tags.map(resolveId).filter(Boolean);
+}));
 
-        // Собираем итоговый массив
-        filterTags = uniqueTagIds.map(id => ({
-            id: id,                     // slug для фильтрации
-            title: titleMap.get(id) || id // Красивое название (или ID как фоллбэк)
-        }));
-    } catch (e) {
-        filterTags = uniqueTagIds.map(id => ({ id, title: id }));
-    }
-}
-// Сортируем по русскому алфавиту
-filterTags.sort((a, b) => a.title.localeCompare(b.title));
+// Формируем массивы для рендера кнопок (ID + Title)
+const filterCategories = allCategories
+    .filter(cat => usedCategoryIds.has(cat.id))
+    .map(cat => ({ id: cat.id, title: cat.data.title }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+const filterTags = allTagsCollection
+    .filter(tag => usedTagIds.has(tag.id))
+    .map(tag => ({ id: tag.id, title: tag.data.title }))
+    .sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
 const pageDesc = "Полная коллекция керамики ручной работы Hyle.";
@@ -59,129 +62,248 @@ const pageDesc = "Полная коллекция керамики ручной 
 
 <Layout title={pageTitle} description={pageDesc}>
   
-  <div class="min-h-screen pt-20 md:pt-24 pb-20 bg-[#FDFCF8]">
+  <div class="min-h-screen pt-24 md:pt-32 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
         
-        <div class="flex flex-col items-start gap-3 md:gap-4 mb-8 md:mb-12 animate-appear">
-            <h1 class="font-serif text-4xl md:text-5xl lg:text-7xl text-hyle-text leading-[0.9]">
-                Коллекция
+        <!-- HEADER -->
+        <div class="flex flex-col items-start gap-4 mb-12 animate-appear">
+            <h1 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[0.9]">
+                Каталог
             </h1>
-            <p class="text-hyle-text/60 font-light max-w-md mt-1 text-sm md:text-base">
-                Все изделия, доступные к заказу.
+            <p class="text-hyle-text/60 font-light max-w-md text-sm md:text-base">
+                Используйте фильтры, чтобы найти свое изделие.
             </p>
         </div>
 
-        <!-- FILTERS -->
-        <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
-            <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
-                <button 
-                    class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                    data-tag="all"
-                    data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
-                    data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
-                >
-                    Все
-                </button>
-
-                {filterTags.map(tag => (
+        <!-- FILTERS PANEL (Sticky) -->
+        <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-md py-4 mb-12 border-b border-hyle-text/5 transition-all w-full -mx-4 px-4 md:mx-0 md:px-0">
+            
+            <div class="flex flex-col gap-4">
+                
+                <!-- ГРУППА 1: КАТЕГОРИИ (Основные) -->
+                <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 mask-linear">
+                    <span class="text-[10px] font-mono uppercase tracking-widest text-hyle-text/40 mr-2 shrink-0">Категории:</span>
+                    
                     <button 
-                        class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                        data-tag={tag.id} 
+                        class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[11px] uppercase tracking-widest"
+                        data-type="category"
+                        data-value="all"
                         data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
                         data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
                     >
-                        #{tag.title}
+                        Все
                     </button>
-                ))}
+
+                    {filterCategories.map(cat => (
+                        <button 
+                            class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[11px] uppercase tracking-widest"
+                            data-type="category"
+                            data-value={cat.id} 
+                            data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                            data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                        >
+                            {cat.title}
+                        </button>
+                    ))}
+                </div>
+
+                <!-- ГРУППА 2: ТЕГИ (Дополнительные) -->
+                {filterTags.length > 0 && (
+                    <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 mask-linear">
+                        <span class="text-[10px] font-mono uppercase tracking-widest text-hyle-text/40 mr-2 shrink-0">Теги:</span>
+                        
+                        {filterTags.map(tag => (
+                            <button 
+                                class="filter-btn group px-3 py-1.5 rounded-sm border transition-all duration-300 whitespace-nowrap text-[11px] font-hand -rotate-1 hover:rotate-0"
+                                data-type="tag"
+                                data-value={tag.id} 
+                                data-active-class="bg-hyle-clay/10 text-hyle-clay border-hyle-clay"
+                                data-inactive-class="bg-transparent text-hyle-text/50 border-hyle-text/10 hover:border-hyle-clay hover:text-hyle-clay"
+                            >
+                                #{tag.title}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+            
+            <!-- Индикатор сброса (появляется JS-ом) -->
+            <div id="active-filters-info" class="hidden mt-3 text-[10px] font-mono text-hyle-text/40 flex gap-2 items-center">
+                <span>Фильтры активны</span>
+                <button id="reset-all" class="underline hover:text-hyle-clay cursor-pointer">Сбросить всё</button>
             </div>
         </div>
 
-        <!-- GRID -->
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
+        <!-- PRODUCTS GRID -->
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {
-                const catRaw = product.data.category;
-                const catId = (typeof catRaw === 'object' && catRaw !== null) ? catRaw.id : catRaw;
+                // Подготовка данных для фильтрации (data-attributes)
+                const catId = resolveId(product.data.category);
                 
-                // Для data-tags нам нужны ID (slugs), чтобы скрипт фильтрации работал
-                const tagsList = (product.data.tags || []).map(t => (typeof t === 'object' && t !== null) ? t.id : t).filter(Boolean);
-                const tagsString = tagsList.join(',');
+                const tagsRaw = product.data.tags || [];
+                const tagIds = tagsRaw.map(resolveId).filter(Boolean);
                 
                 return (
                     <div 
-                        class="product-item transition-all duration-700 opacity-100 translate-y-0"
-                        data-tags={tagsString}
+                        class="product-item transition-all duration-500 opacity-100 translate-y-0"
+                        data-category={catId}
+                        data-tags={tagIds.join(',')}
                     >
                         <ProductCard 
                             product={product} 
+                            // Передаем русское название категории в карточку
                             categoryName={catId ? categoryMap[catId] : ''} 
                         />
                     </div>
                 );
             })}
 
-            <div id="empty-state" class="hidden col-span-full py-20 text-center">
-                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Здесь пока пусто</p>
-                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
-                    Сбросить
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden col-span-full py-24 text-center">
+                <p class="font-serif text-3xl text-hyle-text/40 mb-4">Пустота</p>
+                <p class="font-mono text-xs text-hyle-text/30 mb-6">По выбранным фильтрам изделий не найдено.</p>
+                <button onclick="document.getElementById('reset-all').click()" class="px-6 py-3 border border-hyle-text/20 hover:bg-hyle-text hover:text-white transition-colors text-xs uppercase tracking-widest rounded-sm">
+                    Показать всё
                 </button>
             </div>
 
         </div>
+
     </div>
   </div>
 </Layout>
 
 <script>
-    document.addEventListener('astro:page-load', () => { initCatalog(); }, { once: false });
-    if (document.readyState === 'complete') { initCatalog(); } else { window.addEventListener('load', initCatalog); }
+    document.addEventListener('astro:page-load', initCatalog);
+    if (document.readyState === 'complete') initCatalog();
+    else window.addEventListener('load', initCatalog);
+
     function initCatalog() {
-        const buttons = document.querySelectorAll('.filter-btn');
-        const items = document.querySelectorAll('.product-item');
+        const productItems = document.querySelectorAll('.product-item');
+        const btns = document.querySelectorAll('.filter-btn');
         const emptyState = document.getElementById('empty-state');
-        const resetBtn = document.getElementById('reset-filters');
-        if (!buttons.length || !items.length) return;
+        const resetAllBtn = document.getElementById('reset-all');
+        const infoPanel = document.getElementById('active-filters-info');
+
+        // Состояние фильтров (Set для множественного выбора)
+        let activeCategories = new Set(); // Пустой Set = выбрано "Все"
+        let activeTags = new Set();
+
+        // 1. Инициализация из URL
+        const params = new URLSearchParams(window.location.search);
         
-        const updateButtons = (activeTag) => {
-            buttons.forEach(btn => {
-                const isActive = btn.getAttribute('data-tag') === activeTag;
+        if (params.has('categories')) {
+            params.get('categories').split(',').forEach(c => activeCategories.add(c));
+        }
+        if (params.has('tags')) {
+            params.get('tags').split(',').forEach(t => activeTags.add(t));
+        }
+        // Одиночный легаси параметр ?tag=...
+        if (params.has('tag')) {
+            activeTags.add(params.get('tag'));
+        }
+
+        render();
+
+        // 2. Обработчики кликов
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-type');
+                const value = btn.getAttribute('data-value');
+
+                if (value === 'all') {
+                    // Сброс категории
+                    activeCategories.clear();
+                } else {
+                    // Тоггл (включить/выключить)
+                    const targetSet = type === 'category' ? activeCategories : activeTags;
+                    if (targetSet.has(value)) {
+                        targetSet.delete(value);
+                    } else {
+                        targetSet.add(value);
+                    }
+                }
+                
+                updateURL();
+                render();
+            });
+        });
+
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                activeCategories.clear();
+                activeTags.clear();
+                updateURL();
+                render();
+            });
+        }
+
+        // 3. Основная логика рендеринга
+        function render() {
+            // Обновляем кнопки
+            btns.forEach(btn => {
+                const type = btn.getAttribute('data-type');
+                const value = btn.getAttribute('data-value');
                 const activeClass = btn.getAttribute('data-active-class');
                 const inactiveClass = btn.getAttribute('data-inactive-class');
-                if (isActive) { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${activeClass}`; } 
-                else { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${inactiveClass}`; }
-            });
-        };
+                
+                let isActive = false;
+                if (value === 'all') {
+                    isActive = activeCategories.size === 0; // "Все" активно, если сет пуст
+                } else {
+                    isActive = type === 'category' ? activeCategories.has(value) : activeTags.has(value);
+                }
 
-        const filterGrid = (tag) => {
+                btn.className = `filter-btn relative transition-all duration-300 ${isActive ? activeClass : inactiveClass} ${btn.className.split(' ').filter(c => !c.startsWith('bg-') && !c.startsWith('text-') && !c.startsWith('border-')).join(' ')}`;
+            });
+
+            // Показываем/скрываем товары
             let visibleCount = 0;
-            items.forEach((item) => {
-                const itemTags = item.getAttribute('data-tags')?.split(',') || [];
-                // Фильтруем по ID (slug), который лежит в data-tags
-                const shouldShow = tag === 'all' || itemTags.includes(tag);
-                const element = item as HTMLElement;
-                if (shouldShow) {
-                    element.classList.remove('hidden');
-                    requestAnimationFrame(() => { element.style.opacity = '1'; element.style.transform = 'translateY(0)'; });
+            productItems.forEach(item => {
+                const pCat = item.getAttribute('data-category');
+                const pTags = item.getAttribute('data-tags') ? item.getAttribute('data-tags').split(',') : [];
+
+                // Логика: (Категория подходит ИЛИ категории не выбраны) И (Хотя бы один тег подходит ИЛИ теги не выбраны)
+                const catMatch = activeCategories.size === 0 || activeCategories.has(pCat);
+                
+                // Для тегов: если выбрано несколько тегов, показываем товары, у которых есть ХОТЯ БЫ ОДИН из выбранных (OR logic within tags)
+                // Если нужно STRICT AND (товар должен иметь ВСЕ выбранные теги) - логика будет другой. Обычно в e-commerce это OR.
+                const tagMatch = activeTags.size === 0 || pTags.some(t => activeTags.has(t));
+
+                if (catMatch && tagMatch) {
+                    item.classList.remove('hidden');
                     visibleCount++;
                 } else {
-                    element.style.opacity = '0'; element.style.transform = 'translateY(20px)'; element.classList.add('hidden');
+                    item.classList.add('hidden');
                 }
             });
-            if (visibleCount === 0 && emptyState) { emptyState.classList.remove('hidden'); } else if (emptyState) { emptyState.classList.add('hidden'); }
-        };
 
-        const applyFilter = (tag) => {
-            updateButtons(tag); filterGrid(tag);
+            // Empty State
+            if (visibleCount === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
+
+            // Панель сброса
+            if (activeCategories.size > 0 || activeTags.size > 0) infoPanel.classList.remove('hidden');
+            else infoPanel.classList.add('hidden');
+        }
+
+        function updateURL() {
             const url = new URL(window.location.href);
-            if (tag === 'all') { url.searchParams.delete('tag'); } else { url.searchParams.set('tag', tag); }
-            window.history.pushState({}, '', url);
-        };
+            
+            // Очищаем старые
+            url.searchParams.delete('tag');
+            url.searchParams.delete('categories');
+            url.searchParams.delete('tags');
 
-        buttons.forEach(btn => { btn.addEventListener('click', () => { const tag = btn.getAttribute('data-tag') || 'all'; applyFilter(tag); }); });
-        if (resetBtn) { resetBtn.addEventListener('click', () => applyFilter('all')); }
-        const params = new URLSearchParams(window.location.search);
-        const initialTag = params.get('tag') || 'all';
-        updateButtons(initialTag);
-        if (initialTag !== 'all') { filterGrid(initialTag); } else { updateButtons('all'); }
+            if (activeCategories.size > 0) {
+                url.searchParams.set('categories', Array.from(activeCategories).join(','));
+            }
+            if (activeTags.size > 0) {
+                url.searchParams.set('tags', Array.from(activeTags).join(','));
+            }
+            
+            window.history.pushState({}, '', url);
+        }
     }
 </script>
