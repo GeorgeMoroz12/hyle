@@ -74,10 +74,10 @@ export default config({
     // 1. СПРАВОЧНИК: КАТЕГОРИИ
     categories: collection({
       label: 'Справочник: Категории',
-      slugField: 'title', // Генерируем slug из title
+      slugField: 'title', // Генерируем slug из поля title
       path: 'src/content/categories/*',
       schema: {
-        // ВАЖНО: Поле называется title (не name!)
+        // ВАЖНО: Поле называется title (раньше могло быть name)
         title: fields.slug({ name: { label: 'Название' } }),
       },
     }),
@@ -85,10 +85,10 @@ export default config({
     // 2. СПРАВОЧНИК: ТЕГИ
     tags: collection({
       label: 'Справочник: Теги',
-      slugField: 'title', // Генерируем slug из title
+      slugField: 'title', // Генерируем slug из поля title
       path: 'src/content/tags/*',
       schema: {
-        // ВАЖНО: Поле называется title (не name!)
+        // ВАЖНО: Поле называется title
         title: fields.slug({ name: { label: 'Название' } }),
       },
     }),
@@ -126,7 +126,7 @@ export default config({
         
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги' }
+          { label: 'Теги', itemLabel: (props) => props.value }
         ),
         
         relatedProducts: fields.array(
@@ -145,7 +145,7 @@ export default config({
         
         description: fields.document({ label: 'Описание', formatting: true }),
 
-        // LEGACY (Старые поля, пока не удалили из файлов)
+        // LEGACY (Для совместимости)
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
         care: fields.text({ label: '⚠️ Old: care', multiline: true }),
@@ -167,6 +167,10 @@ export default config({
           directory: 'public/images/blog',
           publicPath: '/images/blog/',
         }),
+        tags: fields.array(
+          fields.relationship({ label: 'Тег', collection: 'tags' }),
+          { label: 'Теги', itemLabel: (props) => props.value }
+        ),
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'Товары' }
