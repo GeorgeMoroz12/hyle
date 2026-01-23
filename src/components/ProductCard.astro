@@ -1,7 +1,7 @@
 ---
 // src/components/ProductCard.astro
 import type { CollectionEntry } from 'astro:content';
-import { getEntry } from 'astro:content';
+import { getEntries } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
@@ -17,51 +17,46 @@ const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'П�
 const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
-const productUrl = `/products/${product.slug}`;
 
-// --- ЛОГИКА РЕЗОЛВА ТЕГА (1 штука) ---
-let visibleTag = null;
+// --- ЛОГИКА ТЕГОВ ---
+let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
 
-if (rawTags.length > 0) {
-    // Берем первый тег для отображения
-    const firstTag = rawTags[0];
-    
-    // Пытаемся зарезолвить
+// 1. Нормализация (Получаем чистые ID)
+const tagIds = rawTags.map(t => {
+    if (typeof t === 'string') return t;
+    if (typeof t === 'object' && t?.id) return t.id;
+    return null;
+}).filter(t => t && t.trim() !== '');
+
+// 2. Запрос названий из базы
+if (tagIds.length > 0) {
     try {
-        let tagData = null;
-        let tagId = null;
+        const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
+        const loadedEntries = await getEntries(tagRefs);
+        
+        const namesMap = new Map();
+        loadedEntries.forEach(entry => {
+            if (entry && entry.data) {
+                // FIX: Заменил .name на .title
+                namesMap.set(entry.id, entry.data.title);
+            }
+        });
 
-        // Вариант 1: Ссылка
-        if (typeof firstTag === 'object' && firstTag !== null) {
-             tagId = firstTag.id || firstTag.slug;
-             tagData = await getEntry(firstTag); // getEntry(ref)
-        } 
-        // Вариант 2: Строка
-        else if (typeof firstTag === 'string') {
-             tagId = firstTag;
-             tagData = await getEntry('tags', firstTag);
-        }
+        // 3. Формируем итоговый список
+        visibleTags = tagIds.map(id => ({
+            slug: id,
+            // Берем .title, или делаем Capitalize ID
+            label: namesMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
+        }));
 
-        if (tagData && tagData.data) {
-            visibleTag = {
-                id: tagId,
-                title: tagData.data.title // ВАЖНО: поле title из справочника
-            };
-        } else {
-             // Fallback: просто ID с заглавной буквы
-             visibleTag = {
-                id: typeof firstTag === 'string' ? firstTag : tagId,
-                title: (typeof firstTag === 'string' ? firstTag : tagId)
-             };
-             if (visibleTag.title) {
-                 visibleTag.title = visibleTag.title.charAt(0).toUpperCase() + visibleTag.title.slice(1);
-             }
-        }
     } catch (e) {
-        // Fail silently
+        visibleTags = tagIds.map(id => ({ slug: id, label: id }));
     }
 }
+
+const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
+const productUrl = `/products/${product.slug}`;
 ---
 
 <div class="group relative w-full flex flex-col">
@@ -84,8 +79,10 @@ if (rawTags.length > 0) {
   </a>
 
   <div class="flex justify-between items-start px-1 mt-auto">
+    
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
         
+        {/* CATEGORY LABEL */}
         {categoryName && (
             <span class="text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 mb-1 block transition-colors group-hover:text-hyle-clay/70">
                 {categoryName}
@@ -98,12 +95,13 @@ if (rawTags.length > 0) {
             </h3>
         </a>
         
-        {visibleTag && (
+        {/* TAG RENDER */}
+        {displayTag && (
             <a 
-                href={`/catalog?tag=${visibleTag.id}`}
+                href={`/catalog?tag=${displayTag.slug}`}
                 class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
             >
-                #{visibleTag.title}
+                #{displayTag.label}
             </a>
         )}
     </div>
@@ -113,5 +111,6 @@ if (rawTags.length > 0) {
           {formattedPrice}
         </span>
     </div>
+
   </div>
 </div>

@@ -5,9 +5,7 @@ export default config({
     ? {
         kind: 'github',
         repo: 'GeorgeMoroz12/hyle',
-        // Убрали branchPrefix, чтобы писать сразу в main.
-        // Это заставит Vercel обновлять Production сайт автоматически.
-    }
+      }
     : {
         kind: 'local',
       },
@@ -76,17 +74,23 @@ export default config({
     // 1. СПРАВОЧНИК: КАТЕГОРИИ
     categories: collection({
       label: 'Справочник: Категории',
-      slugField: 'title',
+      slugField: 'title', // Генерируем slug из title
       path: 'src/content/categories/*',
-      schema: { title: fields.slug({ name: { label: 'Название' } }) },
+      schema: {
+        // ВАЖНО: Поле называется title (не name!)
+        title: fields.slug({ name: { label: 'Название' } }),
+      },
     }),
 
     // 2. СПРАВОЧНИК: ТЕГИ
     tags: collection({
       label: 'Справочник: Теги',
-      slugField: 'title',
+      slugField: 'title', // Генерируем slug из title
       path: 'src/content/tags/*',
-      schema: { title: fields.slug({ name: { label: 'Название' } }) },
+      schema: {
+        // ВАЖНО: Поле называется title (не name!)
+        title: fields.slug({ name: { label: 'Название' } }),
+      },
     }),
 
     // 3. ТОВАРЫ
@@ -114,17 +118,15 @@ export default config({
           defaultValue: 'В наличии',
         }),
         
-        // Связь с категорией
         category: fields.relationship({ 
           label: 'Категория', 
           collection: 'categories',
           validation: { isRequired: false }
         }),
         
-        // Связь с тегами
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги', itemLabel: (props) => props.value }
+          { label: 'Теги' }
         ),
         
         relatedProducts: fields.array(
@@ -143,7 +145,7 @@ export default config({
         
         description: fields.document({ label: 'Описание', formatting: true }),
 
-        // LEGACY (Старые поля, пока оставляем для совместимости)
+        // LEGACY (Старые поля, пока не удалили из файлов)
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
         care: fields.text({ label: '⚠️ Old: care', multiline: true }),
