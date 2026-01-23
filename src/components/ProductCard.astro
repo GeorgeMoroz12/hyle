@@ -1,14 +1,14 @@
 ---
 // src/components/ProductCard.astro
 import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
+import { getEntry } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
   categoryName?: string;
 }
 
-const { product } = Astro.props;
+const { product, categoryName } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
@@ -22,27 +22,33 @@ const isReserved = s === 'reserved' || s === 'резерв';
 let visibleTag = null;
 const rawTags = Array.isArray(tags) ? tags : [];
 
-// 1. Нормализуем ID
+// 1. Нормализуем ID (Строки или Объекты -> ID)
 const tagIds = rawTags.map(t => {
     if (typeof t === 'string') return t;
     if (typeof t === 'object' && t?.id) return t.id;
     return null;
 }).filter(t => t && t.trim() !== '');
 
-// 2. Если есть теги, ищем их названия
+// 2. Ищем название для первого тега
 if (tagIds.length > 0) {
-    // Берем первый ID
     const firstId = tagIds[0];
     
-    // Пытаемся найти в коллекции (для SSG это ок, коллекция кэшируется)
-    // В идеале этот Map передавать пропсом, но для надежности загрузим здесь
-    const allTags = await getCollection('tags');
-    const foundTag = allTags.find(t => t.id === firstId);
-    
-    visibleTag = {
-        slug: firstId,
-        label: foundTag ? foundTag.data.title : (firstId.charAt(0).toUpperCase() + firstId.slice(1))
-    };
+    try {
+        // Пробуем найти перевод в коллекции tags
+        const foundTag = await getEntry('tags', firstId);
+        
+        visibleTag = {
+            slug: firstId,
+            // Если нашли в базе - берем русское title, иначе - сам ID с большой буквы
+            label: foundTag ? foundTag.data.title : (firstId.charAt(0).toUpperCase() + firstId.slice(1))
+        };
+    } catch (e) {
+        // Fallback если что-то пошло не так
+        visibleTag = {
+            slug: firstId,
+            label: firstId.charAt(0).toUpperCase() + firstId.slice(1)
+        };
+    }
 }
 
 const productUrl = `/products/${product.slug}`;
@@ -72,6 +78,15 @@ const productUrl = `/products/${product.slug}`;
   <div class="flex justify-between items-start px-1 mt-auto">
     
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
+        
+        <!-- CATEGORY LABEL (Restored) -->
+        {categoryName && (
+            <span class="text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 mb-1 block transition-colors group-hover:text-hyle-clay/70">
+                {categoryName}
+            </span>
+        )}
+
+        <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
@@ -82,14 +97,14 @@ const productUrl = `/products/${product.slug}`;
         {visibleTag && (
             <a 
                 href={`/catalog?tag=${visibleTag.slug}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
             >
                 #{visibleTag.label}
             </a>
         )}
     </div>
     
-    <div class="flex flex-col items-end shrink-0 pl-1">
+    <div class="flex flex-col items-end shrink-0 pl-1 pt-1">
         <span class="font-hand text-lg md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
           {formattedPrice}
         </span>
