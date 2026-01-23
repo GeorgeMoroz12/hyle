@@ -1,48 +1,55 @@
-import { defineCollection, z } from 'astro:content'; 
-// Убрали reference из импорта, так как временно отключаем его
+import { defineCollection, z, reference } from 'astro:content';
 
 // 1. Справочники
 const tags = defineCollection({
   type: 'content',
-  schema: z.object({ title: z.string().optional() }).passthrough(),
+  schema: z.object({ 
+    name: z.string(), // Русское название
+  }).passthrough(),
 });
 
 const categories = defineCollection({
   type: 'content',
-  schema: z.object({ title: z.string().optional() }).passthrough(),
+  schema: z.object({ 
+    name: z.string(), // Русское название
+  }).passthrough(),
 });
 
-// 2. Товары (Products) — RELAXED VALIDATION
+// 2. Товары
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
+    price: z.any().optional(), 
     
-    // --- HOTFIX START ---
-    // Отключаем reference(), чтобы не падало на старых строках
-    // Используем z.any(), чтобы принимать и String, и Array, и Object
-    
-    category: z.any().optional(),       // Было: reference('categories')
-    tags: z.any().optional(),           // Было: z.array(reference('tags'))
-    relatedProducts: z.any().optional(),// Было: z.array(reference('products'))
-    
-    // --- HOTFIX END ---
+    // КАТЕГОРИЯ: Ссылка на справочник
+    category: z.union([
+        reference('categories'), // Новая правильная связь
+        z.string(),              // Старая строка (Legacy)
+        z.null(),
+        z.undefined()
+    ]).optional(),
 
-    price: z.any().optional(),
-    images: z.any().optional(), // Массив путей или строк
-    
-    status: z.any().optional(),
+    // ТЕГИ: Массив ссылок на справочник
+    tags: z.union([
+        z.array(reference('tags')), // Новые правильные связи
+        z.array(z.string()),        // Старые строки (Legacy)
+        z.null(),
+        z.undefined()
+    ]).optional(),
+
+    images: z.array(z.string()).default([]),
+    relatedProducts: z.any().optional(),
     specs: z.any().optional(),
-    
+    status: z.any().optional(),
     description: z.any().optional(),
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
-
+    
     // Legacy поля
     inStock: z.any().optional(),
     isNew: z.any().optional(),
     care: z.any().optional(),
-
   }).passthrough(),
 });
 
@@ -51,14 +58,9 @@ const blog = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    pubDate: z.any().optional(),
+    pubDate: z.union([z.string(), z.date()]).transform((str) => new Date(str)), 
     coverImage: z.string().optional(),
-    
-    // --- HOTFIX START ---
-    tags: z.any().optional(),           // Отключили валидацию связей
-    relatedProducts: z.any().optional(),// Отключили валидацию связей
-    // --- HOTFIX END ---
-
+    relatedProducts: z.any().optional(),
   }).passthrough(),
 });
 
@@ -71,7 +73,7 @@ const about = defineCollection({
   }).passthrough(),
 });
 
-// 5. Singletons
+// 5. Landing & B2B
 const landing = defineCollection({
   type: 'data',
   schema: z.object({

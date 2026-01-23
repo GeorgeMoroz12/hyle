@@ -13,7 +13,7 @@ export default config({
   singletons: {
     // 1. Landing
     landing: singleton({
-      label: 'Главная страница', // Убрали 🏠
+      label: 'Главная страница',
       path: 'src/content/landing/home',
       schema: {
         heroTitleLine1: fields.text({ label: 'Hero: Заголовок 1', defaultValue: 'Глина' }),
@@ -37,7 +37,7 @@ export default config({
 
     // 2. About
     about: singleton({
-      label: 'О Мастере', // Убрали 👤
+      label: 'О Мастере',
       path: 'src/content/about/main',
       format: { contentField: 'content' },
       schema: {
@@ -60,7 +60,7 @@ export default config({
 
     // 3. B2B
     b2b: singleton({
-      label: 'Страница B2B', // Убрали 💼
+      label: 'Страница B2B',
       path: 'src/content/b2b/main',
       schema: {
         title: fields.text({ label: 'Заголовок' }),
@@ -71,24 +71,29 @@ export default config({
   },
 
   collections: {
-    // СПРАВОЧНИКИ
+    // 1. СПРАВОЧНИК: КАТЕГОРИИ
     categories: collection({
-      label: 'Категории', // Убрали 🗂
-      slugField: 'title',
+      label: 'Справочник: Категории',
+      slugField: 'name', // Slug генерируется из поля name
       path: 'src/content/categories/*',
-      schema: { title: fields.slug({ name: { label: 'Название' } }) },
+      schema: {
+        name: fields.slug({ name: { label: 'Название (Русское)' } }),
+      },
     }),
 
+    // 2. СПРАВОЧНИК: ТЕГИ
     tags: collection({
-      label: 'Теги', // Убрали 🏷️
-      slugField: 'title',
+      label: 'Справочник: Теги',
+      slugField: 'name', // Slug генерируется из поля name
       path: 'src/content/tags/*',
-      schema: { title: fields.slug({ name: { label: 'Название' } }) },
+      schema: {
+        name: fields.slug({ name: { label: 'Название (Русское)' } }),
+      },
     }),
 
-    // ТОВАРЫ
+    // 3. ТОВАРЫ
     products: collection({
-      label: 'Товары', // Убрали 🏺
+      label: 'Товары',
       slugField: 'title',
       path: 'src/content/products/*',
       format: { contentField: 'description' },
@@ -111,20 +116,32 @@ export default config({
           defaultValue: 'В наличии',
         }),
         
+        // СВЯЗЬ: Категория (Одиночный выбор)
         category: fields.relationship({ 
           label: 'Категория', 
           collection: 'categories',
           validation: { isRequired: false }
         }),
         
+        // СВЯЗЬ: Теги (Множественный выбор)
         tags: fields.array(
-          fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги' }
+          fields.relationship({ 
+            label: 'Тег', 
+            collection: 'tags' 
+          }),
+          {
+            label: 'Теги',
+            // ФИКС "Item 2": Теперь здесь будет писаться ID выбранного тега
+            itemLabel: (props) => props.value || 'Выберите тег'
+          }
         ),
         
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }), 
-          { label: 'С этим покупают' }
+          { 
+            label: 'С этим покупают',
+            itemLabel: (props) => props.value || 'Товар'
+          }
         ),
 
         specs: fields.object({
@@ -147,7 +164,7 @@ export default config({
 
     // БЛОГ
     blog: collection({
-      label: 'Блог', // Убрали 📰
+      label: 'Блог',
       slugField: 'title',
       path: 'src/content/blog/*',
       format: { contentField: 'content' },
