@@ -1,6 +1,6 @@
 ---
 // src/pages/products/[slug].astro
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ExpandableText from '../../components/ExpandableText.astro';
 import OrderButton from '../../components/OrderButton.astro';
@@ -18,13 +18,7 @@ const { entry } = Astro.props;
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. GLOBAL LOOKUP MAPS ---
-const allCategories = await getCollection('categories');
-const categoryMap = new Map(allCategories.map(c => [c.id, c.data.title]));
-
-const allTags = await getCollection('tags');
-const tagMap = new Map(allTags.map(t => [t.id, t.data.title]));
-
+// Helpers
 const resolveId = (item: any) => {
     if (!item) return null;
     if (typeof item === 'string') return item;
@@ -32,26 +26,41 @@ const resolveId = (item: any) => {
     return null;
 };
 
-// --- 2. CURRENT CATEGORY & TAGS ---
-const categoryId = resolveId(category);
-const categoryTitle = categoryId ? (categoryMap.get(categoryId) || categoryId) : null;
+// --- DATA LOGIC (FIXED) ---
+const currentCategoryId = resolveId(category);
+let categoryTitle = 'Каталог';
 
+if (currentCategoryId) {
+    try {
+        const catEntry = await getEntry('categories', currentCategoryId);
+        // FIX: .data.name
+        if (catEntry) categoryTitle = catEntry.data.name; 
+    } catch (e) { categoryTitle = currentCategoryId; }
+}
+
+// TAGS
 const rawTags = Array.isArray(tags) ? tags : [];
-const tagIds = rawTags.map(resolveId).filter(Boolean);
+const tagIdsToLoad = rawTags.map(resolveId).filter(id => id !== null);
+let displayTags = [];
 
-// Формируем список тегов для отображения
-const displayTags = tagIds.map(id => ({
-    id,
-    title: tagMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
-})).slice(0, 3); // Limit 3
+if (tagIdsToLoad.length > 0) {
+    try {
+        const tagRefs = tagIdsToLoad.map(id => ({ collection: 'tags', id }));
+        const loadedTags = await getEntries(tagRefs);
+        // FIX: .data.name
+        displayTags = loadedTags.map(t => ({ id: t.id, title: t.data.name }));
+    } catch (e) {
+        displayTags = tagIdsToLoad.map(id => ({ id, title: id }));
+    }
+}
 
-// --- 3. RELATED PRODUCTS ---
+// RELATED
 const allProducts = await getCollection('products');
 const relatedProducts = allProducts.filter(p => {
     if (p.id === entry.id) return false;
     const pCatId = resolveId(p.data.category);
-    if (!categoryId || !pCatId) return false;
-    return pCatId === categoryId;
+    if (!currentCategoryId || !pCatId) return false;
+    return pCatId === currentCategoryId;
 }).slice(0, 6);
 
 let relatedItems = relatedProducts;
@@ -61,6 +70,14 @@ if (relatedItems.length < 4) {
         .slice(0, 6 - relatedItems.length);
     relatedItems = [...relatedItems, ...leftovers];
 }
+
+// Category Map for Cards
+const allCategories = await getCollection('categories');
+const categoryMap = allCategories.reduce((acc, cat) => {
+    // FIX: .data.name
+    acc[cat.id] = cat.data.name;
+    return acc;
+}, {} as Record<string, string>);
 
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const s = status?.toLowerCase() || '';
@@ -76,6 +93,7 @@ const specMap: Record<string, string> = {
 ---
 
 <Layout title={title} hideHeader={true}>
+  
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
     
     <!-- LEFT -->
@@ -87,7 +105,7 @@ const specMap: Record<string, string> = {
              {categoryTitle && (
                 <>
                     <span class="text-hyle-text/30">/</span>
-                    <a href={`/catalog?tag=${categoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">
+                    <a href={`/catalog?categories=${currentCategoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">
                         {categoryTitle}
                     </a>
                 </>
@@ -95,12 +113,21 @@ const specMap: Record<string, string> = {
              <span class="text-hyle-text/30">/</span>
              <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
-
+        
+        <!-- Images & Thumbs (Same as before) -->
         <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
              <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
              <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
-        <!-- Thumbs skipped for brevity -->
+        {images && images.length > 1 && (
+            <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
+                {images.map((img) => (
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
+                        <img src={img} class="w-full h-full object-cover" />
+                    </button>
+                ))}
+            </div>
+        )}
     </div>
 
     <!-- RIGHT -->
@@ -152,13 +179,23 @@ const specMap: Record<string, string> = {
                     <dl class="text-xs grid grid-cols-2 gap-y-3 opacity-70 mb-4">
                         {Object.entries(specs).map(([key, value]) => (
                             <>
-                                <dt class="font-medium uppercase tracking-wider text-hyle-text/60">{specMap[key.toLowerCase()] || key}</dt>
+                                <dt class="font-medium uppercase tracking-wider text-hyle-text/60">
+                                    {specMap[key.toLowerCase()] || key}
+                                </dt>
                                 <dd>{value}</dd>
                             </>
                         ))}
                     </dl>
                 )}
-                {/* Care ... */}
+                {care_instructions && (
+                    <details class="group cursor-pointer border-t border-hyle-text/10 pt-3">
+                        <summary class="flex justify-between items-center list-none outline-none text-hyle-text/60 hover:text-hyle-clay transition-colors">
+                            <span class="text-xs font-medium uppercase tracking-wider">Уход за изделием</span>
+                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">↓</span>
+                        </summary>
+                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">{care_instructions}</div>
+                    </details>
+                )}
             </div>
 
             <div class="mt-2">
@@ -179,7 +216,7 @@ const specMap: Record<string, string> = {
                          const cId = resolveId(item.data.category);
                          return (
                             <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
-                                <ProductCard product={item} categoryName={cId ? (categoryMap.get(cId) || '') : ''} />
+                                <ProductCard product={item} categoryName={cId ? categoryMap[cId] : ''} />
                             </div>
                         );
                     })}

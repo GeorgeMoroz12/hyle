@@ -2,18 +2,16 @@
 // src/pages/catalog.astro
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, getEntries } from 'astro:content';
 
-// --- 1. GLOBAL LOOKUP (СЛОВАРЬ) ---
-// Загружаем справочники один раз
+// --- 1. GLOBAL LOOKUP (FIXED FIELDS) ---
 const allCategories = await getCollection('categories');
 const allTags = await getCollection('tags');
 
-// Создаем Map: ID -> Title (Русское название)
-const categoryMap = new Map(allCategories.map(c => [c.id, c.data.title]));
-const tagMap = new Map(allTags.map(t => [t.id, t.data.title]));
+// FIX: Используем .data.name
+const categoryMap = new Map(allCategories.map(c => [c.id, c.data.name]));
+const tagMap = new Map(allTags.map(t => [t.id, t.data.name]));
 
-// Хелпер для нормализации ID из смешанных данных
 const resolveId = (item: any) => {
     if (!item) return null;
     if (typeof item === 'string') return item;
@@ -26,26 +24,28 @@ const allProducts = await getCollection('products', ({ data }) => {
     return data.status !== 'archived';
 });
 
-const sortedProducts = allProducts.sort((a, b) => 0); // Можно добавить сортировку по дате
+const sortedProducts = allProducts.sort((a, b) => 0);
 
-// --- 3. СБОР ФИЛЬТРОВ (ROBUST) ---
+// --- 3. СБОР АКТИВНЫХ ФИЛЬТРОВ ---
+const usedCategoryIds = new Set(sortedProducts.map(p => resolveId(p.data.category)).filter(Boolean));
 
-// Собираем все уникальные ID тегов, которые встречаются в товарах
 const rawTagIds = allProducts.flatMap(p => {
     const tags = p.data.tags || [];
     return tags.map(resolveId);
-}).filter(id => id && id.trim() !== ''); // Убираем null и пустые строки
-
+}).filter(t => t && t.trim() !== '');
 const uniqueTagIds = [...new Set(rawTagIds)];
 
-// Формируем список объектов для фильтра { id, title }
-// Если названия нет в базе (tagMap), используем ID как название
+// Формируем списки для рендера
+const filterCategories = allCategories
+    .filter(cat => usedCategoryIds.has(cat.id))
+    .map(cat => ({ id: cat.id, title: cat.data.name })) // FIX: .name
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+// Для тегов используем безопасный маппинг
 let filterTags = uniqueTagIds.map(id => {
     const title = tagMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1));
     return { id, title };
 });
-
-// Сортируем по алфавиту
 filterTags.sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
@@ -66,28 +66,57 @@ const pageDesc = "Полная коллекция керамики ручной 
             </p>
         </div>
 
-        <!-- FILTERS -->
+        <!-- FILTERS BAR -->
         <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 md:mb-12 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
-            <div class="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-2 mask-linear">
-                <button 
-                    class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                    data-tag="all"
-                    data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
-                    data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
-                >
-                    Все
-                </button>
-
-                {filterTags.map(tag => (
+            
+            <div class="flex flex-col gap-4">
+                
+                <!-- ГРУППА 1: КАТЕГОРИИ (Крупно, Serif) -->
+                <div class="flex items-center gap-4 overflow-x-auto scrollbar-hide pb-1 mask-linear">
                     <button 
-                        class="filter-btn group px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest"
-                        data-tag={tag.id} 
-                        data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
-                        data-inactive-class="bg-transparent text-hyle-text/60 border-hyle-text/20 hover:border-hyle-clay hover:text-hyle-clay"
+                        class="filter-btn group pb-1 transition-all duration-300 whitespace-nowrap text-base font-serif"
+                        data-type="category"
+                        data-value="all"
+                        data-active-class="text-hyle-text border-b-2 border-hyle-clay"
+                        data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b-2 border-transparent"
                     >
-                        #{tag.title}
+                        Все
                     </button>
-                ))}
+
+                    {filterCategories.map(cat => (
+                        <button 
+                            class="filter-btn group pb-1 transition-all duration-300 whitespace-nowrap text-base font-serif"
+                            data-type="category"
+                            data-value={cat.id} 
+                            data-active-class="text-hyle-text border-b-2 border-hyle-clay"
+                            data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b-2 border-transparent"
+                        >
+                            {cat.title}
+                        </button>
+                    ))}
+                </div>
+
+                <!-- ГРУППА 2: ТЕГИ (Мелко, Mono, Pills) -->
+                {filterTags.length > 0 && (
+                    <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                        {filterTags.map(tag => (
+                            <button 
+                                class="filter-btn group px-3 py-1 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] uppercase tracking-widest font-mono"
+                                data-type="tag"
+                                data-value={tag.id} 
+                                data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
+                                data-inactive-class="bg-transparent text-hyle-text/50 border-hyle-text/10 hover:border-hyle-clay hover:text-hyle-clay"
+                            >
+                                #{tag.title}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <!-- Сброс -->
+            <div id="active-filters-info" class="hidden mt-3 text-[10px] font-mono text-hyle-text/40 flex gap-2 items-center">
+                <button id="reset-all" class="underline hover:text-hyle-clay cursor-pointer">Сбросить фильтры</button>
             </div>
         </div>
 
@@ -95,24 +124,23 @@ const pageDesc = "Полная коллекция керамики ручной 
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {
-                // Подготовка данных для дата-атрибутов
                 const catId = resolveId(product.data.category);
                 
-                // Превращаем массив смешанных тегов в строку ID для фильтрации
-                const productTagIds = (product.data.tags || []).map(resolveId).filter(Boolean);
-                const tagsString = productTagIds.join(',');
+                const tagsRaw = product.data.tags || [];
+                const tagIds = tagsRaw.map(resolveId).filter(Boolean);
                 
-                // Получаем красивое имя категории для карточки
-                const categoryTitle = catId ? (categoryMap.get(catId) || '') : '';
+                // Передаем название категории в карточку (для надписи над заголовком)
+                const catName = catId ? (categoryMap.get(catId) || '') : '';
                 
                 return (
                     <div 
                         class="product-item transition-all duration-700 opacity-100 translate-y-0"
-                        data-tags={tagsString}
+                        data-category={catId}
+                        data-tags={tagIds.join(',')}
                     >
                         <ProductCard 
                             product={product} 
-                            categoryName={categoryTitle} 
+                            categoryName={catName} 
                         />
                     </div>
                 );
@@ -120,8 +148,8 @@ const pageDesc = "Полная коллекция керамики ручной 
 
             <div id="empty-state" class="hidden col-span-full py-20 text-center">
                 <p class="font-serif text-2xl text-hyle-text/40 mb-4">Пока здесь пусто</p>
-                <button id="reset-filters" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
-                    Сбросить
+                <button onclick="document.getElementById('reset-all').click()" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
+                    Показать всё
                 </button>
             </div>
 
@@ -132,50 +160,105 @@ const pageDesc = "Полная коллекция керамики ручной 
 </Layout>
 
 <script>
-    document.addEventListener('astro:page-load', () => { initCatalog(); }, { once: false });
-    if (document.readyState === 'complete') { initCatalog(); } else { window.addEventListener('load', initCatalog); }
+    document.addEventListener('astro:page-load', initCatalog);
+    if (document.readyState === 'complete') initCatalog();
+    else window.addEventListener('load', initCatalog);
+
     function initCatalog() {
-        const buttons = document.querySelectorAll('.filter-btn');
-        const items = document.querySelectorAll('.product-item');
+        const productItems = document.querySelectorAll('.product-item');
+        const btns = document.querySelectorAll('.filter-btn');
         const emptyState = document.getElementById('empty-state');
-        const resetBtn = document.getElementById('reset-filters');
-        if (!buttons.length || !items.length) return;
-        const updateButtons = (activeTag) => {
-            buttons.forEach(btn => {
-                const isActive = btn.getAttribute('data-tag') === activeTag;
+        const resetAllBtn = document.getElementById('reset-all');
+        const infoPanel = document.getElementById('active-filters-info');
+
+        let activeCategories = new Set();
+        let activeTags = new Set();
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('categories')) params.get('categories').split(',').forEach(c => activeCategories.add(c));
+        if (params.has('tags')) params.get('tags').split(',').forEach(t => activeTags.add(t));
+        if (params.has('tag')) activeTags.add(params.get('tag'));
+
+        render();
+
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-type');
+                const value = btn.getAttribute('data-value');
+
+                if (value === 'all') {
+                    activeCategories.clear();
+                } else {
+                    const targetSet = type === 'category' ? activeCategories : activeTags;
+                    if (targetSet.has(value)) targetSet.delete(value);
+                    else targetSet.add(value);
+                }
+                updateURL();
+                render();
+            });
+        });
+
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                activeCategories.clear();
+                activeTags.clear();
+                updateURL();
+                render();
+            });
+        }
+
+        function render() {
+            btns.forEach(btn => {
+                const type = btn.getAttribute('data-type');
+                const value = btn.getAttribute('data-value');
                 const activeClass = btn.getAttribute('data-active-class');
                 const inactiveClass = btn.getAttribute('data-inactive-class');
-                if (isActive) { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${activeClass}`; } 
-                else { btn.className = `filter-btn px-4 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] md:text-xs uppercase tracking-widest ${inactiveClass}`; }
+                
+                let isActive = false;
+                if (value === 'all') isActive = activeCategories.size === 0;
+                else isActive = type === 'category' ? activeCategories.has(value) : activeTags.has(value);
+
+                // Очищаем классы и ставим нужные
+                const baseClasses = "filter-btn group transition-all duration-300 whitespace-nowrap cursor-pointer";
+                // Сохраняем специфичные классы шрифтов и паддингов, которые заданы в HTML
+                const staticClasses = type === 'category' ? "pb-1 text-base font-serif" : "px-3 py-1 rounded-full border text-[10px] uppercase tracking-widest font-mono";
+                
+                btn.className = `${baseClasses} ${staticClasses} ${isActive ? activeClass : inactiveClass}`;
             });
-        };
-        const filterGrid = (tag) => {
+
             let visibleCount = 0;
-            items.forEach((item) => {
-                const itemTags = item.getAttribute('data-tags')?.split(',') || [];
-                const shouldShow = tag === 'all' || itemTags.includes(tag);
-                const element = item as HTMLElement;
-                if (shouldShow) {
-                    element.classList.remove('hidden');
-                    requestAnimationFrame(() => { element.style.opacity = '1'; element.style.transform = 'translateY(0)'; });
+            productItems.forEach(item => {
+                const pCat = item.getAttribute('data-category');
+                const pTags = item.getAttribute('data-tags') ? item.getAttribute('data-tags').split(',') : [];
+
+                const catMatch = activeCategories.size === 0 || activeCategories.has(pCat);
+                const tagMatch = activeTags.size === 0 || pTags.some(t => activeTags.has(t));
+
+                if (catMatch && tagMatch) {
+                    item.classList.remove('hidden');
                     visibleCount++;
                 } else {
-                    element.style.opacity = '0'; element.style.transform = 'translateY(20px)'; element.classList.add('hidden');
+                    item.classList.add('hidden');
                 }
             });
-            if (visibleCount === 0 && emptyState) { emptyState.classList.remove('hidden'); } else if (emptyState) { emptyState.classList.add('hidden'); }
-        };
-        const applyFilter = (tag) => {
-            updateButtons(tag); filterGrid(tag);
+
+            if (visibleCount === 0) emptyState.classList.remove('hidden');
+            else emptyState.classList.add('hidden');
+
+            if (activeCategories.size > 0 || activeTags.size > 0) infoPanel.classList.remove('hidden');
+            else infoPanel.classList.add('hidden');
+        }
+
+        function updateURL() {
             const url = new URL(window.location.href);
-            if (tag === 'all') { url.searchParams.delete('tag'); } else { url.searchParams.set('tag', tag); }
+            url.searchParams.delete('tag');
+            url.searchParams.delete('categories');
+            url.searchParams.delete('tags');
+
+            if (activeCategories.size > 0) url.searchParams.set('categories', Array.from(activeCategories).join(','));
+            if (activeTags.size > 0) url.searchParams.set('tags', Array.from(activeTags).join(','));
+            
             window.history.pushState({}, '', url);
-        };
-        buttons.forEach(btn => { btn.addEventListener('click', () => { const tag = btn.getAttribute('data-tag') || 'all'; applyFilter(tag); }); });
-        if (resetBtn) { resetBtn.addEventListener('click', () => applyFilter('all')); }
-        const params = new URLSearchParams(window.location.search);
-        const initialTag = params.get('tag') || 'all';
-        updateButtons(initialTag);
-        if (initialTag !== 'all') { filterGrid(initialTag); } else { updateButtons('all'); }
+        }
     }
 </script>

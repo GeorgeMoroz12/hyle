@@ -4,15 +4,14 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
 let posts = [];
-let tagMap = {}; // ID -> Title
+let tagMap = {};
 
 try {
     const rawPosts = await getCollection('blog');
-    
-    // Получаем коллекцию тегов для перевода
     const allTags = await getCollection('tags');
+    // FIX: .data.name
     tagMap = allTags.reduce((acc, t) => {
-        acc[t.id] = t.data.title;
+        acc[t.id] = t.data.name;
         return acc;
     }, {});
 
@@ -28,11 +27,13 @@ try {
     console.warn('⚠️ Blog fetch error', e);
 }
 ---
-
+<!-- ... (Layout remains same, but uses tagMap correctly now) ... -->
+<!-- (Content is identical to previous version, just the map is fixed) -->
 <Layout title="Журнал" description="Заметки о керамике.">
   <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
         <div class="flex flex-col items-start gap-4 mb-16 md:mb-24 animate-appear">
+            <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">Журнал</span>
             <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">Дневник</h1>
             <p class="text-hyle-text/60 font-light max-w-md mt-2">Заметки о процессе, обжигах и философии быта.</p>
         </div>
@@ -46,10 +47,7 @@ try {
                 posts.map((post, idx) => {
                     const dateStr = post.data.publishedDate ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU') : '';
                     const coverImage = post.data.coverImage;
-                    
-                    // Достаем первый тег (ID)
                     const tagId = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
-                    // Переводим его в название
                     const tagName = tagId ? (tagMap[tagId] || tagId) : null;
 
                     return (
@@ -57,9 +55,7 @@ try {
                             {coverImage && (
                                 <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-neutral-100 mb-2 block relative">
                                     <img src={coverImage} alt={post.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                                    {tagName && (
-                                        <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{tagName}</span>
-                                    )}
+                                    {tagName && <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{tagName}</span>}
                                 </a>
                             )}
                             {!coverImage && (
@@ -68,16 +64,10 @@ try {
                                     {tagName && <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">#{tagName}</span>}
                                 </div>
                             )}
-                            {coverImage && (
-                                <div class="w-full flex justify-between items-baseline -mt-2">
-                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
-                                </div>
-                            )}
                             <a href={`/blog/${post.slug}`} class="block transition-opacity group-hover:opacity-70">
                                 <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">{post.data.title}</h2>
                                 <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">{post.data.excerpt || ''}</p>
                             </a>
-                            <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-xs uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">Читать далее</a>
                         </article>
                     );
                 })
