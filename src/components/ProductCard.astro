@@ -5,10 +5,10 @@ import { getEntries } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
-  categoryName?: string;
+  categoryName?: string; // Оставляем в типах, но не используем
 }
 
-const { product, categoryName } = Astro.props;
+const { product } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
@@ -18,41 +18,49 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- БЕЗОПАСНАЯ ЛОГИКА ТЕГОВ ---
-let visibleTag = null;
+// --- ЛОГИКА ТЕГОВ ---
+let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
 
-// 1. Извлекаем чистые ID (строки)
 const tagIds = rawTags.map(t => {
     if (typeof t === 'string') return t;
     if (typeof t === 'object' && t?.id) return t.id;
     return null;
-}).filter(t => t && typeof t === 'string' && t.trim() !== '');
+}).filter(t => t && t.trim() !== '');
 
-// 2. Пытаемся найти название первого тега
 if (tagIds.length > 0) {
-    const firstId = tagIds[0];
     try {
-        // Пробуем загрузить (массив объектов {collection, id})
-        const loaded = await getEntries([{ collection: 'tags', id: firstId }]);
+        const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
+        const loadedEntries = await getEntries(tagRefs);
         
-        if (loaded && loaded.length > 0 && loaded[0].data) {
-            visibleTag = { id: firstId, title: loaded[0].data.title };
-        } else {
-            // Fallback на ID с большой буквы
-            visibleTag = { id: firstId, title: firstId.charAt(0).toUpperCase() + firstId.slice(1) };
-        }
+        const namesMap = new Map();
+        loadedEntries.forEach(entry => {
+            if (entry && entry.data) {
+                namesMap.set(entry.id, entry.data.title);
+            }
+        });
+
+        visibleTags = tagIds.map(id => ({
+            slug: id,
+            label: namesMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
+        }));
+
     } catch (e) {
-        visibleTag = { id: firstId, title: firstId.charAt(0).toUpperCase() + firstId.slice(1) };
+        visibleTags = tagIds.map(id => ({ slug: id, label: id }));
     }
 }
 
+const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
 const productUrl = `/products/${product.slug}`;
 ---
 
 <div class="group relative w-full flex flex-col">
   
-  <!-- 1. ИЗОБРАЖЕНИЕ -->
+  <!-- 
+      1. ИЗОБРАЖЕНИЕ
+      bg-hyle-surface: Адаптивный фон (серый в темной теме, белый в светлой), 
+      чтобы контент не терялся.
+  -->
   <a href={productUrl} class="block relative overflow-hidden aspect-square bg-hyle-surface rounded-sm mb-3 cursor-pointer">
     {(isSold || isReserved) && (
       <div class="absolute top-2 left-2 z-30">
@@ -75,33 +83,26 @@ const productUrl = `/products/${product.slug}`;
     
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
         
-        <!-- Category Label -->
-        {categoryName && (
-            <span class="text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 mb-1 block transition-colors group-hover:text-hyle-clay/70">
-                {categoryName}
-            </span>
-        )}
+        <!-- КАТЕГОРИЮ УБРАЛИ ПОЛНОСТЬЮ -->
 
         <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
-            <!-- FIX: pb-1 и leading-normal спасают буквы "р", "ф", "ц" от обрезки -->
-            <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1 -mb-1">
+            <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
             </h3>
         </a>
         
-        <!-- Tag Link -->
-        {visibleTag && (
+        <!-- TAG RENDER -->
+        {displayTag && (
             <a 
-                href={`/catalog?tag=${visibleTag.id}`}
-                class="inline-block text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-1 relative z-20 lowercase"
+                href={`/catalog?tag=${displayTag.slug}`}
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-1 relative z-20 lowercase"
             >
-                #{visibleTag.title.toLowerCase()}
+                #{displayTag.label.toLowerCase()}
             </a>
         )}
     </div>
     
-    <!-- Price -->
     <div class="flex flex-col items-end shrink-0 pl-1 pt-1">
         <span class="font-hand text-lg md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
           {formattedPrice}
