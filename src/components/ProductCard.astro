@@ -12,15 +12,15 @@ const { product, categoryName } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
-const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'по запросу'; // lowercase
+const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
 
 const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- TAG LOOKUP ---
 let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
+
 const tagIds = rawTags.map(t => {
     if (typeof t === 'string') return t;
     if (typeof t === 'object' && t?.id) return t.id;
@@ -31,32 +31,40 @@ if (tagIds.length > 0) {
     try {
         const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
         const loadedEntries = await getEntries(tagRefs);
+        
         const namesMap = new Map();
         loadedEntries.forEach(entry => {
-            if (entry && entry.data) namesMap.set(entry.id, entry.data.title);
+            if (entry && entry.data) {
+                namesMap.set(entry.id, entry.data.title);
+            }
         });
+
         visibleTags = tagIds.map(id => ({
             slug: id,
-            label: namesMap.get(id) || id
+            label: namesMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
         }));
+
     } catch (e) {
         visibleTags = tagIds.map(id => ({ slug: id, label: id }));
     }
 }
+
 const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
 const productUrl = `/products/${product.slug}`;
 ---
 
 <div class="group relative w-full flex flex-col">
-  <a href={productUrl} class="block relative overflow-hidden aspect-square bg-neutral-100 rounded-sm mb-3 cursor-pointer">
+  
+  <!-- FIX: bg-hyle-surface вместо bg-neutral-100 -->
+  <a href={productUrl} class="block relative overflow-hidden aspect-square bg-hyle-surface rounded-sm mb-3 cursor-pointer transition-colors duration-500">
     {(isSold || isReserved) && (
       <div class="absolute top-2 left-2 z-30">
-        <!-- Lowercase status -->
-        <span class="text-[10px] font-mono tracking-widest text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
-           {isSold ? 'продано' : 'резерв'}
+        <span class="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
+           {isSold ? 'Продано' : 'Резерв'}
         </span>
       </div>
     )}
+    
     <img 
       src={mainImage} 
       alt={title} 
@@ -66,6 +74,7 @@ const productUrl = `/products/${product.slug}`;
   </a>
 
   <div class="flex justify-between items-start px-1 mt-auto">
+    
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
         <a href={productUrl} class="block mb-0.5 w-full">
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
@@ -76,7 +85,7 @@ const productUrl = `/products/${product.slug}`;
         {displayTag && (
             <a 
                 href={`/catalog?tag=${displayTag.slug}`}
-                class="inline-block text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-0 relative z-20 lowercase"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-0 relative z-20 lowercase"
             >
                 #{displayTag.label.toLowerCase()}
             </a>
@@ -88,5 +97,6 @@ const productUrl = `/products/${product.slug}`;
           {formattedPrice}
         </span>
     </div>
+
   </div>
 </div>

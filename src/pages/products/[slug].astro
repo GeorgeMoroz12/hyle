@@ -28,7 +28,6 @@ const resolveId = (item: any) => {
 // --- DATA LOGIC ---
 const currentCategoryId = resolveId(category);
 let categoryTitle = 'Каталог';
-
 if (currentCategoryId) {
     try {
         const catEntry = await getEntry('categories', currentCategoryId);
@@ -39,7 +38,6 @@ if (currentCategoryId) {
 const rawTags = Array.isArray(tags) ? tags : [];
 const tagIdsToLoad = rawTags.map(resolveId).filter(id => id !== null);
 let displayTags = [];
-
 if (tagIdsToLoad.length > 0) {
     try {
         const tagRefs = tagIdsToLoad.map(id => ({ collection: 'tags', id }));
@@ -87,9 +85,11 @@ const specMap: Record<string, string> = {
 
 <Layout title={title} hideHeader={true}>
   
-  <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[#FDFCF8]">
+  <!-- FIX: bg-hyle-bg -->
+  <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
     
     <!-- LEFT -->
+    <!-- FIX: bg-hyle-stone/10 -->
     <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
         <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
         
@@ -107,20 +107,9 @@ const specMap: Record<string, string> = {
              <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
         
-        <!-- MAIN IMAGE CONTAINER -->
-        <!-- cursor-zoom-in / cursor-crosshair -->
-        <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-crosshair group overflow-hidden touch-none">
-             <img 
-                src={mainImage} 
-                alt={title} 
-                id="main-product-image" 
-                class="max-w-full max-h-full object-contain transition-transform duration-200 ease-out origin-center drop-shadow-xl will-change-transform" 
-            />
-             
-             <!-- Mobile Hint -->
-             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none opacity-50">
-                Зажми для зума
-            </div>
+        <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
+             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
+             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
 
         {images && images.length > 1 && (
@@ -134,13 +123,14 @@ const specMap: Record<string, string> = {
         )}
     </div>
 
-    <!-- RIGHT -->
-    <div class="w-full lg:w-[30%] min-h-[50vh] bg-white/80 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
+    <!-- RIGHT: SIDEBAR -->
+    <!-- FIX: bg-hyle-surface/90 (для адаптации) -->
+    <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface/90 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
+                        <ExpandableText maxHeight="80px" gradientFrom="from-hyle-surface">
                             <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">{title}</h1>
                         </ExpandableText>
                     </div>
@@ -165,15 +155,16 @@ const specMap: Record<string, string> = {
                 </div>
             </div>
 
-            <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
+            <!-- FIX: bg-hyle-text/5 -->
+            <div class="bg-hyle-text/5 p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-text/5 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
-                 <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
+                 <ExpandableText maxHeight="120px" gradientFrom="from-hyle-surface">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">"{noteText}"</p>
                  </ExpandableText>
             </div>
 
-            <ExpandableText maxHeight="140px" gradientFrom="from-white/80">
-                <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80 text-justify">
+            <ExpandableText maxHeight="140px" gradientFrom="from-hyle-surface">
+                <div class="prose prose-stone prose-sm prose-p:text-hyle-text/80">
                     <Content />
                 </div>
             </ExpandableText>
@@ -186,7 +177,7 @@ const specMap: Record<string, string> = {
                                 <dt class="font-medium uppercase tracking-wider text-hyle-text/60">
                                     {specMap[key.toLowerCase()] || key}
                                 </dt>
-                                <dd>{value}</dd>
+                                <dd className="text-hyle-text">{value}</dd>
                             </>
                         ))}
                     </dl>
@@ -204,7 +195,7 @@ const specMap: Record<string, string> = {
 
             <div class="mt-2">
                  {isSoldOut ? (
-                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
+                    <button disabled class="w-full py-4 bg-hyle-text/10 text-hyle-text/40 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
                 ) : (
                     <OrderButton productName={title} price={price} url={currentUrl} />
                 )}
@@ -232,64 +223,35 @@ const specMap: Record<string, string> = {
 </Layout>
 
 <script>
-    // --- 1. UNIVERSAL LOUPE (MOUSE + TOUCH) ---
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
-
+    let isZoomed = false;
     if (container && img) {
-        
-        // Универсальная функция для расчета позиции
-        const handleMove = (x, y) => {
-            // @ts-ignore
-            const rect = container.getBoundingClientRect();
-            
-            // Если вышли за пределы контейнера (для мыши это mouseleave, для тача - проверка)
-            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-                resetZoom();
-                return;
-            }
-
-            const xPercent = ((x - rect.left) / rect.width) * 100;
-            const yPercent = ((y - rect.top) / rect.height) * 100;
-            
-            img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
-            img.style.transform = 'scale(2.0)'; // Сильный зум
-        };
-
-        const resetZoom = () => {
-            img.style.transform = 'scale(1)';
-            // Небольшая задержка перед сбросом ориджина, чтобы анимация была плавной
-            setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
-        };
-
-        // --- MOUSE EVENTS (DESKTOP) ---
         container.addEventListener('mousemove', (e) => {
-             // @ts-ignore
-            handleMove(e.clientX, e.clientY);
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { left, top, width, height } = container.getBoundingClientRect();
+                // @ts-ignore
+                const x = ((e.clientX - left) / width) * 100;
+                // @ts-ignore
+                const y = ((e.clientY - top) / height) * 100;
+                img.style.transformOrigin = `${x}% ${y}%`;
+                img.style.transform = 'scale(1.5)';
+            }
         });
-
-        container.addEventListener('mouseleave', resetZoom);
-
-        // --- TOUCH EVENTS (MOBILE LOUPE) ---
-        // touchstart - начинаем зум
-        container.addEventListener('touchstart', (e) => {
-            // @ts-ignore
-            // e.preventDefault(); // Если нужно блокировать скролл страницы. Пока не блокируем, чтобы было удобно
-            handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: true });
-
-        // touchmove - двигаем лупу
-        container.addEventListener('touchmove', (e) => {
-            // @ts-ignore
-            // e.preventDefault(); // Блокируем скролл страницы только если мы зумим
-            handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: true });
-
-        // touchend - сброс
-        container.addEventListener('touchend', resetZoom);
+        container.addEventListener('mouseleave', () => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                img.style.transform = 'scale(1)';
+                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
+            }
+        });
+        container.addEventListener('click', () => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+                if (isZoomed) { img.style.transform = 'scale(1)'; isZoomed = false; } 
+                else { img.style.transform = 'scale(1.5)'; isZoomed = true; }
+            }
+        });
     }
-
-    // --- 2. THUMBNAILS ---
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -299,8 +261,6 @@ const specMap: Record<string, string> = {
             btn.classList.add('border-hyle-clay');
         });
     });
-
-    // --- 3. WHEEL SCROLL ---
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
