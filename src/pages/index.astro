@@ -38,31 +38,29 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 <Layout title="Главная" hideHeader={true}>
   
   <!-- HEADER -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start text-white">
-      <a href="/" class="group flex flex-col gap-1">
+  <nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start text-white mix-blend-difference pointer-events-none">
+      <a href="/" class="group flex flex-col gap-0.5 pointer-events-auto">
           <span class="font-serif text-3xl md:text-4xl leading-none block drop-shadow-md">Hyle.</span>
-          <!-- Используем font-sans вместо mono -->
-          <span class="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.2em] opacity-80 md:opacity-100 hidden sm:block">
+          <span class="font-sans text-[10px] md:text-[11px] tracking-wider pl-0.5 opacity-80 hidden sm:block">
               керамика ручной работы
           </span>
       </a>
       
       <!-- Menu Desktop -->
-      <!-- Используем font-sans uppercase tracking -->
-      <div class="hidden md:flex gap-12 font-sans text-[11px] uppercase tracking-[0.2em] font-medium">
-          <a href="/catalog" class="hover:opacity-70 transition-opacity drop-shadow-sm">каталог</a>
-          <a href="/about" class="hover:opacity-70 transition-opacity drop-shadow-sm">о мастере</a>
-          <a href="/blog" class="hover:opacity-70 transition-opacity drop-shadow-sm">журнал</a>
+      <div class="hidden md:flex gap-12 font-sans text-[13px] tracking-wide pointer-events-auto">
+          <a href="/catalog" class="hover:opacity-70 transition-opacity">каталог</a>
+          <a href="/about" class="hover:opacity-70 transition-opacity">о мастере</a>
+          <a href="/blog" class="hover:opacity-70 transition-opacity">журнал</a>
       </div>
 
       <!-- Mobile Menu Button -->
-      <button class="md:hidden pt-1.5 text-[10px] uppercase tracking-[0.2em] border-b border-white/60 pb-0.5 drop-shadow-sm font-sans">
+      <button class="md:hidden pt-1.5 text-[11px] uppercase tracking-widest border-b border-white/60 pb-0.5 pointer-events-auto">
           меню
       </button>
   </nav>
 
-  <!-- HERO SECTION -->
-  <section id="hero-section" class="relative min-h-[90vh] md:min-h-screen w-full flex flex-col justify-end pb-20 md:pb-32 overflow-hidden bg-[#1a1918]">
+  <!-- HERO SECTION: FULLSCREEN CINEMATIC -->
+  <section id="hero-section" class="relative min-h-screen w-full flex flex-col justify-end pb-16 md:pb-24 overflow-hidden bg-[#1a1918]">
     
     <!-- BACKGROUND -->
     <div class="absolute inset-0 z-0">
@@ -70,54 +68,49 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             id="hero-image"
             src={HERO.image} 
             alt="Атмосфера" 
-            class="w-full h-full object-cover scale-105 transition-transform duration-[2s] ease-out will-change-transform"
+            class="w-full h-full object-cover scale-105 transition-transform duration-[2.5s] ease-out will-change-transform"
             onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
         />
         
-        <!-- Затемнение для контраста -->
-        <div class="absolute inset-0 bg-black/30 md:bg-black/40"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20"></div>
-        <!-- Зерно (шум) -->
-        <div class="absolute inset-0 bg-noise opacity-30 mix-blend-overlay pointer-events-none"></div>
+        <!-- Затемнение: Усилено снизу для читаемости текста на мобильных -->
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
     </div>
 
     <!-- CONTENT -->
     <div class="container-main relative z-10 w-full">
-        <div class="animate-appear">
+        <div class="animate-appear flex flex-col md:block items-start">
             
-            <!-- MAIN TITLE: CLASSIC SERIF (Playfair) -->
-            <!-- На мобильных размер 5xl/6xl - это читаемо и не ломает экран -->
-            <h1 class="flex flex-col leading-[0.9] md:leading-[0.85] tracking-tight select-none text-white font-serif">
+            <!-- MAIN TITLE -->
+            <h1 class="flex flex-col leading-[0.9] tracking-tight select-none text-white font-serif mb-6 md:mb-10">
                 <!-- Строка 1 -->
-                <span class="text-6xl sm:text-7xl md:text-9xl lg:text-[10rem] font-medium mix-blend-overlay opacity-90">
+                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] font-medium mix-blend-overlay opacity-90">
                     {HERO.titleLine1.toLowerCase()}
                 </span>
                 
                 <!-- Строка 2 (С акцентом) -->
-                <span class="text-6xl sm:text-7xl md:text-9xl lg:text-[10rem] font-medium ml-4 md:ml-24 -mt-2 md:-mt-6 flex flex-wrap items-baseline gap-3 md:gap-8 mix-blend-overlay opacity-90">
+                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] font-medium ml-8 md:ml-32 -mt-2 md:-mt-8 flex flex-wrap items-baseline gap-4 md:gap-8 mix-blend-overlay opacity-90">
                     <!-- Акцент: Caveat -->
-                    <span class="font-hand text-4xl md:text-7xl text-[#e0d0c0] opacity-100 -rotate-2 relative top-[-5px] md:top-[-15px] mix-blend-normal">
+                    <span class="font-hand text-4xl md:text-7xl text-[#e0d0c0] opacity-100 -rotate-3 relative top-[-5px] md:top-[-15px] mix-blend-normal transform translate-y-[-1vw]">
                         {HERO.titleAccent}
                     </span>
                     {HERO.titleLine2.replace('.', '').toLowerCase()}
                 </span>
             </h1>
 
-            <!-- DESCRIPTION & CTA -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mt-8 md:mt-16 gap-8">
+            <!-- DESCRIPTION & LINK -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end w-full gap-8 md:pl-2">
                 
-                <p class="font-sans font-light text-sm md:text-lg text-white/80 max-w-[300px] md:max-w-sm leading-relaxed border-l border-white/20 pl-4">
+                <p class="font-sans font-light text-base md:text-lg text-white/80 max-w-[280px] md:max-w-sm leading-relaxed border-l border-white/30 pl-4 md:pl-6">
                     {HERO.description}
                 </p>
                 
-                <!-- CTA: CLEAN LINK (Sans) -->
-                <a href="/catalog" class="group flex items-center gap-3 cursor-pointer pb-1">
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">
-                        <span class="text-sm md:text-base relative top-[-1px]">↓</span>
-                    </div>
-                    <span class="font-sans text-[10px] md:text-xs uppercase tracking-[0.2em] text-white/90 group-hover:text-white transition-colors">
+                <!-- CTA: CLEAN TEXT LINK (No Button) -->
+                <a href="/catalog" class="group flex items-center gap-3 cursor-pointer pb-2 md:pb-0">
+                    <span class="font-mono text-xs uppercase tracking-[0.2em] text-white border-b border-white/40 pb-1 group-hover:border-white transition-all">
                         В каталог
                     </span>
+                    <span class="text-xl text-white group-hover:translate-x-2 transition-transform duration-300 font-serif italic">→</span>
                 </a>
 
             </div>
@@ -132,14 +125,14 @@ const categoryMap = allCategories.reduce((acc, cat) => {
         
         <div class="flex flex-col md:flex-row justify-between items-end mb-10 md:mb-16 gap-4">
             <div class="max-w-lg">
-                <span class="font-sans text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
+                <span class="font-sans text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
                 <h2 class="font-serif text-3xl md:text-5xl text-hyle-text">
                     Новое из печи
                 </h2>
             </div>
             
-            <div class="flex items-center gap-2 text-hyle-text/30 hidden md:flex">
-                <span class="font-sans text-[9px] uppercase tracking-[0.2em]">Листайте</span>
+            <div class="hidden md:flex items-center gap-2 text-hyle-text/30">
+                <span class="font-sans text-[10px] uppercase tracking-[0.2em]">Листайте</span>
                 <span class="text-lg">→</span>
             </div>
         </div>
@@ -154,6 +147,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     ? product.data.category.id 
                     : product.data.category;
                 
+                // На мобайле убираем ритм, на десктопе оставляем
                 const offsetClass = idx % 2 !== 0 ? "mt-0 md:mt-12" : "";
 
                 return (
@@ -169,10 +163,8 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             <!-- "See All" Card -->
             <div class="shrink-0 w-[40vw] md:w-[200px] flex items-center justify-center snap-center md:snap-align-none">
                  <a href="/catalog" class="group flex flex-col items-center gap-3 text-hyle-text/40 hover:text-hyle-clay transition-colors">
-                    <div class="w-12 h-12 md:w-16 md:h-16 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <span class="text-xl md:text-2xl">→</span>
-                    </div>
-                    <span class="font-sans text-[9px] md:text-[10px] uppercase tracking-[0.2em]">Все изделия</span>
+                    <span class="text-3xl font-serif italic group-hover:translate-x-1 transition-transform">→</span>
+                    <span class="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] border-b border-transparent group-hover:border-hyle-clay">все изделия</span>
                  </a>
             </div>
             <div class="w-4 shrink-0"></div>
@@ -203,7 +195,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
               <!-- Text (Mobile: Bottom) -->
               <div class="order-2 lg:order-2">
-                  <span class="font-sans text-[9px] uppercase tracking-[0.2em] text-hyle-clay mb-4 md:mb-6 block">Философия</span>
+                  <span class="font-sans text-[10px] uppercase tracking-[0.2em] text-hyle-clay mb-4 md:mb-6 block">Философия</span>
                   <h2 class="font-serif text-3xl md:text-5xl mb-6 md:mb-8 leading-tight">
                       {WORKSHOP.title}
                   </h2>
@@ -212,8 +204,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                   </div>
                   
                   <div class="mt-8 md:mt-12">
-                      <a href="/about" class="inline-block font-sans text-[10px] uppercase tracking-[0.2em] border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors">
-                          О мастере
+                      <a href="/about" class="group inline-flex items-center gap-3 text-white hover:text-hyle-clay transition-colors">
+                          <span class="font-mono text-xs uppercase tracking-[0.2em] border-b border-white/30 pb-1 group-hover:border-hyle-clay transition-colors">
+                              О мастере
+                          </span>
+                          <span class="text-lg font-serif italic relative top-[-1px]">→</span>
                       </a>
                   </div>
               </div>
@@ -229,7 +224,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
               <div class="flex flex-col items-center gap-6">
                   <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
                   
-                  <nav class="flex flex-wrap justify-center gap-6 md:gap-12 font-sans text-[10px] md:text-[11px] text-white/60 uppercase tracking-[0.2em]">
+                  <nav class="flex flex-wrap justify-center gap-6 md:gap-12 font-mono text-[10px] md:text-[11px] text-white/60 uppercase tracking-[0.2em]">
                       <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
                       <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
                       <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
@@ -237,12 +232,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
                   <div class="flex gap-6 mt-2">
                       <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40">
-                          <span class="sr-only">Telegram</span>
-                          Tg
+                          <span class="sr-only">Tg</span>
                       </a>
                   </div>
                   
-                  <p class="mt-8 text-[9px] text-white/20 font-sans tracking-[0.2em] uppercase">
+                  <p class="mt-8 text-[9px] text-white/20 font-mono tracking-[0.2em] uppercase">
                       © 2026 Москва
                   </p>
               </div>
@@ -252,7 +246,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 </Layout>
 
 <script>
-    // Scroll Logic
+    // ... Parallax & Scroll Scripts ...
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
     let current = 0;
@@ -293,5 +287,20 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             isAnimating = false;
             showcase.scrollLeft = target;
         }
+    }
+
+    const heroSection = document.getElementById('hero-section');
+    const heroImage = document.getElementById('hero-image');
+    if (heroSection && heroImage) {
+        heroSection.addEventListener('mousemove', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { clientX, clientY } = e;
+                const { innerWidth, innerHeight } = window;
+                const moveX = (clientX / innerWidth - 0.5) * 15;
+                const moveY = (clientY / innerHeight - 0.5) * 15;
+                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.05)`;
+            }
+        });
     }
 </script>
