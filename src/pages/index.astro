@@ -4,7 +4,6 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection, getEntry } from 'astro:content';
 
-// 1. DATA FETCHING
 const landingEntry = await getEntry('landing', 'home');
 const data = landingEntry?.data || {};
 
@@ -16,7 +15,7 @@ const HERO = {
     titleLine1: data.heroTitleLine1 || "Глина",
     titleAccent: data.heroTitleAccent || "хранит",
     titleLine2: data.heroTitleLine2 || "тепло.",
-    description: data.heroDescription || "Вещи, созданные в тишине. С несовершенствами, которые делают их живыми."
+    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
 };
 
 const WORKSHOP = {
@@ -37,7 +36,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 <Layout title="Главная" hideHeader={true}>
   
-  <!-- HEADER (Absolute) -->
+  <!-- HEADER -->
   <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start mix-blend-difference text-[#F9F8F6]">
       <a href="/" class="group flex flex-col gap-0.5">
           <span class="font-serif text-3xl md:text-4xl leading-none transition-colors block">Hyle.</span>
@@ -55,61 +54,82 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </nav>
 
   <!-- HERO SECTION: GALLERY STYLE -->
-  <section class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#1a1918]">
+  <section id="hero-section" class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#1a1918]">
     
-    <!-- 1. BACKGROUND TYPOGRAPHY (Architectural Anchor) -->
-    <!-- Огромная надпись HYLE на фоне, еле заметная -->
+    <!-- 1. BACKGROUND TYPO (Context Anchor) -->
     <div class="absolute inset-0 flex items-center justify-center z-0 select-none overflow-hidden pointer-events-none">
-        <span class="font-serif text-[40vw] text-[#F9F8F6] opacity-[0.03] leading-none tracking-tighter translate-y-10">
-            Hyle
+        <!-- Пишем CLAY вместо H, чтобы задать тему -->
+        <span class="font-serif text-[35vw] text-[#F9F8F6] opacity-[0.02] leading-none tracking-tighter translate-y-10">
+            Clay
         </span>
     </div>
 
-    <!-- 2. MAIN CONTENT GRID -->
-    <div class="container-main relative z-10 w-full h-full grid grid-cols-1 lg:grid-cols-12 items-center gap-0 lg:gap-12 pt-20 lg:pt-0">
+    <!-- 2. MAIN CONTENT -->
+    <div class="container-main relative z-10 w-full h-full grid grid-cols-1 lg:grid-cols-12 items-center gap-0 lg:gap-12 pt-24 lg:pt-0">
         
-        <!-- IMAGE BLOCK (Dominant, Right/Center) -->
+        <!-- IMAGE BLOCK (Right) -->
         <div class="lg:col-span-7 lg:col-start-6 relative order-1 lg:order-2">
-            <!-- Image Wrapper -->
-            <div class="relative w-full aspect-[3/4] md:aspect-[4/5] lg:aspect-[16/10] overflow-hidden shadow-2xl">
-                 <img 
-                    src={HERO.image} 
-                    alt="Hero Ceramics" 
-                    class="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-[2s] ease-out"
-                    onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
-                />
-                <!-- Texture Overlay -->
-                <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
+            
+            <!-- Wrapper -->
+            <div class="relative w-full aspect-[3/4] md:aspect-[4/5] lg:aspect-[16/10] overflow-visible">
                 
-                <!-- Technical Badge (Top Right of Image) -->
-                <div class="absolute top-0 right-0 bg-[#F9F8F6] text-[#1a1918] p-4 hidden md:block">
-                    <div class="flex flex-col font-mono text-[9px] uppercase tracking-widest leading-relaxed">
-                        <span>Col. 2026</span>
-                        <span>Handmade</span>
-                    </div>
-                </div>
+                 <!-- Main Image -->
+                 <div class="relative w-full h-full overflow-hidden shadow-2xl rounded-sm">
+                    <img 
+                        id="hero-image"
+                        src={HERO.image} 
+                        alt="Ceramics" 
+                        class="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-[2s] ease-out will-change-transform"
+                        onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
+                    />
+                    <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
+                 </div>
+
+                 <!-- 
+                    🔥 FLOATING PRODUCT CARD (Visual Anchor)
+                    Это тот самый элемент, который говорит "Тут продают".
+                    Плавающая карточка поверх фото.
+                 -->
+                 <div class="hidden lg:block absolute -bottom-12 -left-12 z-20 bg-[#F5F4F0] p-6 max-w-[220px] shadow-xl rounded-sm animate-appear" style="animation-delay: 0.5s">
+                     <div class="flex justify-between items-start mb-2">
+                         <span class="font-mono text-[9px] uppercase tracking-widest text-[#1a1918]/50">В наличии</span>
+                         <span class="text-[#B35A32] text-xs">●</span>
+                     </div>
+                     <p class="font-serif text-xl text-[#1a1918] leading-tight mb-4">Ваза "Эфир"</p>
+                     <a href="/catalog" class="text-xs font-mono uppercase tracking-widest border-b border-[#1a1918]/20 pb-1 hover:border-[#B35A32] hover:text-[#B35A32] transition-colors">
+                         Смотреть →
+                     </a>
+                 </div>
+
             </div>
         </div>
 
-        <!-- TEXT BLOCK (Left, Overlapping) -->
-        <!-- Negative margin-right to pull text over image -->
-        <div class="lg:col-span-6 lg:col-start-1 lg:-mr-24 relative z-20 order-2 lg:order-1 mt-8 lg:mt-0 pointer-events-none">
+        <!-- TEXT BLOCK (Left) -->
+        <div class="lg:col-span-6 lg:col-start-1 lg:-mr-24 relative z-20 order-2 lg:order-1 mt-12 lg:mt-0 pointer-events-none">
             <div class="animate-appear pointer-events-auto">
                 
-                <h1 class="font-serif text-6xl md:text-8xl lg:text-[7.5rem] leading-[0.85] text-[#F9F8F6] mb-8 tracking-tight mix-blend-difference">
+                <!-- Explicit Context Label -->
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-px w-8 bg-white/20"></div>
+                    <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-[#F9F8F6]/60">
+                        Мастерская керамики
+                    </span>
+                </div>
+
+                <h1 class="font-serif text-6xl md:text-8xl lg:text-[7.5rem] leading-[0.85] text-[#F9F8F6] mb-10 tracking-tight mix-blend-difference">
                     {HERO.titleLine1} <br/>
-                    <span class="italic font-light text-[#B35A32] ml-16 md:ml-32 block">
+                    <span class="italic font-light text-[#B35A32] ml-16 md:ml-32 block transform transition-transform duration-700 hover:translate-x-4 cursor-default">
                         {HERO.titleAccent}
                     </span>
                     {HERO.titleLine2}
                 </h1>
 
-                <div class="flex flex-col md:flex-row items-start gap-8 lg:pl-2">
-                    <p class="font-sans font-light text-sm md:text-base text-[#F9F8F6]/70 max-w-xs leading-relaxed border-l border-white/20 pl-4">
+                <div class="flex flex-col md:flex-row items-start gap-10 lg:pl-2">
+                    <p class="font-sans font-light text-sm md:text-base text-[#F9F8F6]/60 max-w-xs leading-relaxed border-l border-white/10 pl-6">
                         {HERO.description}
                     </p>
                     
-                    <a href="/catalog" class="group flex items-center gap-3">
+                    <a href="/catalog" class="group flex items-center gap-4 pt-2">
                         <div class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-[#F9F8F6] group-hover:bg-[#B35A32] group-hover:border-[#B35A32] transition-all duration-300">
                             <span class="text-xl relative top-[-2px] group-hover:translate-x-0.5 transition-transform">→</span>
                         </div>
@@ -121,21 +141,19 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             </div>
         </div>
 
-        <!-- META DATA (Bottom Left Absolute) -->
-        <div class="absolute bottom-8 left-4 hidden lg:flex flex-col gap-1 font-mono text-[9px] uppercase tracking-widest text-[#F9F8F6]/30">
-            <span>Lat: 55.7558</span>
-            <span>Lon: 37.6173</span>
-            <span>Mat: Clay / Fire</span>
+        <!-- COORD DATA -->
+        <div class="absolute bottom-8 left-4 hidden lg:flex flex-col gap-1 font-mono text-[9px] uppercase tracking-widest text-[#F9F8F6]/20">
+            <span>Moscow</span>
+            <span>Est. 2026</span>
         </div>
 
     </div>
   </section>
 
-  <!-- SECTION 2: CATALOG (Light Background starts here) -->
-  <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.1)]">
+  <!-- SECTION 2: CATALOG (Rounded top transition) -->
+  <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.2)]">
     <div class="container-main">
         
-        <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div class="max-w-lg">
                 <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
@@ -186,22 +204,29 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- UNIFIED DARK SECTION: PHILOSOPHY + FOOTER -->
-  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
+  <!-- UNIFIED DARK SECTION: WORKSHOP + FOOTER -->
+  <!-- FIX: min-h-screen для монолитности -->
+  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative min-h-screen flex flex-col justify-between overflow-hidden">
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
-      <section class="py-24 md:py-40 relative z-10">
-          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+      <!-- WORKSHOP CONTENT -->
+      <section class="py-24 md:py-40 relative z-10 flex-grow flex items-center">
+          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center w-full">
+              
+              <!-- Image -->
               <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
-                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29]">
+                  <!-- FIX: Вернул -rotate-1 и ховер -->
+                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29] transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
                       <img 
                         src={WORKSHOP.image} 
                         alt="Процесс" 
-                        class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-[1.5s] ease-out"
+                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-[1.5s] ease-out"
                         onerror={`this.onerror=null; this.src='${FALLBACK_WORKSHOP}';`}
                       />
                   </div>
               </div>
+
+              <!-- Text -->
               <div class="order-1 lg:order-2">
                   <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-clay mb-6 block">Философия</span>
                   <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
@@ -211,7 +236,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                       <p>{WORKSHOP.text}</p>
                   </div>
                   <div class="mt-12">
-                      <a href="/about" class="font-mono text-xs uppercase tracking-widest border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors">
+                      <a href="/about" class="font-mono text-sm border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors uppercase tracking-widest">
                           О мастере
                       </a>
                   </div>
@@ -219,29 +244,51 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           </div>
       </section>
 
-      <footer class="pb-20 pt-0 relative z-10">
-          <div class="container-main flex flex-col items-center text-center">
-              <div class="mb-10 opacity-10 w-full h-px bg-white"></div>
-              <div class="flex flex-col items-center gap-6">
-                  <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
-                  <nav class="flex gap-8 md:gap-12 font-mono text-[11px] text-white/60 uppercase tracking-widest">
-                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
-                      <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
-                      <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
-                  </nav>
-                  <div class="flex gap-6 mt-2">
-                      <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40"><span class="sr-only">Telegram</span>Tg</a>
-                  </div>
-                  <p class="mt-8 text-[10px] text-white/20 font-mono tracking-widest uppercase">
-                      © 2026 Москва
+      <!-- FOOTER -->
+      <footer class="pb-16 pt-0 relative z-10">
+          <div class="container-main flex flex-col md:flex-row justify-between items-start gap-12 border-t border-white/5 pt-12">
+              <div class="max-w-xs">
+                  <span class="font-serif text-2xl block mb-4">Hyle.</span>
+                  <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">
+                      Керамика ручной работы.<br/>
+                      Создано для жизни.
                   </p>
               </div>
+              <div class="flex gap-12 text-sm font-light text-white/60">
+                  <div class="flex flex-col gap-3">
+                      <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Навигация</span>
+                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
+                      <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
+                      <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
+                  </div>
+              </div>
+          </div>
+          <div class="container-main mt-8 pt-0 flex justify-between items-center text-[10px] text-white/20 uppercase tracking-widest font-mono">
+              <span>© 2026 Moscow</span>
           </div>
       </footer>
   </div>
 </Layout>
 
 <script>
+    // ... Parallax Scripts (Same as before) ...
+    const heroSection = document.getElementById('hero-section');
+    const heroImage = document.getElementById('hero-image');
+
+    if (heroSection && heroImage) {
+        heroSection.addEventListener('mousemove', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { clientX, clientY } = e;
+                const { innerWidth, innerHeight } = window;
+                const moveX = (clientX / innerWidth - 0.5) * 15;
+                const moveY = (clientY / innerHeight - 0.5) * 15;
+                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.1)`;
+            }
+        });
+    }
+
+    // Showcase Scroll
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
     let current = 0;
