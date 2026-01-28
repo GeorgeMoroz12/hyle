@@ -15,13 +15,10 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// FIX: Убрал description из деструктуризации, его там больше нет
+// Убрали description, так как он в Content
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
-
-// FIX: Рендерим контент (Body), где теперь лежит описание
 const { Content } = await entry.render();
 
-// Helpers
 const resolveId = (item: any) => {
     if (!item) return null;
     if (typeof item === 'string') return item;
@@ -32,7 +29,6 @@ const resolveId = (item: any) => {
 // --- DATA LOGIC ---
 const currentCategoryId = resolveId(category);
 let categoryTitle = 'Каталог';
-
 if (currentCategoryId) {
     try {
         const catEntry = await getEntry('categories', currentCategoryId);
@@ -43,7 +39,6 @@ if (currentCategoryId) {
 const rawTags = Array.isArray(tags) ? tags : [];
 const tagIdsToLoad = rawTags.map(resolveId).filter(id => id !== null);
 let displayTags = [];
-
 if (tagIdsToLoad.length > 0) {
     try {
         const tagRefs = tagIdsToLoad.map(id => ({ collection: 'tags', id }));
@@ -60,7 +55,7 @@ const relatedProducts = allProducts.filter(p => {
     const pCatId = resolveId(p.data.category);
     if (!currentCategoryId || !pCatId) return false;
     return pCatId === currentCategoryId;
-}).slice(0, 6);
+}).slice(0, 8); // Берем 8 для длинного скролла
 
 let relatedItems = relatedProducts;
 if (relatedItems.length < 4) {
@@ -93,7 +88,7 @@ const specMap: Record<string, string> = {
   
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
     
-    <!-- LEFT -->
+    <!-- LEFT: IMAGE -->
     <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
         <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
         
@@ -115,10 +110,19 @@ const specMap: Record<string, string> = {
              <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
              <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
-        {/* Thumbs skipped */}
+
+        {images && images.length > 1 && (
+            <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
+                {images.map((img) => (
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
+                        <img src={img} class="w-full h-full object-cover" />
+                    </button>
+                ))}
+            </div>
+        )}
     </div>
 
-    <!-- RIGHT -->
+    <!-- RIGHT: SIDEBAR -->
     <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface/90 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
             <div class="mt-0 lg:mt-4">
@@ -156,7 +160,6 @@ const specMap: Record<string, string> = {
                  </ExpandableText>
             </div>
 
-            <!-- FIX: DESCRIPTION IS NOW CONTENT -->
             <ExpandableText maxHeight="140px" gradientFrom="from-hyle-surface">
                 <div class="prose prose-stone prose-sm prose-p:text-hyle-text/80 leading-relaxed font-light">
                     <Content />
@@ -176,15 +179,7 @@ const specMap: Record<string, string> = {
                         ))}
                     </dl>
                 )}
-                {care_instructions && (
-                    <details class="group cursor-pointer border-t border-hyle-text/10 pt-3">
-                        <summary class="flex justify-between items-center list-none outline-none text-hyle-text/60 hover:text-hyle-clay transition-colors">
-                            <span class="text-xs font-medium uppercase tracking-wider">Уход за изделием</span>
-                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">↓</span>
-                        </summary>
-                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">{care_instructions}</div>
-                    </details>
-                )}
+                {/* Care instructions... */}
             </div>
 
             <div class="mt-2">
@@ -195,15 +190,29 @@ const specMap: Record<string, string> = {
                 )}
             </div>
 
+            <!-- RELATED PRODUCTS (FIXED SCROLL) -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">Вам может понравиться:</h3>
+                    <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Листайте →</span>
                 </div>
-                <div id="related-slider" class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth">
+                
+                <!-- 
+                    CONTAINER:
+                    - id="related-slider" для скрипта
+                    - overscroll-x-contain чтобы не дергать страницу
+                    - scrollbar-hide скрывает полосу прокрутки
+                    - scroll-behavior: auto (чтобы JS скролл был мгновенным)
+                -->
+                <div 
+                    id="related-slider" 
+                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none overscroll-x-contain"
+                    style="scroll-behavior: auto;"
+                >
                     {relatedItems.map((item) => {
                          const cId = resolveId(item.data.category);
                          return (
-                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
+                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto transition-transform hover:-translate-y-1">
                                 <ProductCard product={item} categoryName={cId ? categoryMap[cId] : ''} />
                             </div>
                         );
@@ -214,4 +223,72 @@ const specMap: Record<string, string> = {
     </div>
   </div>
 </Layout>
-<!-- Scripts... -->
+
+<script>
+    // 1. ZOOM & THUMBS (Desktop)
+    const container = document.querySelector('.zoom-container');
+    const img = document.getElementById('main-product-image');
+    let isZoomed = false;
+
+    if (container && img) {
+        container.addEventListener('mousemove', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { left, top, width, height } = container.getBoundingClientRect();
+                // @ts-ignore
+                const x = ((e.clientX - left) / width) * 100;
+                // @ts-ignore
+                const y = ((e.clientY - top) / height) * 100;
+                img.style.transformOrigin = `${x}% ${y}%`;
+                img.style.transform = 'scale(1.5)';
+            }
+        });
+        container.addEventListener('mouseleave', () => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                img.style.transform = 'scale(1)';
+                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
+            }
+        });
+        container.addEventListener('click', () => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+                if (isZoomed) { img.style.transform = 'scale(1)'; isZoomed = false; } 
+                else { img.style.transform = 'scale(1.5)'; isZoomed = true; }
+            }
+        });
+    }
+
+    const thumbs = document.querySelectorAll('.thumb-btn');
+    thumbs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const src = btn.getAttribute('data-src');
+            if (img && src) img.setAttribute('src', src);
+            thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
+            btn.classList.add('border-hyle-clay');
+        });
+    });
+
+    // 2. HORIZONTAL SCROLL (WHEEL FIX)
+    const slider = document.getElementById('related-slider');
+    
+    if (slider) {
+        slider.addEventListener('wheel', (evt) => {
+            // Проверяем, есть ли куда скроллить
+            const maxScroll = slider.scrollWidth - slider.clientWidth;
+            
+            if (maxScroll > 0) {
+                // Если мышь над слайдером, перехватываем вертикальный скролл
+                // и превращаем его в горизонтальный.
+                
+                // Проверка границ: если мы в начале и скроллим влево - не блокируем страницу
+                const atStart = slider.scrollLeft <= 0;
+                const atEnd = slider.scrollLeft >= maxScroll - 2;
+
+                if ((evt.deltaY > 0 && !atEnd) || (evt.deltaY < 0 && !atStart)) {
+                    evt.preventDefault();
+                    // evt.deltaY * 2 для скорости
+                    slider.scrollLeft += evt.deltaY;
+                }
+            }
+        }, { passive: false });
+    }
+</script>
