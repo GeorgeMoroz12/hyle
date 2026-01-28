@@ -1,6 +1,8 @@
 ---
 // src/components/Footer.astro
 const currentYear = new Date().getFullYear();
+const tgUsername = import.meta.env.PUBLIC_TG_USERNAME || 'hyle_ceramics'; // Дефолтный юзернейм
+const tgLink = `https://t.me/${tgUsername}`;
 ---
 
 <footer class="bg-[#1F1E1C] text-[#F9F8F6] py-16 border-t border-white/5 relative overflow-hidden">
@@ -20,7 +22,9 @@ const currentYear = new Date().getFullYear();
             <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
             <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
             <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
-            <a href="https://t.me/username" target="_blank" class="hover:text-hyle-clay transition-colors text-white/80">telegram</a>
+            
+            <!-- FIX: Реальная ссылка на Telegram -->
+            <a href={tgLink} target="_blank" rel="noopener noreferrer" class="hover:text-hyle-clay transition-colors text-white/80">telegram</a>
         </nav>
 
         <p class="font-hand text-2xl text-hyle-clay/60 mb-8 -rotate-1">
