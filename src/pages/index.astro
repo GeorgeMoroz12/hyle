@@ -1,311 +1,303 @@
 ---
-// src/pages/index.astro
-import Layout from '../layouts/Layout.astro';
-import ProductCard from '../components/ProductCard.astro';
-import { getCollection, getEntry } from 'astro:content';
+        // src/pages/index.astro
+        import Layout from '../layouts/Layout.astro';
+        import ProductCard from '../components/ProductCard.astro';
+        import { getCollection, getEntry } from 'astro:content';
 
-// 1. DATA FETCHING
-const landingEntry = await getEntry('landing', 'home');
-const data = landingEntry?.data || {};
+        // 1. DATA FETCHING
+        const landingEntry = await getEntry('landing', 'home');
+        const data = landingEntry?.data || {};
 
-const FALLBACK_HERO = "/images/hero-minimal.jpg";
-const FALLBACK_WORKSHOP = "/images/workshop-process.jpg";
+        const FALLBACK_HERO = "/images/hero-minimal.jpg";
+        const FALLBACK_WORKSHOP = "/images/workshop-process.jpg";
 
-const HERO = {
-    image: data.heroImage || FALLBACK_HERO,
-    titleLine1: data.heroTitleLine1 || "Глина",
-    titleAccent: data.heroTitleAccent || "хранит",
-    titleLine2: data.heroTitleLine2 || "тепло.",
-    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
-};
+        const HERO = {
+            image: data.heroImage || FALLBACK_HERO,
+            titleLine1: data.heroTitleLine1 || "Глина",
+            titleAccent: data.heroTitleAccent || "хранит",
+            titleLine2: data.heroTitleLine2 || "тепло.",
+            description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
+        };
 
-const WORKSHOP = {
-    image: data.workshopImage || FALLBACK_WORKSHOP,
-    title: data.workshopTitle || "Красота в несовершенстве.",
-    text: data.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
-};
+        const WORKSHOP = {
+            image: data.workshopImage || FALLBACK_WORKSHOP,
+            title: data.workshopTitle || "Красота в несовершенстве.",
+            text: data.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
+        };
 
-const allProducts = await getCollection('products');
-const recentProducts = allProducts.slice(0, 8); 
+        const allProducts = await getCollection('products');
+        const recentProducts = allProducts.slice(0, 8); 
 
-const allCategories = await getCollection('categories');
-const categoryMap = allCategories.reduce((acc, cat) => {
-    acc[cat.id] = cat.data.title;
-    return acc;
-}, {} as Record<string, string>);
----
+        const allCategories = await getCollection('categories');
+        const categoryMap = allCategories.reduce((acc, cat) => {
+            acc[cat.id] = cat.data.title;
+            return acc;
+        }, {} as Record<string, string>);
+        ---
 
-<Layout title="Главная" hideHeader={true}>
-  
-  <!-- HEADER -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start mix-blend-difference text-[#F9F8F6]">
-      <a href="/" class="group flex flex-col gap-0.5">
-          <span class="font-serif text-3xl md:text-4xl leading-none transition-colors block">Hyle.</span>
-      </a>
-      
-      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] uppercase pt-2">
-          <a href="/catalog" class="hover:opacity-70 transition-opacity">каталог</a>
-          <a href="/about" class="hover:opacity-70 transition-opacity">о мастере</a>
-          <a href="/blog" class="hover:opacity-70 transition-opacity">блог</a>
-      </div>
-
-      <button class="md:hidden pt-2 text-[10px] uppercase tracking-widest border-b border-current pb-0.5">
-          меню
-      </button>
-  </nav>
-
-  <!-- HERO SECTION: MODERNIST INTER -->
-  <section id="hero-section" class="relative min-h-screen w-full flex flex-col justify-end pb-24 lg:pb-32 overflow-hidden bg-[#1a1918]">
-    
-    <!-- 1. BACKGROUND IMAGE -->
-    <div class="absolute inset-0 z-0">
-        <img 
-            id="hero-image"
-            src={HERO.image} 
-            alt="Атмосфера" 
-            class="w-full h-full object-cover scale-105 transition-transform duration-[2s] ease-out will-change-transform"
-            onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
-        />
+        <Layout title="Главная" hideHeader={true}>
         
-        <!-- Затемнение для контраста белого текста -->
-        <div class="absolute inset-0 bg-black/30"></div>
-        <!-- Градиент снизу, чтобы нижний текст читался идеально -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20"></div>
-        
-        <!-- Texture Grain -->
-        <div class="absolute inset-0 bg-noise opacity-30 mix-blend-overlay pointer-events-none"></div>
-    </div>
-
-    <!-- 2. CONTENT -->
-    <div class="container-main relative z-10 w-full">
-        <div class="animate-appear">
+        <!-- HEADER (Absolute, High Contrast) -->
+        <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start text-white">
+            <a href="/" class="group flex flex-col gap-0.5">
+                <!-- Logo: Serif (Brand identity) -->
+                <span class="font-serif text-3xl md:text-4xl leading-none block drop-shadow-md">Hyle.</span>
+                <span class="font-sans text-[11px] md:text-[12px] tracking-wider pl-1 opacity-100">
+                    керамика ручной работы
+                </span>
+            </a>
             
-            <!-- TECHNICAL TOP LABEL -->
-            <div class="absolute top-[-60vh] left-0 md:left-auto md:right-0 border-l md:border-l-0 md:border-r border-white/30 pl-4 md:pr-4 py-2 hidden sm:block">
-                <p class="font-mono text-[10px] text-white/60 uppercase tracking-widest leading-loose">
-                    Ручная работа<br/>
-                    Лимитированный тираж<br/>
-                    Москва
-                </p>
+            <!-- Menu: Sans (Clean, No Gray) -->
+            <div class="hidden md:flex gap-12 font-sans text-[14px] font-medium tracking-wide">
+                <a href="/catalog" class="hover:opacity-70 transition-opacity drop-shadow-sm">каталог</a>
+                <a href="/about" class="hover:opacity-70 transition-opacity drop-shadow-sm">о мастере</a>
+                <a href="/blog" class="hover:opacity-70 transition-opacity drop-shadow-sm">журнал</a>
             </div>
 
-            <!-- MAIN TITLE: INTER STYLE -->
-            <!-- 
-                Используем font-sans (Inter).
-                text-white/90 + mix-blend-overlay создает эффект, будто буквы сделаны из стекла или света.
-            -->
-            <h1 class="flex flex-col leading-[0.8] tracking-tighter select-none">
-                <!-- Строка 1 -->
-                <span class="font-sans font-bold text-[18vw] lg:text-[13rem] text-white mix-blend-overlay opacity-90">
-                    {HERO.titleLine1.toLowerCase()}
-                </span>
-                
-                <!-- Строка 2 (Связка) -->
-                <span class="flex items-center gap-6 ml-2 md:ml-4 lg:ml-8 -mt-2 md:-mt-8">
-                    <span class="font-serif italic font-light text-3xl md:text-6xl text-[#Dkbca0] opacity-90">
-                        {HERO.titleAccent}
-                    </span>
-                    <div class="h-px flex-grow bg-white/20 max-w-[100px] md:max-w-[200px]"></div>
-                </span>
-                
-                <!-- Строка 3 -->
-                <span class="font-sans font-bold text-[18vw] lg:text-[13rem] text-white mix-blend-overlay opacity-90 text-right md:text-left md:ml-32 -mt-2 md:-mt-6">
-                    {HERO.titleLine2.replace('.', '').toLowerCase()}
-                </span>
-            </h1>
+            <button class="md:hidden pt-2 text-[12px] uppercase tracking-widest border-b-2 border-white pb-1 drop-shadow-sm">
+                меню
+            </button>
+        </nav>
 
-            <!-- BOTTOM ROW: DESCRIPTION & CTA -->
-            <div class="flex flex-col md:flex-row justify-between items-end mt-12 gap-8 border-t border-white/20 pt-8">
+        <!-- HERO SECTION: CLEAN & ARCHITECTURAL -->
+        <section id="hero-section" class="relative min-h-screen w-full flex flex-col justify-end pb-20 lg:pb-32 overflow-hidden bg-[#1a1918]">
+            
+            <!-- 1. BACKGROUND IMAGE -->
+            <div class="absolute inset-0 z-0">
+                <img 
+                    id="hero-image"
+                    src={HERO.image} 
+                    alt="Атмосфера" 
+                    class="w-full h-full object-cover scale-105 transition-transform duration-[2s] ease-out will-change-transform"
+                    onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
+                />
                 
-                <p class="font-sans font-light text-sm md:text-lg text-white/70 max-w-sm leading-relaxed">
-                    {HERO.description}
-                </p>
-                
-                <a href="/catalog" class="group flex items-center gap-4 cursor-pointer">
-                    <div class="relative w-14 h-14 rounded-full border border-white/30 flex items-center justify-center overflow-hidden">
-                        <!-- Hover Fill Effect -->
-                        <div class="absolute inset-0 bg-[#F9F8F6] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        <span class="relative z-10 text-xl text-white group-hover:text-black transition-colors">↓</span>
+                <!-- Затемнение: Ровное, без грязи -->
+                <div class="absolute inset-0 bg-black/40"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20"></div>
+            </div>
+
+            <!-- 2. CONTENT (NO LINES, PURE TYPOGRAPHY) -->
+            <div class="container-main relative z-10 w-full">
+                <div class="animate-appear">
+                    
+                    <!-- MAIN TITLE: FONT SANS (INTER) -->
+                    <h1 class="flex flex-col leading-[0.85] tracking-tight select-none text-white">
+                        <!-- Строка 1 -->
+                        <span class="font-sans font-bold text-[18vw] lg:text-[11rem]">
+                            {HERO.titleLine1.toLowerCase()}
+                        </span>
+                        
+                        <!-- Строка 2 (С акцентом) -->
+                        <span class="font-sans font-bold text-[18vw] lg:text-[11rem] ml-12 lg:ml-32 -mt-4 lg:-mt-10 flex items-baseline gap-6">
+                            <span class="font-serif italic font-light text-5xl lg:text-8xl text-[#e0d0c0] -translate-y-4 lg:-translate-y-8">
+                                {HERO.titleAccent}
+                            </span>
+                            {HERO.titleLine2.replace('.', '').toLowerCase()}
+                        </span>
+                    </h1>
+
+                    <!-- DESCRIPTION & CTA -->
+                    <div class="flex flex-col md:flex-row justify-between items-end mt-16 gap-8">
+                        
+                        <!-- Чистый текст без полос -->
+                        <p class="font-sans font-light text-lg md:text-xl text-white/90 max-w-sm leading-relaxed">
+                            {HERO.description}
+                        </p>
+                        
+                        <a href="/catalog" class="group flex items-center gap-5 cursor-pointer">
+                            <div class="relative w-16 h-16 rounded-full bg-white flex items-center justify-center overflow-hidden hover:scale-110 transition-transform duration-300">
+                                <span class="relative z-10 text-2xl text-black">↓</span>
+                            </div>
+                            <span class="font-sans text-sm font-medium tracking-widest text-white uppercase">
+                                В каталог
+                            </span>
+                        </a>
+
                     </div>
-                    <span class="font-mono text-xs uppercase tracking-widest text-white group-hover:text-white/80 transition-colors">
-                        Открыть каталог
-                    </span>
-                </a>
 
-            </div>
-
-        </div>
-    </div>
-    
-  </section>
-
-  <!-- SECTION 2: CATALOG -->
-  <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.3)]">
-    <div class="container-main">
-        
-        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div class="max-w-lg">
-                <h2 class="font-serif text-4xl md:text-6xl text-hyle-text mb-4">
-                    Новое из печи
-                </h2>
-                <p class="text-hyle-text/60 font-light text-sm md:text-base leading-relaxed max-w-sm">
-                    Ограниченный тираж. Изделия, которые мы достали из печи сегодня утром.
-                </p>
+                </div>
             </div>
             
-            <div class="flex items-center gap-3 text-hyle-text/30">
-                <span class="font-mono text-[10px] uppercase tracking-widest">Листайте</span>
-                <span class="text-lg">→</span>
-            </div>
-        </div>
+        </section>
 
-        <div 
-            id="horizontal-showcase" 
-            class="flex gap-8 overflow-x-auto pb-20 px-5 -mx-5 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
-        >
-            {recentProducts.map((product, idx) => {
-                const catId = (product.data.category && typeof product.data.category === 'object') 
-                    ? product.data.category.id 
-                    : product.data.category;
+        <!-- SECTION 2: CATALOG -->
+        <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.3)]">
+            <div class="container-main">
                 
-                const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
+                <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                    <div class="max-w-lg">
+                        <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
+                        <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">
+                            Новое из печи
+                        </h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 text-hyle-text/30">
+                        <span class="font-mono text-[10px] uppercase tracking-widest">Листайте</span>
+                        <span class="text-lg">→</span>
+                    </div>
+                </div>
 
-                return (
-                    <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
-                         <ProductCard 
-                            product={product} 
-                            categoryName={catId ? categoryMap[catId] : ''} 
-                        />
+                <div 
+                    id="horizontal-showcase" 
+                    class="flex gap-8 overflow-x-auto pb-20 px-5 -mx-5 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
+                    style="scrollbar-width: none; -ms-overflow-style: none;"
+                >
+                    {recentProducts.map((product, idx) => {
+                        const catId = (product.data.category && typeof product.data.category === 'object') 
+                            ? product.data.category.id 
+                            : product.data.category;
+                        
+                        const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
+
+                        return (
+                            <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
+                                <ProductCard 
+                                    product={product} 
+                                    categoryName={catId ? categoryMap[catId] : ''} 
+                                />
+                            </div>
+                        );
+                    })}
+                    
+                    <div class="shrink-0 w-[200px] flex items-center justify-center snap-center md:snap-align-none">
+                        <a href="/catalog" class="group flex flex-col items-center gap-4 text-hyle-text/40 hover:text-hyle-clay transition-colors">
+                            <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <span class="text-2xl">→</span>
+                            </div>
+                            <span class="font-mono text-xs uppercase tracking-widest">Все изделия</span>
+                        </a>
                     </div>
-                );
-            })}
-            
-            <div class="shrink-0 w-[200px] flex items-center justify-center snap-center md:snap-align-none">
-                 <a href="/catalog" class="group flex flex-col items-center gap-4 text-hyle-text/40 hover:text-hyle-clay transition-colors">
-                    <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <span class="text-2xl">→</span>
-                    </div>
-                    <span class="font-mono text-xs uppercase tracking-widest">Все изделия</span>
-                 </a>
+                    <div class="w-12 shrink-0"></div>
+                </div>
+
             </div>
-            <div class="w-12 shrink-0"></div>
+        </section>
+
+        <!-- UNIFIED DARK SECTION: WORKSHOP + FOOTER -->
+        <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
+            
+            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
+            
+            <section class="py-24 md:py-40 relative z-10">
+                <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+                    
+                    <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
+                        <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29]">
+                            <img 
+                                src={WORKSHOP.image} 
+                                alt="Процесс" 
+                                class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-[1.5s] ease-out"
+                                onerror={`this.onerror=null; this.src='${FALLBACK_WORKSHOP}';`}
+                            />
+                        </div>
+                    </div>
+
+                    <div class="order-1 lg:order-2">
+                        <span class="font-mono text-[11px] text-hyle-clay mb-6 block uppercase tracking-widest">Философия</span>
+                        <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
+                            {WORKSHOP.title}
+                        </h2>
+                        <div class="space-y-6 text-white/50 font-light text-lg leading-relaxed max-w-md border-l border-white/10 pl-6">
+                            <p>{WORKSHOP.text}</p>
+                        </div>
+                        
+                        <div class="mt-12">
+                            <a href="/about" class="font-mono text-sm border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors uppercase tracking-widest">
+                                О мастере
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="pb-20 pt-0 relative z-10">
+                <div class="container-main flex flex-col items-center text-center">
+                    
+                    <div class="mb-10 opacity-10 w-full h-px bg-white"></div>
+
+                    <div class="flex flex-col items-center gap-6">
+                        <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
+                        
+                        <nav class="flex gap-8 md:gap-12 font-mono text-[12px] text-white/60 uppercase tracking-widest">
+                            <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
+                            <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
+                            <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
+                        </nav>
+
+                        <div class="flex gap-6 mt-2">
+                            <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40">
+                                <span class="sr-only">Telegram</span>
+                                Tg
+                            </a>
+                        </div>
+                        
+                        <p class="mt-8 text-[10px] text-white/20 font-mono tracking-widest uppercase">
+                            © 2026 Москва
+                        </p>
+                    </div>
+                </div>
+            </footer>
         </div>
+        </Layout>
 
-    </div>
-  </section>
+        <script>
+            // ... (Scroll Scripts remain the same) ...
+            const showcase = document.getElementById('horizontal-showcase');
+            let target = 0;
+            let current = 0;
+            let isAnimating = false;
 
-  <!-- UNIFIED DARK SECTION: WORKSHOP + FOOTER -->
-  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
-      <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
-      
-      <section class="py-24 md:py-40 relative z-10">
-          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-              <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
-                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29]">
-                      <img 
-                        src={WORKSHOP.image} 
-                        alt="Процесс" 
-                        class="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-[1.5s] ease-out"
-                        onerror={`this.onerror=null; this.src='${FALLBACK_WORKSHOP}';`}
-                      />
-                  </div>
-              </div>
-              <div class="order-1 lg:order-2">
-                  <h2 class="font-serif text-4xl md:text-6xl mb-8 leading-tight">
-                      {WORKSHOP.title}
-                  </h2>
-                  <div class="space-y-6 text-white/50 font-light text-lg leading-relaxed max-w-md border-l border-white/10 pl-6">
-                      <p>{WORKSHOP.text}</p>
-                  </div>
-                  <div class="mt-12">
-                      <a href="/about" class="font-mono text-sm border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors uppercase tracking-widest">
-                          О мастере
-                      </a>
-                  </div>
-              </div>
-          </div>
-      </section>
+            if (showcase) {
+                target = showcase.scrollLeft;
+                current = showcase.scrollLeft;
 
-      <footer class="pb-20 pt-0 relative z-10">
-          <div class="container-main flex flex-col items-center text-center">
-              <div class="mb-10 opacity-10 w-full h-px bg-white"></div>
-              <div class="flex flex-col items-center gap-6">
-                  <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
-                  <nav class="flex gap-8 md:gap-12 font-mono text-[12px] text-white/60 uppercase tracking-widest">
-                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
-                      <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
-                      <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
-                  </nav>
-                  <div class="flex gap-6 mt-2">
-                      <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40"><span class="sr-only">Telegram</span>Tg</a>
-                  </div>
-                  <p class="mt-8 text-[10px] text-white/20 font-mono tracking-widest uppercase">
-                      © 2026 Москва
-                  </p>
-              </div>
-          </div>
-      </footer>
-  </div>
-</Layout>
+                showcase.addEventListener('wheel', (evt) => {
+                    if (window.matchMedia("(min-width: 768px)").matches) {
+                        const maxScroll = showcase.scrollWidth - showcase.clientWidth;
+                        const canScrollRight = target < maxScroll - 2;
+                        const canScrollLeft = target > 2;
 
-<script>
-    // ... (Scripts remain the same: Parallax, Scroll Wheel) ...
-    const showcase = document.getElementById('horizontal-showcase');
-    let target = 0;
-    let current = 0;
-    let isAnimating = false;
+                        if ((evt.deltaY > 0 && canScrollRight) || (evt.deltaY < 0 && canScrollLeft)) {
+                            evt.preventDefault();
+                            target += evt.deltaY * 2.5;
+                            target = Math.max(0, Math.min(target, maxScroll));
 
-    if (showcase) {
-        target = showcase.scrollLeft;
-        current = showcase.scrollLeft;
-
-        showcase.addEventListener('wheel', (evt) => {
-            if (window.matchMedia("(min-width: 768px)").matches) {
-                const maxScroll = showcase.scrollWidth - showcase.clientWidth;
-                const canScrollRight = target < maxScroll - 2;
-                const canScrollLeft = target > 2;
-
-                if ((evt.deltaY > 0 && canScrollRight) || (evt.deltaY < 0 && canScrollLeft)) {
-                    evt.preventDefault();
-                    target += evt.deltaY * 2.5;
-                    target = Math.max(0, Math.min(target, maxScroll));
-
-                    if (!isAnimating) {
-                        isAnimating = true;
-                        requestAnimationFrame(smoothScrollLoop);
+                            if (!isAnimating) {
+                                isAnimating = true;
+                                requestAnimationFrame(smoothScrollLoop);
+                            }
+                        }
                     }
+                }, { passive: false });
+            }
+
+            function smoothScrollLoop() {
+                if (!showcase) return;
+                current += (target - current) * 0.08;
+                showcase.scrollLeft = current;
+
+                if (Math.abs(target - current) > 0.5) {
+                    requestAnimationFrame(smoothScrollLoop);
+                } else {
+                    isAnimating = false;
+                    showcase.scrollLeft = target;
                 }
             }
-        }, { passive: false });
-    }
-
-    function smoothScrollLoop() {
-        if (!showcase) return;
-        current += (target - current) * 0.08;
-        showcase.scrollLeft = current;
-
-        if (Math.abs(target - current) > 0.5) {
-            requestAnimationFrame(smoothScrollLoop);
-        } else {
-            isAnimating = false;
-            showcase.scrollLeft = target;
-        }
-    }
-    
-    // Hero Parallax
-    const heroSection = document.getElementById('hero-section');
-    const heroImage = document.getElementById('hero-image');
-
-    if (heroSection && heroImage) {
-        heroSection.addEventListener('mousemove', (e) => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                // @ts-ignore
-                const { clientX, clientY } = e;
-                const { innerWidth, innerHeight } = window;
-                const moveX = (clientX / innerWidth - 0.5) * 15;
-                const moveY = (clientY / innerHeight - 0.5) * 15;
-                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.05)`;
+            
+            const heroSection = document.getElementById('hero-section');
+            const heroImage = document.getElementById('hero-image');
+            if (heroSection && heroImage) {
+                heroSection.addEventListener('mousemove', (e) => {
+                    if (window.matchMedia("(min-width: 1024px)").matches) {
+                        // @ts-ignore
+                        const { clientX, clientY } = e;
+                        const { innerWidth, innerHeight } = window;
+                        const moveX = (clientX / innerWidth - 0.5) * 15;
+                        const moveY = (clientY / innerHeight - 0.5) * 15;
+                        heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.05)`;
+                    }
+                });
             }
-        });
-    }
-</script>
+        </script>
