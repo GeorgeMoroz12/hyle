@@ -1,35 +1,29 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники (Теги и Категории)
+// 1. Справочники (ТЕГИ И КАТЕГОРИИ)
+// ФИКС: Меняем type с 'content' на 'data', так как физически это YAML/JSON файлы.
 const tags = defineCollection({
-  type: 'content',
+  type: 'data', // <--- БЫЛО: 'content', СТАЛО: 'data'
   schema: z.object({ 
-    title: z.string(), // Обязательное поле для Keystatic
+    title: z.string(), 
   }).passthrough(),
 });
 
 const categories = defineCollection({
-  type: 'content',
+  type: 'data', // <--- БЫЛО: 'content', СТАЛО: 'data'
   schema: z.object({ 
-    title: z.string(), // Обязательное поле для Keystatic
+    title: z.string(), 
   }).passthrough(),
 });
 
-// 2. Товары (Products) — Максимально толерантная схема для легаси данных
+// 2. Товары (Products) — Остаются 'content', так как у них есть тело статьи (.mdoc)
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
+    price: z.any().optional(),
     
-    // Цена: принимаем что угодно, превращаем в число
-    price: z.any()
-      .transform((val) => {
-        const num = Number(val);
-        return isNaN(num) ? 0 : num;
-      })
-      .optional(), 
-    
-    // Категория: Ссылка (Object) или Строка (Legacy) или Null
+    // Ссылки работают одинаково и для 'content', и для 'data' коллекций
     category: z.union([
         reference('categories'),
         z.string(),
@@ -37,40 +31,34 @@ const products = defineCollection({
         z.undefined()
     ]).optional(),
 
-    // Теги: Массив ссылок, массив строк или Null
     tags: z.union([
         z.array(z.union([reference('tags'), z.string(), z.null()])),
         z.null(),
         z.undefined()
     ]).optional(),
 
-    // Связанные товары
-    relatedProducts: z.any().optional(),
-
-    // Картинки
+    // Остальные поля...
     images: z.array(z.string()).default([]),
-    image: z.any().optional(), // Legacy support
-
-    // Характеристики и описание
+    image: z.any().optional(),
+    relatedProducts: z.any().optional(),
     specs: z.any().optional(),
     status: z.any().optional(),
     description: z.any().optional(),
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
     
-    // Старые поля (Legacy)
+    // Legacy
     inStock: z.any().optional(),
     isNew: z.any().optional(),
     care: z.any().optional(),
-  }).passthrough(), // Пропускаем любые неизвестные поля
+  }).passthrough(),
 });
 
-// 3. Блог
+// 3. Блог — 'content' (это статьи)
 const blog = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    // Дата: строка или объект Date
     pubDate: z.union([z.string(), z.date()])
       .transform((str) => new Date(str))
       .optional(), 
@@ -80,7 +68,7 @@ const blog = defineCollection({
   }).passthrough(),
 });
 
-// 4. О Мастере (Singleton Content)
+// 4. О Мастере — 'content' (это статья)
 const about = defineCollection({
   type: 'content', 
   schema: z.object({
@@ -89,23 +77,19 @@ const about = defineCollection({
   }).passthrough(),
 });
 
-// 5. Landing (Singleton Data)
+// 5. Landing — 'data' (JSON)
 const landing = defineCollection({
   type: 'data',
   schema: z.object({
     heroTitleLine1: z.string().optional(),
-    heroTitleAccent: z.string().optional(),
-    heroTitleLine2: z.string().optional(),
-    heroDescription: z.string().optional(),
     heroImage: z.string().optional(),
-    
     workshopTitle: z.string().optional(),
     workshopText: z.string().optional(),
     workshopImage: z.string().optional(),
   }).passthrough(),
 });
 
-// 6. B2B (Singleton Data)
+// 6. B2B — 'data' (JSON)
 const b2b = defineCollection({
   type: 'data',
   schema: z.object({
@@ -114,7 +98,6 @@ const b2b = defineCollection({
   }).passthrough(),
 });
 
-// Экспорт всех коллекций
 export const collections = {
   products,
   tags,
