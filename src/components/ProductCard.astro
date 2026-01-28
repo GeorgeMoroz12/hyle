@@ -21,40 +21,30 @@ const isReserved = s === 'reserved' || s === 'резерв';
 // --- ЛОГИКА ТЕГОВ ---
 let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
-
-// 1. Нормализация (Получаем чистые ID)
 const tagIds = rawTags.map(t => {
     if (typeof t === 'string') return t;
     if (typeof t === 'object' && t?.id) return t.id;
     return null;
 }).filter(t => t && t.trim() !== '');
 
-// 2. Запрос названий из базы
 if (tagIds.length > 0) {
     try {
         const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
         const loadedEntries = await getEntries(tagRefs);
-        
         const namesMap = new Map();
         loadedEntries.forEach(entry => {
             if (entry && entry.data) {
-                // FIX: Заменил .name на .title
                 namesMap.set(entry.id, entry.data.title);
             }
         });
-
-        // 3. Формируем итоговый список
         visibleTags = tagIds.map(id => ({
             slug: id,
-            // Берем .title, или делаем Capitalize ID
             label: namesMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
         }));
-
     } catch (e) {
         visibleTags = tagIds.map(id => ({ slug: id, label: id }));
     }
 }
-
 const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
 const productUrl = `/products/${product.slug}`;
 ---
@@ -70,36 +60,31 @@ const productUrl = `/products/${product.slug}`;
       </div>
     )}
     
+    <!-- FIX ZOOM: Increased scale to 1.10 and speed to 700ms -->
     <img 
       src={mainImage} 
       alt={title} 
       loading="lazy"
-      class={`w-full h-full object-cover object-center transition-transform duration-[1.2s] ease-out-expo group-hover:scale-105 z-10 relative ${isSold ? 'grayscale opacity-90' : ''}`}
+      class={`w-full h-full object-cover object-center transition-transform duration-700 ease-out-expo group-hover:scale-110 z-10 relative ${isSold ? 'grayscale opacity-90' : ''}`}
     />
   </a>
 
   <div class="flex justify-between items-start px-1 mt-auto">
-    
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
-        
-        {/* CATEGORY LABEL */}
         {categoryName && (
             <span class="text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 mb-1 block transition-colors group-hover:text-hyle-clay/70">
                 {categoryName}
             </span>
         )}
-
         <a href={productUrl} class="block mb-0.5 w-full">
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
             </h3>
         </a>
-        
-        {/* TAG RENDER */}
         {displayTag && (
             <a 
                 href={`/catalog?tag=${displayTag.slug}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-1 hover:text-hyle-clay transition-all z-10 relative"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/60 -rotate-1 mt-0 hover:text-hyle-clay transition-all z-10 relative"
             >
                 #{displayTag.label}
             </a>
@@ -111,6 +96,5 @@ const productUrl = `/products/${product.slug}`;
           {formattedPrice}
         </span>
     </div>
-
   </div>
 </div>
