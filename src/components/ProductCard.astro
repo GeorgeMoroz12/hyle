@@ -5,10 +5,11 @@ import { getEntries } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
-  categoryName?: string; // Оставляем в типах, но не используем
+  categoryName?: string;
 }
 
-const { product } = Astro.props;
+const { product, categoryName } = Astro.props;
+// FIX: Убрали description
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
@@ -18,7 +19,6 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ЛОГИКА ТЕГОВ ---
 let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
 
@@ -56,12 +56,7 @@ const productUrl = `/products/${product.slug}`;
 
 <div class="group relative w-full flex flex-col">
   
-  <!-- 
-      1. ИЗОБРАЖЕНИЕ
-      bg-hyle-surface: Адаптивный фон (серый в темной теме, белый в светлой), 
-      чтобы контент не терялся.
-  -->
-  <a href={productUrl} class="block relative overflow-hidden aspect-square bg-hyle-surface rounded-sm mb-3 cursor-pointer">
+  <a href={productUrl} class="block relative overflow-hidden aspect-square bg-hyle-surface rounded-sm mb-3 cursor-pointer transition-colors duration-500">
     {(isSold || isReserved) && (
       <div class="absolute top-2 left-2 z-30">
         <span class="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
@@ -78,25 +73,19 @@ const productUrl = `/products/${product.slug}`;
     />
   </a>
 
-  <!-- 2. ИНФОРМАЦИЯ -->
   <div class="flex justify-between items-start px-1 mt-auto">
     
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
-        
-        <!-- КАТЕГОРИЮ УБРАЛИ ПОЛНОСТЬЮ -->
-
-        <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
             </h3>
         </a>
         
-        <!-- TAG RENDER -->
         {displayTag && (
             <a 
                 href={`/catalog?tag=${displayTag.slug}`}
-                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-1 relative z-20 lowercase"
+                class="inline-block text-[11px] md:text-[13px] font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0 mt-0 relative z-20 lowercase"
             >
                 #{displayTag.label.toLowerCase()}
             </a>
