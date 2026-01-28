@@ -5,10 +5,10 @@ import { getEntries } from 'astro:content';
 
 interface Props {
   product: CollectionEntry<'products'>;
-  categoryName?: string;
+  categoryName?: string; // Оставляем в пропсах для совместимости, но не выводим
 }
 
-const { product, categoryName } = Astro.props;
+const { product } = Astro.props;
 const { title, price, images, status, tags } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
@@ -18,9 +18,10 @@ const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
 const isReserved = s === 'reserved' || s === 'резерв';
 
-// --- ЛОГИКА ТЕГОВ ---
+// --- ЛОГИКА ТЕГОВ (FIXED TITLE) ---
 let visibleTags = [];
 const rawTags = Array.isArray(tags) ? tags : [];
+
 const tagIds = rawTags.map(t => {
     if (typeof t === 'string') return t;
     if (typeof t === 'object' && t?.id) return t.id;
@@ -31,26 +32,32 @@ if (tagIds.length > 0) {
     try {
         const tagRefs = tagIds.map(id => ({ collection: 'tags', id }));
         const loadedEntries = await getEntries(tagRefs);
+        
         const namesMap = new Map();
         loadedEntries.forEach(entry => {
             if (entry && entry.data) {
+                // ВАЖНО: Используем .title для русского названия
                 namesMap.set(entry.id, entry.data.title);
             }
         });
+
         visibleTags = tagIds.map(id => ({
             slug: id,
             label: namesMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1))
         }));
+
     } catch (e) {
         visibleTags = tagIds.map(id => ({ slug: id, label: id }));
     }
 }
+
 const displayTag = visibleTags.length > 0 ? visibleTags[0] : null;
 const productUrl = `/products/${product.slug}`;
 ---
 
 <div class="group relative w-full flex flex-col">
   
+  <!-- 1. ИЗОБРАЖЕНИЕ -->
   <a href={productUrl} class="block relative overflow-hidden aspect-square bg-neutral-100 rounded-sm mb-3 cursor-pointer">
     {(isSold || isReserved) && (
       <div class="absolute top-2 left-2 z-30">
@@ -60,27 +67,35 @@ const productUrl = `/products/${product.slug}`;
       </div>
     )}
     
-    <!-- FIX ZOOM: Increased scale to 1.10 and speed to 700ms -->
+    <!-- 
+       FIX ZOOM: 
+       duration-1000 (плавно, но не затянуто)
+       group-hover:scale-105 (аккуратное увеличение)
+    -->
     <img 
       src={mainImage} 
       alt={title} 
       loading="lazy"
-      class={`w-full h-full object-cover object-center transition-transform duration-700 ease-out-expo group-hover:scale-110 z-10 relative ${isSold ? 'grayscale opacity-90' : ''}`}
+      class={`w-full h-full object-cover object-center transition-transform duration-1000 ease-out-expo group-hover:scale-105 z-10 relative ${isSold ? 'grayscale opacity-90' : ''}`}
     />
   </a>
 
+  <!-- 2. ИНФОРМАЦИЯ -->
   <div class="flex justify-between items-start px-1 mt-auto">
+    
     <div class="pr-2 flex flex-col items-start w-full min-w-0 relative">
-        {categoryName && (
-            <span class="text-[9px] uppercase tracking-[0.2em] text-hyle-text/40 mb-1 block transition-colors group-hover:text-hyle-clay/70">
-                {categoryName}
-            </span>
-        )}
+        
+        <!-- УБРАЛ ВЫВОД КАТЕГОРИИ (ОЧИЩЕНО) -->
+
+        <!-- Title Link -->
         <a href={productUrl} class="block mb-0.5 w-full">
+            <!-- Типографика с фиксом обрезки букв -->
             <h3 class="font-serif text-base md:text-lg leading-normal text-hyle-text transition-colors duration-300 group-hover:text-hyle-clay line-clamp-2 pb-1.5 -mb-1.5">
               {title}
             </h3>
         </a>
+        
+        <!-- TAG RENDER (Russian Title) -->
         {displayTag && (
             <a 
                 href={`/catalog?tag=${displayTag.slug}`}
@@ -96,5 +111,6 @@ const productUrl = `/products/${product.slug}`;
           {formattedPrice}
         </span>
     </div>
+
   </div>
 </div>
