@@ -4,28 +4,29 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection, getEntries } from 'astro:content';
 
-// 1. ЗАГРУЗКА СПРАВОЧНИКОВ
+// 1. GLOBAL LOOKUP (FIXED FIELDS)
 const allCategories = await getCollection('categories');
 const allTags = await getCollection('tags');
 
-// Словари ID -> Title (Русское название)
+// FIX: Используем .data.title
 const categoryMap = new Map(allCategories.map(c => [c.id, c.data.title]));
 const tagMap = new Map(allTags.map(t => [t.id, t.data.title]));
 
 const resolveId = (item: any) => {
     if (!item) return null;
     if (typeof item === 'string') return item;
-    if (typeof item === 'object' && item.id) return item.id; 
+    if (typeof item === 'object' && item.id) return item.id;
     return null;
 };
 
-// 2. ТОВАРЫ
+// 2. СБОР ТОВАРОВ
 const allProducts = await getCollection('products', ({ data }) => {
     return data.status !== 'archived';
 });
+
 const sortedProducts = allProducts.sort((a, b) => 0);
 
-// 3. СБОР ФИЛЬТРОВ
+// 3. СБОР АКТИВНЫХ ФИЛЬТРОВ
 const usedCategoryIds = new Set(sortedProducts.map(p => resolveId(p.data.category)).filter(Boolean));
 
 const rawTagIds = allProducts.flatMap(p => {
@@ -34,17 +35,18 @@ const rawTagIds = allProducts.flatMap(p => {
 }).filter(t => t && t.trim() !== '');
 const uniqueTagIds = [...new Set(rawTagIds)];
 
-// Категории для рендера
+// Формируем списки для рендера
 const filterCategories = allCategories
     .filter(cat => usedCategoryIds.has(cat.id))
     .map(cat => ({ id: cat.id, title: cat.data.title }))
     .sort((a, b) => a.title.localeCompare(b.title));
 
-// Теги для рендера
+// Для тегов используем безопасный маппинг
 let filterTags = uniqueTagIds.map(id => {
     const title = tagMap.get(id) || (id.charAt(0).toUpperCase() + id.slice(1));
     return { id, title };
-}).sort((a, b) => a.title.localeCompare(b.title));
+});
+filterTags.sort((a, b) => a.title.localeCompare(b.title));
 
 const pageTitle = "Каталог";
 const pageDesc = "Полная коллекция керамики ручной работы Hyle.";
@@ -52,82 +54,85 @@ const pageDesc = "Полная коллекция керамики ручной 
 
 <Layout title={pageTitle} description={pageDesc}>
   
-  <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
+  <!-- 
+    FIX: Уменьшил pt (padding-top) с pt-32 до pt-28.
+    Это минимально необходимый отступ, чтобы фильтры не налезли на логотип, 
+    но при этом были максимально высоко.
+  -->
+  <div class="min-h-screen pt-28 pb-20 bg-[#FDFCF8]">
     <div class="container-main">
         
-        <!-- HEADER: CENTERED & CLEAN -->
-        <div class="flex flex-col items-center text-center gap-6 mb-16 animate-appear">
-            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
-                Керамика
-            </h1>
-            <div class="w-12 h-px bg-hyle-text/10"></div>
-            <p class="text-hyle-text/60 font-light max-w-md text-sm md:text-base leading-relaxed">
-                Вещи, хранящие тепло рук. <br/>
-                Найдите то, что откликается именно вам.
-            </p>
-        </div>
+        <!-- HEADER REMOVED: Заголовок "Коллекция" удален полностью -->
 
-        <!-- FILTERS: TWO LEVELS -->
-        <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-6 mb-12 transition-all w-full" id="filter-bar">
-            <div class="flex flex-col items-center gap-6">
+        <!-- FILTERS BAR -->
+        <!-- 
+           Sticky top-0: При скролле панель прилипнет к верху экрана.
+           Добавил pt-2, чтобы был воздух над кнопками при прилипании.
+        -->
+        <div class="sticky top-0 z-40 bg-[#FDFCF8]/95 backdrop-blur-sm py-4 mb-8 border-b border-hyle-text/5 transition-all w-full" id="filter-bar">
+            
+            <div class="flex flex-col gap-4">
                 
-                <!-- LEVEL 1: CATEGORIES (Text Links) -->
-                <div class="flex flex-wrap justify-center gap-6 md:gap-8 pb-2 border-b border-hyle-text/5 w-full">
+                <!-- ГРУППА 1: КАТЕГОРИИ (Крупно, Serif) -->
+                <div class="flex items-center gap-4 overflow-x-auto scrollbar-hide pb-1 mask-linear justify-center">
                     <button 
-                        class="filter-btn group pb-1 transition-all duration-300 text-lg md:text-xl font-serif"
+                        class="filter-btn group pb-1 transition-all duration-300 whitespace-nowrap text-lg font-serif"
                         data-type="category"
                         data-value="all"
-                        data-active-class="text-hyle-text border-b border-hyle-text"
-                        data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b border-transparent"
+                        data-active-class="text-hyle-text border-b-2 border-hyle-clay"
+                        data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b-2 border-transparent"
                     >
                         Все
                     </button>
 
                     {filterCategories.map(cat => (
                         <button 
-                            class="filter-btn group pb-1 transition-all duration-300 text-lg md:text-xl font-serif"
+                            class="filter-btn group pb-1 transition-all duration-300 whitespace-nowrap text-lg font-serif"
                             data-type="category"
                             data-value={cat.id} 
-                            data-active-class="text-hyle-text border-b border-hyle-text"
-                            data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b border-transparent"
+                            data-active-class="text-hyle-text border-b-2 border-hyle-clay"
+                            data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b-2 border-transparent"
                         >
                             {cat.title}
                         </button>
                     ))}
                 </div>
 
-                <!-- LEVEL 2: TAGS (Pills) -->
+                <!-- ГРУППА 2: ТЕГИ (Мелко, Mono, Pills) -->
                 {filterTags.length > 0 && (
-                    <div class="flex flex-wrap justify-center gap-3 px-4">
+                    <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 justify-center">
                         {filterTags.map(tag => (
                             <button 
-                                class="filter-btn group px-4 py-1.5 rounded-full border transition-all duration-300 text-[11px] lowercase tracking-wide font-mono"
+                                class="filter-btn group px-3 py-1 rounded-full border transition-all duration-300 whitespace-nowrap text-[10px] uppercase tracking-widest font-mono"
                                 data-type="tag"
                                 data-value={tag.id} 
                                 data-active-class="bg-hyle-text text-[#F9F8F6] border-hyle-text"
                                 data-inactive-class="bg-transparent text-hyle-text/50 border-hyle-text/10 hover:border-hyle-clay hover:text-hyle-clay"
                             >
-                                {tag.title.toLowerCase()}
+                                #{tag.title}
                             </button>
                         ))}
                     </div>
                 )}
             </div>
-            
-            <div id="active-filters-info" class="hidden mt-4 text-center">
-                <button id="reset-all" class="text-[10px] uppercase tracking-widest text-hyle-text/40 hover:text-hyle-clay border-b border-current pb-0.5 transition-colors">
-                    Сбросить фильтры
-                </button>
+
+            <!-- Сброс -->
+            <div id="active-filters-info" class="hidden mt-3 text-[10px] font-mono text-hyle-text/40 flex gap-2 items-center justify-center">
+                <button id="reset-all" class="underline hover:text-hyle-clay cursor-pointer">Сбросить фильтры</button>
             </div>
         </div>
 
-        <!-- GRID -->
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
+        <!-- PRODUCTS GRID -->
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
+            
             {sortedProducts.map((product) => {
                 const catId = resolveId(product.data.category);
+                
                 const rawTags = product.data.tags || [];
                 const tagIds = rawTags.map(resolveId).filter(Boolean);
                 const tagsString = tagIds.join(',');
+                
+                // Передаем название категории в карточку (для надписи над заголовком)
                 const catName = catId ? (categoryMap.get(catId) || '') : '';
                 
                 return (
@@ -145,11 +150,12 @@ const pageDesc = "Полная коллекция керамики ручной 
             })}
 
             <div id="empty-state" class="hidden col-span-full py-20 text-center">
-                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Пустота</p>
+                <p class="font-serif text-2xl text-hyle-text/40 mb-4">Пока здесь пусто</p>
                 <button onclick="document.getElementById('reset-all').click()" class="text-xs uppercase tracking-widest border-b border-hyle-clay text-hyle-clay">
                     Показать всё
                 </button>
             </div>
+
         </div>
 
     </div>
@@ -172,8 +178,8 @@ const pageDesc = "Полная коллекция керамики ручной 
         let activeTags = new Set();
 
         const params = new URLSearchParams(window.location.search);
-        if (params.has('categories')) params.get('categories').split(',').forEach(c => { if(c) activeCategories.add(c); });
-        if (params.has('tags')) params.get('tags').split(',').forEach(t => { if(t) activeTags.add(t); });
+        if (params.has('categories')) params.get('categories').split(',').forEach(c => activeCategories.add(c));
+        if (params.has('tags')) params.get('tags').split(',').forEach(t => activeTags.add(t));
         if (params.has('tag')) activeTags.add(params.get('tag'));
 
         render();
@@ -187,11 +193,11 @@ const pageDesc = "Полная коллекция керамики ручной 
                 if (value === 'all') {
                     activeCategories.clear();
                 } else if (type === 'category') {
-                    // Категории работают как ТАБЫ (только одна активна)
+                    // ТАБЫ для категорий (только одна активна)
                     activeCategories.clear();
                     activeCategories.add(value);
                 } else {
-                    // Теги работают как ФИЛЬТРЫ (множественный выбор)
+                    // ФИЛЬТРЫ для тегов (можно несколько)
                     if (activeTags.has(value)) activeTags.delete(value);
                     else activeTags.add(value);
                 }
@@ -221,10 +227,9 @@ const pageDesc = "Полная коллекция керамики ручной 
                 if (value === 'all') isActive = activeCategories.size === 0;
                 else isActive = type === 'category' ? activeCategories.has(value) : activeTags.has(value);
 
-                // Очистка и применение классов
                 let baseClasses = "filter-btn group transition-all duration-300 whitespace-nowrap cursor-pointer";
-                if (type === 'category') baseClasses += " pb-1 text-lg md:text-xl font-serif";
-                else baseClasses += " px-4 py-1.5 rounded-full border text-[11px] lowercase tracking-wide font-mono";
+                if (type === 'category') baseClasses += " pb-1 text-lg font-serif";
+                else baseClasses += " px-3 py-1 rounded-full border text-[10px] uppercase tracking-widest font-mono";
                 
                 btn.className = `${baseClasses} ${isActive ? activeClass : inactiveClass}`;
             });
@@ -239,18 +244,8 @@ const pageDesc = "Полная коллекция керамики ручной 
 
                 if (catMatch && tagMatch) {
                     item.classList.remove('hidden');
-                    requestAnimationFrame(() => {
-                        // @ts-ignore
-                        item.style.opacity = '1';
-                        // @ts-ignore
-                        item.style.transform = 'translateY(0)';
-                    });
                     visibleCount++;
                 } else {
-                    // @ts-ignore
-                    item.style.opacity = '0';
-                    // @ts-ignore
-                    item.style.transform = 'translateY(20px)';
                     item.classList.add('hidden');
                 }
             });
