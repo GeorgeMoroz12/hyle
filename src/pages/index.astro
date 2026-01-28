@@ -4,6 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { getCollection, getEntry } from 'astro:content';
 
+// --- 1. DATA FETCHING ---
 const landingEntry = await getEntry('landing', 'home');
 const data = landingEntry?.data || {};
 
@@ -15,7 +16,7 @@ const HERO = {
     titleLine1: data.heroTitleLine1 || "Глина",
     titleAccent: data.heroTitleAccent || "хранит",
     titleLine2: data.heroTitleLine2 || "тепло.",
-    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
+    description: data.heroDescription || "Вещи, созданные в тишине. С несовершенствами, которые делают их живыми."
 };
 
 const WORKSHOP = {
@@ -36,127 +37,100 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 <Layout title="Главная" hideHeader={true}>
   
-  <!-- HEADER -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start mix-blend-difference text-[#F9F8F6]">
+  <!-- HEADER (Transparent & Minimal) -->
+  <nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start text-[#F9F8F6]">
       <a href="/" class="group flex flex-col gap-0.5">
-          <span class="font-serif text-3xl md:text-4xl leading-none transition-colors block">Hyle.</span>
+          <!-- Logo stays in English as Brand Name -->
+          <span class="font-serif text-3xl md:text-4xl leading-none transition-colors block drop-shadow-md">Hyle.</span>
       </a>
       
-      <div class="hidden md:flex gap-12 font-mono text-[11px] tracking-[0.2em] uppercase pt-2">
-          <a href="/catalog" class="hover:opacity-70 transition-opacity">каталог</a>
-          <a href="/about" class="hover:opacity-70 transition-opacity">о мастере</a>
-          <a href="/blog" class="hover:opacity-70 transition-opacity">блог</a>
+      <div class="hidden md:flex gap-12 font-mono text-[13px] pt-3 uppercase tracking-widest opacity-90">
+          <a href="/catalog" class="hover:text-hyle-clay transition-colors drop-shadow-sm">каталог</a>
+          <a href="/about" class="hover:text-hyle-clay transition-colors drop-shadow-sm">о мастере</a>
+          <a href="/blog" class="hover:text-hyle-clay transition-colors drop-shadow-sm">журнал</a>
       </div>
 
-      <button class="md:hidden pt-2 text-[10px] uppercase tracking-widest border-b border-current pb-0.5">
+      <button class="md:hidden pt-2 text-[10px] uppercase tracking-widest border-b border-white/50 pb-0.5 drop-shadow-sm">
           меню
       </button>
   </nav>
 
-  <!-- HERO SECTION: GALLERY STYLE -->
-  <section id="hero-section" class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#1a1918]">
+  <!-- HERO SECTION: CINEMATIC FULLSCREEN -->
+  <section id="hero-section" class="relative h-screen w-full flex flex-col justify-center items-center overflow-hidden bg-[#1a1918]">
     
-    <!-- 1. BACKGROUND TYPO (Context Anchor) -->
-    <div class="absolute inset-0 flex items-center justify-center z-0 select-none overflow-hidden pointer-events-none">
-        <!-- Пишем CLAY вместо H, чтобы задать тему -->
-        <span class="font-serif text-[35vw] text-[#F9F8F6] opacity-[0.02] leading-none tracking-tighter translate-y-10">
-            Clay
-        </span>
-    </div>
-
-    <!-- 2. MAIN CONTENT -->
-    <div class="container-main relative z-10 w-full h-full grid grid-cols-1 lg:grid-cols-12 items-center gap-0 lg:gap-12 pt-24 lg:pt-0">
+    <!-- 1. BACKGROUND IMAGE -->
+    <div class="absolute inset-0 z-0">
+        <img 
+            id="hero-image"
+            src={HERO.image} 
+            alt="Атмосфера" 
+            class="w-full h-full object-cover scale-105 transition-transform duration-[2s] ease-out will-change-transform"
+            onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
+        />
+        <!-- 
+            Overlay: 
+            Легкое затемнение, чтобы белый текст читался на любой фотографии. 
+            Градиент снизу вверх.
+        -->
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
         
-        <!-- IMAGE BLOCK (Right) -->
-        <div class="lg:col-span-7 lg:col-start-6 relative order-1 lg:order-2">
-            
-            <!-- Wrapper -->
-            <div class="relative w-full aspect-[3/4] md:aspect-[4/5] lg:aspect-[16/10] overflow-visible">
-                
-                 <!-- Main Image -->
-                 <div class="relative w-full h-full overflow-hidden shadow-2xl rounded-sm">
-                    <img 
-                        id="hero-image"
-                        src={HERO.image} 
-                        alt="Ceramics" 
-                        class="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-[2s] ease-out will-change-transform"
-                        onerror={`this.onerror=null; this.src='${FALLBACK_HERO}';`}
-                    />
-                    <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
-                 </div>
-
-                 <!-- 
-                    🔥 FLOATING PRODUCT CARD (Visual Anchor)
-                    Это тот самый элемент, который говорит "Тут продают".
-                    Плавающая карточка поверх фото.
-                 -->
-                 <div class="hidden lg:block absolute -bottom-12 -left-12 z-20 bg-[#F5F4F0] p-6 max-w-[220px] shadow-xl rounded-sm animate-appear" style="animation-delay: 0.5s">
-                     <div class="flex justify-between items-start mb-2">
-                         <span class="font-mono text-[9px] uppercase tracking-widest text-[#1a1918]/50">В наличии</span>
-                         <span class="text-[#B35A32] text-xs">●</span>
-                     </div>
-                     <p class="font-serif text-xl text-[#1a1918] leading-tight mb-4">Ваза "Эфир"</p>
-                     <a href="/catalog" class="text-xs font-mono uppercase tracking-widest border-b border-[#1a1918]/20 pb-1 hover:border-[#B35A32] hover:text-[#B35A32] transition-colors">
-                         Смотреть →
-                     </a>
-                 </div>
-
-            </div>
-        </div>
-
-        <!-- TEXT BLOCK (Left) -->
-        <div class="lg:col-span-6 lg:col-start-1 lg:-mr-24 relative z-20 order-2 lg:order-1 mt-12 lg:mt-0 pointer-events-none">
-            <div class="animate-appear pointer-events-auto">
-                
-                <!-- Explicit Context Label -->
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="h-px w-8 bg-white/20"></div>
-                    <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-[#F9F8F6]/60">
-                        Мастерская керамики
-                    </span>
-                </div>
-
-                <h1 class="font-serif text-6xl md:text-8xl lg:text-[7.5rem] leading-[0.85] text-[#F9F8F6] mb-10 tracking-tight mix-blend-difference">
-                    {HERO.titleLine1} <br/>
-                    <span class="italic font-light text-[#B35A32] ml-16 md:ml-32 block transform transition-transform duration-700 hover:translate-x-4 cursor-default">
-                        {HERO.titleAccent}
-                    </span>
-                    {HERO.titleLine2}
-                </h1>
-
-                <div class="flex flex-col md:flex-row items-start gap-10 lg:pl-2">
-                    <p class="font-sans font-light text-sm md:text-base text-[#F9F8F6]/60 max-w-xs leading-relaxed border-l border-white/10 pl-6">
-                        {HERO.description}
-                    </p>
-                    
-                    <a href="/catalog" class="group flex items-center gap-4 pt-2">
-                        <div class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-[#F9F8F6] group-hover:bg-[#B35A32] group-hover:border-[#B35A32] transition-all duration-300">
-                            <span class="text-xl relative top-[-2px] group-hover:translate-x-0.5 transition-transform">→</span>
-                        </div>
-                        <span class="font-mono text-xs uppercase tracking-widest text-[#F9F8F6]/80 group-hover:text-white transition-colors">
-                            Каталог
-                        </span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- COORD DATA -->
-        <div class="absolute bottom-8 left-4 hidden lg:flex flex-col gap-1 font-mono text-[9px] uppercase tracking-widest text-[#F9F8F6]/20">
-            <span>Moscow</span>
-            <span>Est. 2026</span>
-        </div>
-
+        <!-- Texture Grain -->
+        <div class="absolute inset-0 bg-noise opacity-30 mix-blend-overlay pointer-events-none"></div>
     </div>
+
+    <!-- 2. CONTENT (CENTERED) -->
+    <div class="relative z-10 text-center text-[#F9F8F6] px-4 max-w-4xl mx-auto flex flex-col items-center">
+        
+        <!-- Animated Entrance -->
+        <div class="animate-appear flex flex-col items-center gap-6">
+            
+            <!-- Main Title: Huge & Elegant -->
+            <h1 class="flex flex-col items-center leading-[0.85] tracking-tight mix-blend-overlay">
+                <span class="font-serif text-[18vw] md:text-[12rem] lg:text-[14rem] text-white/90">
+                    {HERO.titleLine1}
+                </span>
+                
+                <span class="font-hand text-4xl md:text-6xl text-[#Dkbca0] -rotate-3 my-2 md:my-4 relative z-20 opacity-90">
+                    {HERO.titleAccent}
+                </span>
+                
+                <span class="font-serif text-[18vw] md:text-[12rem] lg:text-[14rem] text-white/90">
+                    {HERO.titleLine2.replace('.', '')}
+                </span>
+            </h1>
+
+            <!-- Description -->
+            <p class="font-sans font-light text-sm md:text-lg text-white/80 max-w-md leading-relaxed mt-4 drop-shadow-md">
+                {HERO.description}
+            </p>
+
+            <!-- CTA -->
+            <div class="mt-10">
+                <a href="/catalog" class="group relative inline-flex items-center gap-4 px-8 py-4 overflow-hidden rounded-full border border-white/30 hover:border-white/60 transition-colors backdrop-blur-sm bg-white/5">
+                    <span class="relative z-10 font-mono text-xs uppercase tracking-[0.2em] text-white group-hover:text-white transition-colors">
+                        В каталог
+                    </span>
+                    <span class="relative z-10 text-lg text-white group-hover:translate-x-1 transition-transform">→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll Hint -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 animate-bounce">
+        <span class="text-xl">↓</span>
+    </div>
+
   </section>
 
-  <!-- SECTION 2: CATALOG (Rounded top transition) -->
-  <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.2)]">
+  <!-- SECTION 2: CATALOG (Horizontal Scroll) -->
+  <section class="py-24 md:py-32 bg-[#FDFCF8] relative z-20 overflow-hidden rounded-t-[40px] -mt-8 shadow-[0_-20px_60px_rgba(0,0,0,0.3)]">
     <div class="container-main">
         
         <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div class="max-w-lg">
-                <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
+                <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Коллекция</span>
                 <h2 class="font-serif text-4xl md:text-6xl text-hyle-text">
                     Новое из печи
                 </h2>
@@ -168,10 +142,10 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             </div>
         </div>
 
-        <!-- Horizontal Scroll -->
         <div 
             id="horizontal-showcase" 
             class="flex gap-8 overflow-x-auto pb-20 px-5 -mx-5 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
+            style="scrollbar-width: none; -ms-overflow-style: none;"
         >
             {recentProducts.map((product, idx) => {
                 const catId = (product.data.category && typeof product.data.category === 'object') 
@@ -181,7 +155,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                 const offsetClass = idx % 2 !== 0 ? "mt-12" : "";
 
                 return (
-                    <div class={`shrink-0 w-[85vw] md:w-[420px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
+                    <div class={`shrink-0 w-[85vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
                          <ProductCard 
                             product={product} 
                             categoryName={catId ? categoryMap[catId] : ''} 
@@ -195,7 +169,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                     <div class="w-20 h-20 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform">
                         <span class="text-2xl">→</span>
                     </div>
-                    <span class="font-mono text-xs uppercase tracking-widest">Все изделия</span>
+                    <span class="font-mono text-xs uppercase tracking-widest">все изделия</span>
                  </a>
             </div>
             <div class="w-12 shrink-0"></div>
@@ -205,17 +179,15 @@ const categoryMap = allCategories.reduce((acc, cat) => {
   </section>
 
   <!-- UNIFIED DARK SECTION: WORKSHOP + FOOTER -->
-  <!-- FIX: min-h-screen для монолитности -->
-  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative min-h-screen flex flex-col justify-between overflow-hidden">
+  <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
+      
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
-      <!-- WORKSHOP CONTENT -->
-      <section class="py-24 md:py-40 relative z-10 flex-grow flex items-center">
-          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center w-full">
+      <section class="py-24 md:py-40 relative z-10">
+          <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
               
               <!-- Image -->
               <div class="relative order-2 lg:order-1 pl-4 lg:pl-0">
-                  <!-- FIX: Вернул -rotate-1 и ховер -->
                   <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-[90%] shadow-2xl bg-[#2C2B29] transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
                       <img 
                         src={WORKSHOP.image} 
@@ -235,9 +207,10 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                   <div class="space-y-6 text-white/50 font-light text-lg leading-relaxed max-w-md border-l border-white/10 pl-6">
                       <p>{WORKSHOP.text}</p>
                   </div>
+                  
                   <div class="mt-12">
                       <a href="/about" class="font-mono text-sm border-b border-white/30 pb-1 hover:border-hyle-clay hover:text-hyle-clay transition-colors uppercase tracking-widest">
-                          О мастере
+                          о мастере
                       </a>
                   </div>
               </div>
@@ -245,33 +218,38 @@ const categoryMap = allCategories.reduce((acc, cat) => {
       </section>
 
       <!-- FOOTER -->
-      <footer class="pb-16 pt-0 relative z-10">
-          <div class="container-main flex flex-col md:flex-row justify-between items-start gap-12 border-t border-white/5 pt-12">
-              <div class="max-w-xs">
-                  <span class="font-serif text-2xl block mb-4">Hyle.</span>
-                  <p class="font-mono text-[10px] uppercase tracking-widest text-white/40 leading-relaxed">
-                      Керамика ручной работы.<br/>
-                      Создано для жизни.
+      <footer class="pb-20 pt-0 relative z-10">
+          <div class="container-main flex flex-col items-center text-center">
+              
+              <div class="mb-10 opacity-10 w-full h-px bg-white"></div>
+
+              <div class="flex flex-col items-center gap-6">
+                  <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
+                  
+                  <nav class="flex gap-8 md:gap-12 font-mono text-[12px] text-white/60 uppercase tracking-widest">
+                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
+                      <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
+                      <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
+                  </nav>
+
+                  <div class="flex gap-6 mt-2">
+                      <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40">
+                          <span class="sr-only">Telegram</span>
+                          Tg
+                      </a>
+                  </div>
+                  
+                  <p class="mt-8 text-[10px] text-white/20 font-mono tracking-widest uppercase">
+                      © 2026 Москва
                   </p>
               </div>
-              <div class="flex gap-12 text-sm font-light text-white/60">
-                  <div class="flex flex-col gap-3">
-                      <span class="font-mono text-[10px] uppercase text-white/20 mb-1">Навигация</span>
-                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-                      <a href="/about" class="hover:text-hyle-clay transition-colors">Мастерская</a>
-                      <a href="/blog" class="hover:text-hyle-clay transition-colors">Журнал</a>
-                  </div>
-              </div>
-          </div>
-          <div class="container-main mt-8 pt-0 flex justify-between items-center text-[10px] text-white/20 uppercase tracking-widest font-mono">
-              <span>© 2026 Moscow</span>
           </div>
       </footer>
   </div>
 </Layout>
 
 <script>
-    // ... Parallax Scripts (Same as before) ...
+    // --- Mouse Parallax for Hero ---
     const heroSection = document.getElementById('hero-section');
     const heroImage = document.getElementById('hero-image');
 
@@ -281,14 +259,14 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                 // @ts-ignore
                 const { clientX, clientY } = e;
                 const { innerWidth, innerHeight } = window;
-                const moveX = (clientX / innerWidth - 0.5) * 15;
-                const moveY = (clientY / innerHeight - 0.5) * 15;
-                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.1)`;
+                const moveX = (clientX / innerWidth - 0.5) * 20; 
+                const moveY = (clientY / innerHeight - 0.5) * 20;
+                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.05)`;
             }
         });
     }
 
-    // Showcase Scroll
+    // --- Horizontal Scroll Logic ---
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
     let current = 0;
