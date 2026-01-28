@@ -9,6 +9,7 @@ let tagMap = {};
 try {
     const rawPosts = await getCollection('blog');
     const allTags = await getCollection('tags');
+    // @ts-ignore
     tagMap = allTags.reduce((acc, t) => { acc[t.id] = t.data.title; return acc; }, {});
 
     if (Array.isArray(rawPosts)) {
@@ -23,7 +24,6 @@ try {
     console.warn('⚠️ Blog fetch error', e);
 }
 
-// Fallback image helper
 const resolveImg = (img) => {
     if (typeof img === 'string') return img;
     if (typeof img === 'object' && img?.src) return img.src;
@@ -32,7 +32,7 @@ const resolveImg = (img) => {
 ---
 
 <Layout title="Журнал" description="Заметки о керамике.">
-  <div class="min-h-screen pt-32 pb-20 bg-hyle-bg transition-colors duration-500">
+  <div class="min-h-screen pt-28 pb-20 bg-hyle-bg transition-colors duration-500">
     <div class="container-main">
         <div class="flex flex-col items-center text-center gap-6 mb-16 animate-appear">
             <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">Дневник</h1>
@@ -40,7 +40,10 @@ const resolveImg = (img) => {
             <p class="text-hyle-text/60 font-light max-w-md mt-2 text-sm md:text-base">Заметки о процессе, обжигах и философии быта.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+        <!-- 
+            FIX: grid-cols-1 для мобилок. w-full для статьи.
+        -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-16 w-full">
             {posts.length === 0 ? (
                 <div class="col-span-full py-20 text-center">
                     <p class="font-serif text-2xl text-hyle-text/40 mb-2">Тишина в эфире</p>
@@ -50,10 +53,11 @@ const resolveImg = (img) => {
                     const dateStr = post.data.publishedDate ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU') : '';
                     const coverImage = resolveImg(post.data.coverImage);
                     const tagId = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
+                    // @ts-ignore
                     const tagName = tagId ? (tagMap[tagId] || tagId) : null;
 
                     return (
-                        <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
+                        <article class="group flex flex-col items-start gap-4 w-full animate-appear" style={`animation-delay: ${idx * 100}ms`}>
                             {coverImage && (
                                 <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-hyle-surface mb-2 block relative shadow-sm hover:shadow-md transition-all">
                                     <img 
@@ -71,8 +75,8 @@ const resolveImg = (img) => {
                                 <span>{dateStr}</span>
                             </div>
 
-                            <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
-                                <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">{post.data.title}</h2>
+                            <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity w-full">
+                                <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors break-words">{post.data.title}</h2>
                                 <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">{post.data.excerpt || ''}</p>
                             </a>
                             

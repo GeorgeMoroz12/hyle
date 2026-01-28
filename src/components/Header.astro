@@ -4,38 +4,49 @@ const pathname = new URL(Astro.request.url).pathname;
 const currentPath = pathname.slice(1);
 ---
 
-<nav class="absolute top-0 left-0 w-full z-50 px-6 py-8 md:px-12 flex justify-between items-start animate-appear">
+<!-- MOBILE MENU OVERLAY -->
+<div id="global-mobile-menu" class="fixed inset-0 bg-[#1a1918] z-[100] translate-x-full transition-transform duration-500 ease-out flex flex-col justify-center items-center text-center">
+    <button id="close-global-menu" class="absolute top-8 right-6 text-white/50 hover:text-white uppercase tracking-widest text-[10px] border-b border-transparent hover:border-white transition-colors pb-1">
+        Закрыть
+    </button>
+    
+    <nav class="flex flex-col gap-10 font-serif text-4xl text-[#F9F8F6]">
+        <a href="/catalog" class="hover:text-hyle-clay transition-colors italic">Каталог</a>
+        <a href="/about" class="hover:text-hyle-clay transition-colors italic">О мастере</a>
+        <a href="/blog" class="hover:text-hyle-clay transition-colors italic">Журнал</a>
+        <a href="/" class="text-sm font-sans tracking-widest uppercase text-white/40 mt-8">На главную</a>
+    </nav>
+</div>
+
+<nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start animate-appear">
     <a href="/" class="group flex flex-col gap-0.5">
         <span class="font-serif text-3xl md:text-4xl leading-none text-hyle-text group-hover:text-hyle-clay transition-colors block">
             Hyle.
         </span>
-        <span class="font-sans text-[10px] md:text-[11px] text-hyle-clay tracking-wider transition-colors pl-1 opacity-90 lowercase">
+        <span class="font-sans text-[10px] md:text-[11px] text-hyle-clay tracking-wider transition-colors pl-1 opacity-90 lowercase hidden sm:block">
             керамика ручной работы
         </span>
     </a>
     
     <div class="hidden md:flex gap-10 font-mono text-[13px] text-hyle-text/80 pt-2 mix-blend-multiply tracking-wide lowercase">
-        <a 
-            href="/catalog" 
-            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('catalog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
-        >
-            каталог
-        </a>
-        <a 
-            href="/about" 
-            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('about') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
-        >
-            о мастере
-        </a>
-        <a 
-            href="/blog" 
-            class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('blog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}
-        >
-            блог
-        </a>
+        <a href="/catalog" class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('catalog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}>каталог</a>
+        <a href="/about" class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('about') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}>о мастере</a>
+        <a href="/blog" class={`hover:text-hyle-clay transition-colors ${currentPath.startsWith('blog') ? 'text-hyle-clay border-b border-hyle-clay/30' : ''}`}>блог</a>
     </div>
 
-    <button class="md:hidden text-hyle-text pt-1 group">
-        <span class="font-mono text-sm border-b border-hyle-text/30 group-hover:text-hyle-clay group-hover:border-hyle-clay transition-colors lowercase">меню</span>
+    <!-- BUTTON -->
+    <button id="open-global-menu" class="md:hidden text-hyle-text pt-1 group cursor-pointer">
+        <span class="font-mono text-[11px] border-b border-hyle-text/30 group-hover:text-hyle-clay group-hover:border-hyle-clay transition-colors lowercase">меню</span>
     </button>
 </nav>
+
+<script>
+    const openBtn = document.getElementById('open-global-menu');
+    const closeBtn = document.getElementById('close-global-menu');
+    const menu = document.getElementById('global-mobile-menu');
+
+    if (openBtn && closeBtn && menu) {
+        openBtn.addEventListener('click', () => menu.classList.remove('translate-x-full'));
+        closeBtn.addEventListener('click', () => menu.classList.add('translate-x-full'));
+    }
+</script>

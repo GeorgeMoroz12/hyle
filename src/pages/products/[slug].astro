@@ -15,7 +15,6 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// Убрали description, так как он в Content
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
 const { Content } = await entry.render();
 
@@ -55,7 +54,7 @@ const relatedProducts = allProducts.filter(p => {
     const pCatId = resolveId(p.data.category);
     if (!currentCategoryId || !pCatId) return false;
     return pCatId === currentCategoryId;
-}).slice(0, 8); // Берем 8 для длинного скролла
+}).slice(0, 6);
 
 let relatedItems = relatedProducts;
 if (relatedItems.length < 4) {
@@ -75,6 +74,7 @@ const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Ц�
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
 const mainImage = images && images.length > 0 ? images[0] : '/placeholder.jpg';
+const galleryImages = images && images.length > 0 ? images : ['/placeholder.jpg'];
 const noteText = masterNote || "Особенность этой серии — в несовершенстве формы. Следы пальцев оставлены намеренно.";
 const currentUrl = Astro.url.href;
 
@@ -88,10 +88,17 @@ const specMap: Record<string, string> = {
   
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
     
-    <!-- LEFT: IMAGE -->
-    <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden">
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
+    <!-- LEFT: PRODUCT STAGE -->
+    <!-- FIX: Добавил pt-32 на мобильном, чтобы лого и крошки не наезжали на фото -->
+    <div class="relative w-full lg:w-[70%] h-[70vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
         
+        <!-- LOGO -->
+        <!-- FIX: Убрал mix-blend-multiply, чтобы было видно на темной теме -->
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">
+            Hyle.
+        </a>
+        
+        <!-- BREADCRUMBS -->
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
              {categoryTitle && (
@@ -102,19 +109,49 @@ const specMap: Record<string, string> = {
                     </a>
                 </>
              )}
-             <span class="text-hyle-text/30">/</span>
-             <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
-        </div>
-        
-        <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
-             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
-             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
         </div>
 
+        <!-- DESKTOP IMAGE (ZOOM ENABLED) -->
+        <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group">
+             <img 
+                src={mainImage} 
+                alt={title} 
+                id="main-product-image" 
+                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" 
+            />
+        </div>
+
+        <!-- MOBILE GALLERY (SWIPE) -->
+        <!-- FIX: Горизонтальный скролл с snap-x для свайпа -->
+        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            {galleryImages.map((img) => (
+                <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6">
+                    <img 
+                        src={img} 
+                        alt={title} 
+                        class="max-w-full max-h-full object-contain drop-shadow-lg" 
+                    />
+                </div>
+            ))}
+        </div>
+        
+        <!-- Mobile Pagination Dots (Если больше 1 фото) -->
+        {galleryImages.length > 1 && (
+            <div class="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                {galleryImages.map((_, idx) => (
+                    <div class="w-1.5 h-1.5 rounded-full bg-hyle-text/20"></div>
+                ))}
+            </div>
+        )}
+
+        <!-- Desktop Thumbnails -->
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
-                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
+                    <button 
+                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" 
+                        data-src={img}
+                    >
                         <img src={img} class="w-full h-full object-cover" />
                     </button>
                 ))}
@@ -179,7 +216,15 @@ const specMap: Record<string, string> = {
                         ))}
                     </dl>
                 )}
-                {/* Care instructions... */}
+                {care_instructions && (
+                    <details class="group cursor-pointer border-t border-hyle-text/10 pt-3">
+                        <summary class="flex justify-between items-center list-none outline-none text-hyle-text/60 hover:text-hyle-clay transition-colors">
+                            <span class="text-xs font-medium uppercase tracking-wider">Уход за изделием</span>
+                            <span class="font-hand text-xl group-open:rotate-180 transition-transform duration-300">↓</span>
+                        </summary>
+                        <div class="mt-3 text-sm font-light text-hyle-text/80 leading-relaxed animate-appear">{care_instructions}</div>
+                    </details>
+                )}
             </div>
 
             <div class="mt-2">
@@ -190,29 +235,16 @@ const specMap: Record<string, string> = {
                 )}
             </div>
 
-            <!-- RELATED PRODUCTS (FIXED SCROLL) -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">Вам может понравиться:</h3>
                     <span class="text-[9px] uppercase tracking-widest text-hyle-text/30 hidden sm:block animate-pulse">Листайте →</span>
                 </div>
-                
-                <!-- 
-                    CONTAINER:
-                    - id="related-slider" для скрипта
-                    - overscroll-x-contain чтобы не дергать страницу
-                    - scrollbar-hide скрывает полосу прокрутки
-                    - scroll-behavior: auto (чтобы JS скролл был мгновенным)
-                -->
-                <div 
-                    id="related-slider" 
-                    class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none overscroll-x-contain"
-                    style="scroll-behavior: auto;"
-                >
+                <div id="related-slider" class="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide select-none scroll-smooth">
                     {relatedItems.map((item) => {
                          const cId = resolveId(item.data.category);
                          return (
-                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto transition-transform hover:-translate-y-1">
+                            <div class="shrink-0 w-44 md:w-52 snap-start pointer-events-auto">
                                 <ProductCard product={item} categoryName={cId ? categoryMap[cId] : ''} />
                             </div>
                         );
@@ -225,10 +257,9 @@ const specMap: Record<string, string> = {
 </Layout>
 
 <script>
-    // 1. ZOOM & THUMBS (Desktop)
+    // 1. ZOOM (Desktop Only)
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
-    let isZoomed = false;
 
     if (container && img) {
         container.addEventListener('mousemove', (e) => {
@@ -239,24 +270,21 @@ const specMap: Record<string, string> = {
                 const x = ((e.clientX - left) / width) * 100;
                 // @ts-ignore
                 const y = ((e.clientY - top) / height) * 100;
+                
                 img.style.transformOrigin = `${x}% ${y}%`;
                 img.style.transform = 'scale(1.5)';
             }
         });
+
         container.addEventListener('mouseleave', () => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
                 img.style.transform = 'scale(1)';
                 setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
             }
         });
-        container.addEventListener('click', () => {
-            if (window.matchMedia("(max-width: 1023px)").matches) {
-                if (isZoomed) { img.style.transform = 'scale(1)'; isZoomed = false; } 
-                else { img.style.transform = 'scale(1.5)'; isZoomed = true; }
-            }
-        });
     }
 
+    // 2. THUMBNAILS (Desktop Only)
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -267,27 +295,13 @@ const specMap: Record<string, string> = {
         });
     });
 
-    // 2. HORIZONTAL SCROLL (WHEEL FIX)
+    // 3. HORIZONTAL SCROLL
     const slider = document.getElementById('related-slider');
-    
     if (slider) {
-        slider.addEventListener('wheel', (evt) => {
-            // Проверяем, есть ли куда скроллить
-            const maxScroll = slider.scrollWidth - slider.clientWidth;
-            
-            if (maxScroll > 0) {
-                // Если мышь над слайдером, перехватываем вертикальный скролл
-                // и превращаем его в горизонтальный.
-                
-                // Проверка границ: если мы в начале и скроллим влево - не блокируем страницу
-                const atStart = slider.scrollLeft <= 0;
-                const atEnd = slider.scrollLeft >= maxScroll - 2;
-
-                if ((evt.deltaY > 0 && !atEnd) || (evt.deltaY < 0 && !atStart)) {
-                    evt.preventDefault();
-                    // evt.deltaY * 2 для скорости
-                    slider.scrollLeft += evt.deltaY;
-                }
+        slider.addEventListener('wheel', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches && slider.scrollWidth > slider.clientWidth) {
+                e.preventDefault();
+                slider.scrollLeft += e.deltaY;
             }
         }, { passive: false });
     }

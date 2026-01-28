@@ -4,15 +4,18 @@ const currentYear = new Date().getFullYear();
 ---
 
 <footer class="bg-[#1F1E1C] text-[#F9F8F6] py-16 border-t border-white/5 relative overflow-hidden">
+    <!-- Texture Overlay -->
     <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
 
     <div class="container-main relative z-10 flex flex-col items-center text-center">
         
+        <!-- Logo -->
         <a href="/" class="group mb-8 block">
             <span class="font-serif text-3xl md:text-4xl block mb-2 opacity-80 group-hover:text-hyle-clay transition-colors">Hyle.</span>
             <span class="font-mono text-[10px] tracking-widest text-white/30 lowercase">керамика ручной работы</span>
         </a>
         
+        <!-- Navigation -->
         <nav class="flex flex-wrap justify-center gap-8 md:gap-16 text-xs tracking-widest text-white/50 mb-12 font-mono lowercase">
             <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
             <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
@@ -27,7 +30,7 @@ const currentYear = new Date().getFullYear();
         <div class="w-12 h-px bg-white/10 mb-8"></div>
         
         <p class="text-[10px] text-white/20 font-mono tracking-widest lowercase">
-            © {currentYear} москва
+            © {currentYear}
         </p>
     </div>
 </footer>
