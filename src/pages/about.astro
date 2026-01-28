@@ -19,9 +19,8 @@ try {
     console.warn('CMS: About page content missing.', e);
 }
 
-// 2. ДАННЫЕ С ФОЛЛБЕКАМИ
+// 2. ДАННЫЕ
 const FALLBACK_IMG = "/images/workshop-process.jpg";
-
 let heroImage = cmsData?.heroImage;
 if (typeof heroImage === 'object' && heroImage !== null && 'src' in heroImage) {
     heroImage = heroImage.src;
@@ -34,19 +33,20 @@ const DATA = {
     location: cmsData?.location || "Moscow, RU",
     fallbackHTML: `
         <p>Привет. Меня зовут [Имя Мастера], и я создаю керамику Hyle.</p>
-        <p>В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях. След пальца на ручке чашки, неровный край тарелки — всё это делает предмет живым.</p>
+        <p>В мире, где всё стремится стать идеальным и одинаковым, я ищу красоту в случайностях.</p>
         <p>Моя керамика — это тактильный опыт. Это вес глины в руке, шероховатость терракоты и гладкость эмали.</p>
     `
 };
-
-// FIX: Ссылка на Telegram
-const tgUsername = import.meta.env.PUBLIC_TG_USERNAME || 'hyle_ceramics';
-const tgLink = `https://t.me/${tgUsername}`;
 ---
 
-<Layout title="О мастере" description="Философия Hyle Ceramics. О мастере и процессе создания.">
+<Layout title="О мастере" description="Философия Hyle Ceramics.">
   
-  <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
+  <!-- 
+      FIX: bg-hyle-bg вместо bg-[#FDFCF8]
+      Теперь фон адаптируется под тему (черный в Dark Mode, белый в Light Mode).
+      text-hyle-text (в Layout и typography) будет автоматически белым на черном фоне.
+  -->
+  <div class="min-h-screen pt-32 pb-20 bg-hyle-bg transition-colors duration-500">
     <div class="container-main">
         
         <div class="mb-16 md:mb-24 animate-appear">
@@ -62,11 +62,11 @@ const tgLink = `https://t.me/${tgUsername}`;
             
             <!-- LEFT: IMAGE -->
             <div class="lg:col-span-5 relative animate-appear" style="animation-delay: 100ms;">
-                <div class="relative aspect-[4/5] overflow-hidden rounded-sm bg-neutral-100 shadow-xl">
+                <div class="relative aspect-[4/5] overflow-hidden rounded-sm bg-hyle-surface shadow-xl">
                     <img 
                         src={DATA.image} 
                         alt="Портрет мастера" 
-                        class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[1.5s]"
+                        class="w-full h-full object-cover transition-all duration-[1.5s]"
                         onerror={`this.onerror=null; this.src='${FALLBACK_IMG}';`}
                     />
                     <div class="absolute inset-0 border border-white/20 m-4 pointer-events-none"></div>
@@ -99,8 +99,7 @@ const tgLink = `https://t.me/${tgUsername}`;
 
                 <div class="flex flex-col gap-4 mt-4">
                     <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">Контакты</span>
-                    <!-- FIX: Реальная ссылка -->
-                    <a href={tgLink} target="_blank" rel="noopener noreferrer" class="text-lg hover:text-hyle-clay transition-colors border-b border-hyle-text/20 pb-1 w-max">
+                    <a href="https://t.me/username" target="_blank" class="text-lg hover:text-hyle-clay transition-colors border-b border-hyle-text/20 pb-1 w-max text-hyle-text">
                         Написать в Telegram →
                     </a>
                 </div>

@@ -5,40 +5,26 @@ import ProductCard from '../components/ProductCard.astro';
 import Footer from '../components/Footer.astro';
 import { getCollection, getEntry } from 'astro:content';
 
-// --- 1. SAFE DATA FETCHING (ФИКС ПАДЕНИЯ БИЛДА) ---
-let landingData = {};
-try {
-    // Пытаемся получить данные. Если файла нет - не падаем, а идем дальше.
-    const landingEntry = await getEntry('landing', 'home');
-    if (landingEntry && landingEntry.data) {
-        landingData = landingEntry.data;
-    }
-} catch (e) {
-    console.warn('⚠️ Landing page content not found (using defaults):', e);
-}
+const landingEntry = await getEntry('landing', 'home');
+const data = landingEntry?.data || {};
 
-// Константы
 const FALLBACK_HERO = "/images/hero-minimal.jpg";
 const FALLBACK_WORKSHOP = "/images/workshop-process.jpg";
 
-// Объединяем данные из CMS с дефолтными
-// @ts-ignore
 const HERO = {
-    image: landingData.heroImage || FALLBACK_HERO,
-    titleLine1: landingData.heroTitleLine1 || "Глина",
-    titleAccent: landingData.heroTitleAccent || "хранит",
-    titleLine2: landingData.heroTitleLine2 || "тепло.",
-    description: landingData.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
+    image: data.heroImage || FALLBACK_HERO,
+    titleLine1: data.heroTitleLine1 || "Глина",
+    titleAccent: data.heroTitleAccent || "хранит",
+    titleLine2: data.heroTitleLine2 || "тепло рук.", // Исправил текст по запросу
+    description: data.heroDescription || "Посуда, созданная в тишине. С несовершенствами, которые делают ее живой."
 };
 
-// @ts-ignore
 const WORKSHOP = {
-    image: landingData.workshopImage || FALLBACK_WORKSHOP,
-    title: landingData.workshopTitle || "Красота в несовершенстве.",
-    text: landingData.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
+    image: data.workshopImage || FALLBACK_WORKSHOP,
+    title: data.workshopTitle || "Красота в несовершенстве.",
+    text: data.workshopText || "В блоге мы делимся процессом: как бесформенный кусок глины обретает характер."
 };
 
-// Получение товаров и категорий
 const allProducts = await getCollection('products');
 const recentProducts = allProducts.slice(0, 8); 
 
@@ -50,11 +36,12 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 const tgUsername = import.meta.env.PUBLIC_TG_USERNAME || 'hyle_ceramics';
 const tgLink = `https://t.me/${tgUsername}`;
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="Главная" hideHeader={true}>
   
-  <!-- MOBILE MENU OVERLAY -->
+  <!-- MOBILE MENU -->
   <div id="mobile-menu" class="fixed inset-0 bg-hyle-bg z-[100] translate-x-full transition-transform duration-500 ease-out flex flex-col justify-center items-center text-center text-hyle-text">
       <button id="close-menu" class="absolute top-8 right-6 text-hyle-text/50 hover:text-hyle-text uppercase tracking-widest text-[10px] border-b border-transparent hover:border-current transition-colors pb-1 cursor-pointer">
           Закрыть
@@ -108,19 +95,27 @@ const tgLink = `https://t.me/${tgUsername}`;
     <div class="container-main relative z-10 w-full">
         <div class="animate-appear flex flex-col md:block items-start">
             
-            <!-- MAIN TITLE -->
-            <h1 class="flex flex-col leading-[0.9] md:leading-[0.85] tracking-tight select-none text-white font-serif mb-6 md:mb-10">
+            <!-- 
+                FIX: HERO TITLE TYPOGRAPHY
+                - 3 Lines
+                - All Same Size (text-[15vw] md:text-[9rem] lg:text-[11rem])
+                - Accent: Italic + Color #D68C5A (Clay)
+            -->
+            <h1 class="flex flex-col leading-[0.85] tracking-tight select-none font-serif mb-8 md:mb-12">
                 <!-- Строка 1 -->
-                <span class="text-[17vw] md:text-[11rem] mix-blend-overlay opacity-90 block">
-                    {HERO.titleLine1.toLowerCase()}
+                <span class="text-[15vw] md:text-[9rem] lg:text-[11rem] text-[#F9F8F6] block">
+                    {HERO.titleLine1}
                 </span>
                 
-                <!-- Строка 2 (С акцентом Caveat) -->
-                <span class="text-[17vw] md:text-[11rem] ml-4 md:ml-32 -mt-1 md:-mt-8 flex flex-wrap items-baseline gap-4 md:gap-8 mix-blend-overlay opacity-90">
-                    <span class="font-hand text-[#e0d0c0] opacity-100 -rotate-3 relative top-[-1vw] mix-blend-normal">
-                        {HERO.titleAccent.toLowerCase()}
-                    </span>
-                    {HERO.titleLine2.replace('.', '').toLowerCase()}
+                <!-- Строка 2 (Акцент) -->
+                <!-- italic, text-hyle-clay, same size -->
+                <span class="text-[15vw] md:text-[9rem] lg:text-[11rem] text-[#D68C5A] italic block ml-8 md:ml-32">
+                    {HERO.titleAccent}
+                </span>
+
+                <!-- Строка 3 -->
+                <span class="text-[15vw] md:text-[9rem] lg:text-[11rem] text-[#F9F8F6] block">
+                    {HERO.titleLine2}
                 </span>
             </h1>
 
@@ -139,10 +134,9 @@ const tgLink = `https://t.me/${tgUsername}`;
     </div>
   </section>
 
-  <!-- SECTION 2: CATALOG (ADAPTIVE) -->
+  <!-- CATALOG SECTION -->
   <section class="py-16 md:py-32 bg-hyle-bg text-hyle-text relative z-20 overflow-hidden rounded-t-[24px] md:rounded-t-[40px] -mt-6 md:-mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.1)] transition-colors duration-500">
     <div class="container-main">
-        
         <div class="flex flex-col md:flex-row justify-between items-end mb-10 md:mb-16 gap-4">
             <div class="max-w-lg">
                 <span class="font-sans text-[10px] uppercase tracking-[0.2em] text-hyle-text/40 block mb-2">Избранное</span>
@@ -150,34 +144,22 @@ const tgLink = `https://t.me/${tgUsername}`;
                     Новое из печи
                 </h2>
             </div>
-            
             <div class="hidden md:flex items-center gap-2 text-hyle-text/30">
                 <span class="font-sans text-[10px] uppercase tracking-[0.2em]">Листайте</span>
                 <span class="text-lg">→</span>
             </div>
         </div>
 
-        <div 
-            id="horizontal-showcase" 
-            class="flex gap-4 md:gap-8 overflow-x-auto pb-12 px-5 -mx-5 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain"
-        >
+        <div id="horizontal-showcase" class="flex gap-4 md:gap-8 overflow-x-auto pb-12 px-5 -mx-5 md:px-0 md:mx-0 snap-x md:snap-none cursor-ew-resize scrollbar-hide overscroll-x-contain">
             {recentProducts.map((product, idx) => {
-                const catId = (product.data.category && typeof product.data.category === 'object') 
-                    ? product.data.category.id 
-                    : product.data.category;
-                
+                const catId = (product.data.category && typeof product.data.category === 'object') ? product.data.category.id : product.data.category;
                 const offsetClass = idx % 2 !== 0 ? "mt-0 md:mt-12" : "";
-
                 return (
                     <div class={`shrink-0 w-[75vw] md:w-[450px] snap-center transition-transform duration-700 hover:-translate-y-2 ${offsetClass}`}>
-                         <ProductCard 
-                            product={product} 
-                            categoryName={catId ? categoryMap[catId] : ''} 
-                        />
+                         <ProductCard product={product} categoryName={catId ? categoryMap[catId] : ''} />
                     </div>
                 );
             })}
-            
             <div class="shrink-0 w-[40vw] md:w-[200px] flex items-center justify-center snap-center md:snap-align-none">
                  <a href="/catalog" class="group flex flex-col items-center gap-3 text-hyle-text/40 hover:text-hyle-clay transition-colors">
                     <span class="text-3xl font-serif italic group-hover:translate-x-1 transition-transform">→</span>
@@ -186,20 +168,17 @@ const tgLink = `https://t.me/${tgUsername}`;
             </div>
             <div class="w-4 shrink-0"></div>
         </div>
-
     </div>
   </section>
 
-  <!-- UNIFIED DARK SECTION: WORKSHOP + FOOTER (ALWAYS DARK) -->
+  <!-- UNIFIED DARK SECTION -->
   <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
       <section class="py-16 md:py-40 relative z-10">
           <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-32 items-center">
-              
               <div class="relative order-1 lg:order-1 pl-0 lg:pl-0">
-                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-full md:w-[90%] shadow-2xl bg-[#2C2B29] transform -rotate-1 transition-transform duration-1000 hover:rotate-0">
-                      <!-- FIX: Чистая картинка, без grayscale -->
+                  <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-full md:w-[90%] shadow-2xl bg-[#2C2B29]">
                       <img 
                         src={WORKSHOP.image} 
                         alt="Процесс" 
@@ -208,7 +187,6 @@ const tgLink = `https://t.me/${tgUsername}`;
                       />
                   </div>
               </div>
-
               <div class="order-2 lg:order-2">
                   <span class="font-sans text-[10px] uppercase tracking-[0.2em] text-[#B35A32] mb-4 md:mb-6 block">Философия</span>
                   <h2 class="font-serif text-3xl md:text-5xl mb-6 md:mb-8 leading-tight text-white">
@@ -217,7 +195,6 @@ const tgLink = `https://t.me/${tgUsername}`;
                   <div class="space-y-4 md:space-y-6 text-white/50 font-light text-sm md:text-lg leading-relaxed max-w-md border-l border-white/10 pl-6">
                       <p>{WORKSHOP.text}</p>
                   </div>
-                  
                   <div class="mt-8 md:mt-12">
                       <a href="/about" class="group inline-flex items-center gap-3 text-white hover:text-[#B35A32] transition-colors">
                           <span class="font-mono text-xs uppercase tracking-[0.2em] border-b border-white/30 pb-1 group-hover:border-[#B35A32] transition-colors">
@@ -229,14 +206,12 @@ const tgLink = `https://t.me/${tgUsername}`;
               </div>
           </div>
       </section>
-
-      <!-- GLOBAL FOOTER (IMPORTED) -->
+      
       <Footer />
   </div>
 </Layout>
 
 <script>
-    // Menu
     const openBtn = document.getElementById('open-menu');
     const closeBtn = document.getElementById('close-menu');
     const menu = document.getElementById('mobile-menu');
@@ -244,7 +219,7 @@ const tgLink = `https://t.me/${tgUsername}`;
         openBtn.addEventListener('click', () => menu.classList.remove('translate-x-full'));
         closeBtn.addEventListener('click', () => menu.classList.add('translate-x-full'));
     }
-    // Scroll
+
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0; let current = 0; let isAnimating = false;
     if (showcase) {
@@ -270,7 +245,6 @@ const tgLink = `https://t.me/${tgUsername}`;
         if (Math.abs(target - current) > 0.5) { requestAnimationFrame(smoothScrollLoop); } 
         else { isAnimating = false; showcase.scrollLeft = target; }
     }
-    // Parallax
     const heroSection = document.getElementById('hero-section');
     const heroImage = document.getElementById('hero-image');
     if (heroSection && heroImage) {
