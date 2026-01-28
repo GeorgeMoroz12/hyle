@@ -9,11 +9,7 @@ let tagMap = {};
 try {
     const rawPosts = await getCollection('blog');
     const allTags = await getCollection('tags');
-    // FIX: .data.name
-    tagMap = allTags.reduce((acc, t) => {
-        acc[t.id] = t.data.name;
-        return acc;
-    }, {});
+    tagMap = allTags.reduce((acc, t) => { acc[t.id] = t.data.title; return acc; }, {});
 
     if (Array.isArray(rawPosts)) {
         const validPosts = rawPosts.filter(p => p && p.data && p.data.title);
@@ -26,16 +22,22 @@ try {
 } catch (e) {
     console.warn('⚠️ Blog fetch error', e);
 }
+
+// Fallback image helper
+const resolveImg = (img) => {
+    if (typeof img === 'string') return img;
+    if (typeof img === 'object' && img?.src) return img.src;
+    return null;
+}
 ---
-<!-- ... (Layout remains same, but uses tagMap correctly now) ... -->
-<!-- (Content is identical to previous version, just the map is fixed) -->
+
 <Layout title="Журнал" description="Заметки о керамике.">
-  <div class="min-h-screen pt-32 pb-20 bg-[#FDFCF8]">
+  <div class="min-h-screen pt-32 pb-20 bg-hyle-bg transition-colors duration-500">
     <div class="container-main">
-        <div class="flex flex-col items-start gap-4 mb-16 md:mb-24 animate-appear">
-            <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-hyle-text/40 pl-1">Журнал</span>
+        <div class="flex flex-col items-center text-center gap-6 mb-16 animate-appear">
             <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">Дневник</h1>
-            <p class="text-hyle-text/60 font-light max-w-md mt-2">Заметки о процессе, обжигах и философии быта.</p>
+            <div class="w-12 h-px bg-hyle-text/10"></div>
+            <p class="text-hyle-text/60 font-light max-w-md mt-2 text-sm md:text-base">Заметки о процессе, обжигах и философии быта.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
@@ -46,28 +48,35 @@ try {
             ) : (
                 posts.map((post, idx) => {
                     const dateStr = post.data.publishedDate ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU') : '';
-                    const coverImage = post.data.coverImage;
+                    const coverImage = resolveImg(post.data.coverImage);
                     const tagId = (Array.isArray(post.data.tags) && post.data.tags.length > 0) ? post.data.tags[0] : null;
                     const tagName = tagId ? (tagMap[tagId] || tagId) : null;
 
                     return (
                         <article class="group flex flex-col items-start gap-4 animate-appear" style={`animation-delay: ${idx * 100}ms`}>
                             {coverImage && (
-                                <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-neutral-100 mb-2 block relative">
-                                    <img src={coverImage} alt={post.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
-                                    {tagName && <span class="absolute top-2 right-2 bg-white/90 px-2 py-1 text-[9px] uppercase tracking-widest font-mono text-hyle-text/60">#{tagName}</span>}
+                                <a href={`/blog/${post.slug}`} class="w-full aspect-[16/9] overflow-hidden rounded-sm bg-hyle-surface mb-2 block relative shadow-sm hover:shadow-md transition-all">
+                                    <img 
+                                        src={coverImage} 
+                                        alt={post.data.title} 
+                                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                                        loading="lazy" 
+                                        onerror="this.style.display='none'"
+                                    />
+                                    {tagName && <span class="absolute top-3 right-3 bg-white/90 px-3 py-1 text-[10px] lowercase tracking-wide font-mono text-hyle-text/60 rounded-full">#{tagName.toLowerCase()}</span>}
                                 </a>
                             )}
-                            {!coverImage && (
-                                <div class="flex items-center gap-3 w-full border-b border-hyle-text/10 pb-3 mb-2">
-                                    <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40">{dateStr}</span>
-                                    {tagName && <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-clay ml-auto">#{tagName}</span>}
-                                </div>
-                            )}
-                            <a href={`/blog/${post.slug}`} class="block transition-opacity group-hover:opacity-70">
+                            
+                            <div class="flex items-center gap-3 w-full text-[10px] font-mono uppercase tracking-widest text-hyle-text/40 mb-1">
+                                <span>{dateStr}</span>
+                            </div>
+
+                            <a href={`/blog/${post.slug}`} class="block group-hover:opacity-70 transition-opacity">
                                 <h2 class="font-serif text-2xl md:text-3xl text-hyle-text leading-tight mb-3 group-hover:text-hyle-clay transition-colors">{post.data.title}</h2>
                                 <p class="font-sans font-light text-sm text-hyle-text/60 leading-relaxed line-clamp-3">{post.data.excerpt || ''}</p>
                             </a>
+                            
+                            <a href={`/blog/${post.slug}`} class="mt-2 font-mono text-[10px] uppercase tracking-widest border-b border-transparent group-hover:border-hyle-clay hover:text-hyle-clay transition-all">Читать далее</a>
                         </article>
                     );
                 })
