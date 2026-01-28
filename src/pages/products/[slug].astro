@@ -15,6 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+// Убрали description, так как он в Content
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
 const { Content } = await entry.render();
 
@@ -25,7 +26,7 @@ const resolveId = (item: any) => {
     return null;
 };
 
-// DATA
+// --- DATA LOGIC ---
 const currentCategoryId = resolveId(category);
 let categoryTitle = 'Каталог';
 if (currentCategoryId) {
@@ -54,7 +55,7 @@ const relatedProducts = allProducts.filter(p => {
     const pCatId = resolveId(p.data.category);
     if (!currentCategoryId || !pCatId) return false;
     return pCatId === currentCategoryId;
-}).slice(0, 8);
+}).slice(0, 8); // Берем 8 для длинного скролла
 
 let relatedItems = relatedProducts;
 if (relatedItems.length < 4) {
@@ -91,9 +92,7 @@ const specMap: Record<string, string> = {
     <!-- LEFT: PRODUCT STAGE -->
     <div class="relative w-full lg:w-[70%] h-[70vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
         
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">
-            Hyle.
-        </a>
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
         
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
@@ -106,47 +105,40 @@ const specMap: Record<string, string> = {
                 </>
              )}
         </div>
-
-        <!-- DESKTOP IMAGE (ZOOM ENABLED) -->
-        <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group">
-             <img 
-                src={mainImage} 
-                alt={title} 
-                id="main-product-image" 
-                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" 
-            />
+        
+        <!-- DESKTOP IMAGE (HOVER ZOOM) -->
+        <div class="hidden lg:flex zoom-container relative w-full h-[50vh] lg:h-[85vh] items-center justify-center cursor-zoom-in group">
+             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
         </div>
 
-        <!-- MOBILE GALLERY (SWIPE & TAP-TO-ZOOM) -->
-        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" id="mobile-gallery">
+        <!-- MOBILE GALLERY (PINCH ZOOM ENABLED) -->
+        <!-- touch-action: none предотвращает скролл страницы браузером, пока мы зумим фото -->
+        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide touch-none" id="mobile-gallery">
             {galleryImages.map((img) => (
                 <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative mobile-zoom-wrapper">
                     <img 
                         src={img} 
                         alt={title} 
-                        class="max-w-full max-h-full object-contain drop-shadow-lg transition-transform duration-300 mobile-zoom-img" 
+                        class="max-w-full max-h-full object-contain drop-shadow-lg transition-transform duration-100 ease-out mobile-zoom-img" 
                     />
                 </div>
             ))}
         </div>
         
-        {/* Pagination */}
+        {/* Pagination Dots */}
         {galleryImages.length > 1 && (
-            <div class="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div class="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20 pointer-events-none">
                 {galleryImages.map((_, idx) => (
                     <div class="w-1.5 h-1.5 rounded-full bg-hyle-text/20"></div>
                 ))}
             </div>
         )}
 
-        <!-- Desktop Thumbnails -->
+        <!-- Thumbnails (Desktop) -->
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
-                    <button 
-                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" 
-                        data-src={img}
-                    >
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
                         <img src={img} class="w-full h-full object-cover" />
                     </button>
                 ))}
@@ -155,8 +147,7 @@ const specMap: Record<string, string> = {
     </div>
 
     <!-- RIGHT: SIDEBAR -->
-    <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
-        
+    <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface/90 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
@@ -253,7 +244,7 @@ const specMap: Record<string, string> = {
 </Layout>
 
 <script>
-    // --- 1. DESKTOP ZOOM ---
+    // --- DESKTOP ZOOM ---
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
 
@@ -266,12 +257,10 @@ const specMap: Record<string, string> = {
                 const x = ((e.clientX - left) / width) * 100;
                 // @ts-ignore
                 const y = ((e.clientY - top) / height) * 100;
-                
                 img.style.transformOrigin = `${x}% ${y}%`;
                 img.style.transform = 'scale(1.5)';
             }
         });
-
         container.addEventListener('mouseleave', () => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
                 img.style.transform = 'scale(1)';
@@ -280,45 +269,109 @@ const specMap: Record<string, string> = {
         });
     }
 
-    // --- 2. MOBILE TAP ZOOM ---
+    // --- MOBILE PINCH ZOOM (VANILLA JS) ---
     const mobileWrappers = document.querySelectorAll('.mobile-zoom-wrapper');
+    
     mobileWrappers.forEach(wrapper => {
         const mobileImg = wrapper.querySelector('.mobile-zoom-img');
         if (!mobileImg) return;
         
-        let isZoomed = false;
-
-        wrapper.addEventListener('click', (e) => {
-            if (isZoomed) {
+        let startDist = 0;
+        let startScale = 1;
+        let currentScale = 1;
+        let isPinching = false;
+        
+        // Touch Start
+        wrapper.addEventListener('touchstart', (e) => {
+            // @ts-ignore
+            if (e.touches.length === 2) {
+                isPinching = true;
                 // @ts-ignore
-                mobileImg.style.transform = 'scale(1)';
-                isZoomed = false;
-            } else {
-                // @ts-ignore
-                mobileImg.style.transform = 'scale(1.5)';
-                isZoomed = true;
+                startDist = Math.hypot(
+                    // @ts-ignore
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    // @ts-ignore
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                startScale = currentScale;
             }
+        }, { passive: true });
+
+        // Touch Move (Pinch)
+        wrapper.addEventListener('touchmove', (e) => {
+            // @ts-ignore
+            if (isPinching && e.touches.length === 2) {
+                // @ts-ignore
+                const dist = Math.hypot(
+                    // @ts-ignore
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    // @ts-ignore
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                
+                // Calculate scale
+                const scale = Math.min(Math.max(1, startScale * (dist / startDist)), 3);
+                currentScale = scale;
+                
+                // Apply
+                // @ts-ignore
+                mobileImg.style.transform = `scale(${scale})`;
+            }
+        }, { passive: true });
+
+        // Touch End
+        wrapper.addEventListener('touchend', (e) => {
+            // @ts-ignore
+            if (e.touches.length < 2) {
+                isPinching = false;
+                // Если отпустили - можно либо оставить зум, либо сбросить
+                // Для простоты UI сбрасываем, если пальцы убрали, или оставляем чуть увеличенным
+                // Здесь оставляем как есть, но добавляем double tap to reset
+            }
+        });
+
+        // Tap to Zoom (Alternative)
+        let lastTap = 0;
+        wrapper.addEventListener('click', (e) => {
+            const now = Date.now();
+            if (now - lastTap < 300) { // Double tap
+                if (currentScale > 1) {
+                    currentScale = 1;
+                    // @ts-ignore
+                    mobileImg.style.transform = `scale(1)`;
+                } else {
+                    currentScale = 2;
+                    // @ts-ignore
+                    mobileImg.style.transform = `scale(2)`;
+                }
+            } else {
+                // Single tap - maybe minimal zoom
+                if (currentScale === 1) {
+                    currentScale = 1.5;
+                    // @ts-ignore
+                    mobileImg.style.transform = `scale(1.5)`;
+                } else {
+                    currentScale = 1;
+                    // @ts-ignore
+                    mobileImg.style.transform = `scale(1)`;
+                }
+            }
+            lastTap = now;
         });
     });
 
-    // --- 3. THUMBNAILS ---
+    // --- THUMBNAILS ---
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
             // @ts-ignore
             if (img && src) img.src = src;
-            
-            // Также обновляем все мобильные картинки, чтобы они синхронизировались
-            // Хотя в слайдере это не нужно, там свайп.
-            // Но если есть главное фото, обновляем его
-            
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
 
-    // --- 4. HORIZONTAL SCROLL WHEEL ---
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {

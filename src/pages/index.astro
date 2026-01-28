@@ -37,6 +37,23 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 <Layout title="Главная" hideHeader={true}>
   
+  <!-- MOBILE MENU OVERLAY (RESTORED) -->
+  <div id="mobile-menu" class="fixed inset-0 bg-[#1a1918] z-[100] translate-x-full transition-transform duration-500 ease-out flex flex-col justify-center items-center text-center">
+      <button id="close-menu" class="absolute top-8 right-6 text-white/50 hover:text-white uppercase tracking-widest text-[10px] border-b border-transparent hover:border-white transition-colors pb-1 cursor-pointer">
+          Закрыть
+      </button>
+      
+      <nav class="flex flex-col gap-10 font-serif text-4xl text-[#F9F8F6]">
+          <a href="/catalog" class="hover:text-hyle-clay transition-colors italic">Каталог</a>
+          <a href="/about" class="hover:text-hyle-clay transition-colors italic">О мастере</a>
+          <a href="/blog" class="hover:text-hyle-clay transition-colors italic">Журнал</a>
+      </nav>
+
+      <div class="mt-16 flex gap-8 font-mono text-[10px] uppercase tracking-widest text-white/30">
+          <a href="#" class="hover:text-white transition-colors">Telegram</a>
+      </div>
+  </div>
+
   <!-- HEADER -->
   <nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start text-white pointer-events-none">
       <a href="/" class="group flex flex-col gap-0.5 pointer-events-auto">
@@ -52,12 +69,12 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           <a href="/blog" class="hover:opacity-70 transition-opacity drop-shadow-sm">журнал</a>
       </div>
 
-      <button class="md:hidden pt-1.5 text-[10px] uppercase tracking-[0.2em] border-b border-white/60 pb-0.5 drop-shadow-sm font-sans pointer-events-auto cursor-pointer">
+      <button id="open-menu" class="md:hidden pt-1.5 text-[10px] uppercase tracking-[0.2em] border-b border-white/60 pb-0.5 drop-shadow-sm font-sans pointer-events-auto cursor-pointer">
           меню
       </button>
   </nav>
 
-  <!-- HERO SECTION (FIXED: Playfair + Caveat) -->
+  <!-- HERO SECTION -->
   <section id="hero-section" class="relative min-h-[90vh] md:min-h-screen w-full flex flex-col justify-end pb-16 md:pb-24 overflow-hidden bg-[#1a1918]">
     
     <!-- BACKGROUND -->
@@ -77,18 +94,20 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     <div class="container-main relative z-10 w-full">
         <div class="animate-appear flex flex-col md:block items-start">
             
-            <!-- MAIN TITLE: RESTORED FONTS -->
+            <!-- MAIN TITLE: 3 LINES, SAME SIZE -->
             <h1 class="flex flex-col leading-[0.9] md:leading-[0.85] tracking-tight select-none text-white font-serif mb-6 md:mb-10">
                 <!-- Строка 1 -->
                 <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] mix-blend-overlay opacity-90 block">
                     {HERO.titleLine1.toLowerCase()}
                 </span>
                 
-                <!-- Строка 2 (С акцентом Caveat) -->
-                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] ml-4 md:ml-32 -mt-1 md:-mt-8 flex flex-wrap items-baseline gap-4 md:gap-8 mix-blend-overlay opacity-90">
-                    <span class="font-hand text-4xl md:text-7xl text-[#e0d0c0] opacity-100 -rotate-3 relative top-[-5px] md:top-[-15px] mix-blend-normal transform translate-y-[-1vw]">
-                        {HERO.titleAccent}
-                    </span>
+                <!-- Строка 2: Такой же размер, отступ слева -->
+                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] ml-12 md:ml-32 -mt-2 md:-mt-8 block mix-blend-overlay opacity-90 italic text-[#e0d0c0]">
+                    {HERO.titleAccent.toLowerCase()}
+                </span>
+
+                <!-- Строка 3: Такой же размер -->
+                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] -mt-2 md:-mt-8 block mix-blend-overlay opacity-90">
                     {HERO.titleLine2.replace('.', '').toLowerCase()}
                 </span>
             </h1>
@@ -108,8 +127,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- SECTION 2: CATALOG (FIXED DARK MODE) -->
-  <!-- bg-hyle-bg (адаптивный фон), text-hyle-text (адаптивный текст) -->
+  <!-- SECTION 2: CATALOG -->
   <section class="py-16 md:py-32 bg-hyle-bg relative z-20 overflow-hidden rounded-t-[24px] md:rounded-t-[40px] -mt-6 md:-mt-12 shadow-[0_-20px_60px_rgba(0,0,0,0.3)] transition-colors duration-500">
     <div class="container-main">
         
@@ -205,6 +223,21 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 </Layout>
 
 <script>
+    // MENU LOGIC (RESTORED)
+    const openBtn = document.getElementById('open-menu');
+    const closeBtn = document.getElementById('close-menu');
+    const menu = document.getElementById('mobile-menu');
+
+    if (openBtn && closeBtn && menu) {
+        openBtn.addEventListener('click', () => {
+            menu.classList.remove('translate-x-full');
+        });
+        closeBtn.addEventListener('click', () => {
+            menu.classList.add('translate-x-full');
+        });
+    }
+
+    // Scroll Logic
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
     let current = 0;
