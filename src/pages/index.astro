@@ -2,11 +2,8 @@
 // src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
 import ProductCard from '../components/ProductCard.astro';
-// Импортируем единый футер
-import Footer from '../components/Footer.astro';
 import { getCollection, getEntry } from 'astro:content';
 
-// 1. DATA FETCHING
 const landingEntry = await getEntry('landing', 'home');
 const data = landingEntry?.data || {};
 
@@ -39,30 +36,46 @@ const categoryMap = allCategories.reduce((acc, cat) => {
 
 <Layout title="Главная" hideHeader={true}>
   
+  <!-- MOBILE MENU OVERLAY (Added locally for Index page) -->
+  <div id="mobile-menu" class="fixed inset-0 bg-[#1a1918] z-[100] translate-x-full transition-transform duration-500 ease-out flex flex-col justify-center items-center text-center">
+      <button id="close-menu" class="absolute top-8 right-6 text-white/50 hover:text-white uppercase tracking-widest text-[10px] border-b border-transparent hover:border-white transition-colors pb-1 cursor-pointer">
+          Закрыть
+      </button>
+      
+      <nav class="flex flex-col gap-10 font-serif text-4xl text-[#F9F8F6]">
+          <a href="/catalog" class="hover:text-hyle-clay transition-colors italic">Каталог</a>
+          <a href="/about" class="hover:text-hyle-clay transition-colors italic">О мастере</a>
+          <a href="/blog" class="hover:text-hyle-clay transition-colors italic">Журнал</a>
+      </nav>
+
+      <div class="mt-16 flex gap-8 font-mono text-[10px] uppercase tracking-widest text-white/30">
+          <a href="#" class="hover:text-white transition-colors">Telegram</a>
+      </div>
+  </div>
+
   <!-- HEADER -->
-  <nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start text-white">
-      <a href="/" class="group flex flex-col gap-1">
+  <nav class="absolute top-0 left-0 w-full z-50 px-5 py-6 md:px-12 md:py-8 flex justify-between items-start text-white mix-blend-difference pointer-events-none">
+      <a href="/" class="group flex flex-col gap-0.5 pointer-events-auto">
           <span class="font-serif text-3xl md:text-4xl leading-none block drop-shadow-md">Hyle.</span>
           <span class="font-sans text-[10px] md:text-[11px] tracking-wider pl-0.5 opacity-80 md:opacity-100 hidden sm:block">
               керамика ручной работы
           </span>
       </a>
       
-      <!-- Menu Desktop -->
-      <div class="hidden md:flex gap-12 font-sans text-[13px] tracking-wide font-medium">
+      <div class="hidden md:flex gap-12 font-sans text-[13px] tracking-wide pointer-events-auto">
           <a href="/catalog" class="hover:opacity-70 transition-opacity drop-shadow-sm">каталог</a>
           <a href="/about" class="hover:opacity-70 transition-opacity drop-shadow-sm">о мастере</a>
           <a href="/blog" class="hover:opacity-70 transition-opacity drop-shadow-sm">журнал</a>
       </div>
 
-      <!-- Mobile Menu Button -->
-      <button class="md:hidden pt-1.5 text-[10px] uppercase tracking-[0.2em] border-b border-white/60 pb-0.5 drop-shadow-sm font-sans">
+      <button id="open-menu" class="md:hidden pt-1.5 text-[11px] uppercase tracking-widest border-b border-white/60 pb-0.5 drop-shadow-sm font-sans pointer-events-auto cursor-pointer">
           меню
       </button>
   </nav>
 
   <!-- HERO SECTION -->
-  <section id="hero-section" class="relative min-h-[90vh] md:min-h-screen w-full flex flex-col justify-end pb-16 md:pb-32 overflow-hidden bg-[#1a1918]">
+  <section id="hero-section" class="relative min-h-[90vh] md:min-h-screen w-full flex flex-col justify-end pb-16 md:pb-24 overflow-hidden bg-[#1a1918]">
+    
     <!-- BACKGROUND -->
     <div class="absolute inset-0 z-0">
         <img 
@@ -79,22 +92,33 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     <!-- CONTENT -->
     <div class="container-main relative z-10 w-full">
         <div class="animate-appear flex flex-col md:block items-start">
-            <h1 class="flex flex-col leading-[0.9] md:leading-[0.85] tracking-tight select-none text-white font-serif mb-6 md:mb-10">
-                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] font-medium mix-blend-overlay opacity-90">
+            
+            <!-- 
+                MAIN TITLE: FIXED LAYOUT 
+                Три строки, одинаковый размер, жирный Inter.
+            -->
+            <h1 class="flex flex-col leading-[0.85] tracking-tight select-none text-white font-sans font-bold mb-8 md:mb-12">
+                <!-- Строка 1 -->
+                <span class="text-[17vw] md:text-[10rem] lg:text-[12rem] mix-blend-overlay opacity-90 block">
                     {HERO.titleLine1.toLowerCase()}
                 </span>
-                <span class="text-[16vw] md:text-[9rem] lg:text-[11rem] font-medium ml-4 md:ml-32 -mt-2 md:-mt-8 flex flex-wrap items-baseline gap-4 md:gap-8 mix-blend-overlay opacity-90">
-                    <span class="font-hand text-4xl md:text-7xl text-[#e0d0c0] opacity-100 -rotate-3 relative top-[-5px] md:top-[-15px] mix-blend-normal transform translate-y-[-1vw]">
-                        {HERO.titleAccent}
-                    </span>
+                
+                <!-- Строка 2 (Теперь такая же массивная) -->
+                <span class="text-[17vw] md:text-[10rem] lg:text-[12rem] mix-blend-overlay opacity-90 block ml-4 md:ml-32">
+                    {HERO.titleAccent.toLowerCase()}
+                </span>
+
+                <!-- Строка 3 -->
+                <span class="text-[17vw] md:text-[10rem] lg:text-[12rem] mix-blend-overlay opacity-90 block ml-0 md:ml-16">
                     {HERO.titleLine2.replace('.', '').toLowerCase()}
                 </span>
             </h1>
+
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end w-full gap-8 md:pl-2">
-                <p class="font-sans font-light text-base md:text-lg text-white/80 max-w-[280px] md:max-w-sm leading-relaxed border-l border-white/30 pl-4 md:pl-6">
+                <p class="font-sans font-light text-base md:text-xl text-white/90 max-w-[280px] md:max-w-sm leading-relaxed border-l border-white/30 pl-4 md:pl-6">
                     {HERO.description}
                 </p>
-                <a href="/catalog" class="group flex items-center gap-3 cursor-pointer pb-2 md:pb-0">
+                <a href="/catalog" class="group flex items-center gap-3 cursor-pointer pb-2 md:pb-0 pointer-events-auto">
                     <span class="font-mono text-xs uppercase tracking-[0.2em] text-white border-b border-white/40 pb-1 group-hover:border-white transition-all">
                         В каталог
                     </span>
@@ -142,11 +166,11 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     </div>
   </section>
 
-  <!-- UNIFIED DARK SECTION: WORKSHOP -->
+  <!-- WORKSHOP -->
   <div class="bg-[#1F1E1C] text-[#F9F8F6] relative overflow-hidden">
       <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay pointer-events-none"></div>
       
-      <section class="pt-16 md:pt-40 pb-0 relative z-10">
+      <section class="py-16 md:py-40 relative z-10">
           <div class="container-main grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-32 items-center">
               <div class="relative order-1 lg:order-1 pl-0 lg:pl-0">
                   <div class="group relative z-10 aspect-[4/5] overflow-hidden rounded-sm w-full md:w-[90%] shadow-2xl bg-[#2C2B29]">
@@ -169,9 +193,7 @@ const categoryMap = allCategories.reduce((acc, cat) => {
                   </div>
                   <div class="mt-8 md:mt-12">
                       <a href="/about" class="group inline-flex items-center gap-3 text-white hover:text-hyle-clay transition-colors">
-                          <span class="font-mono text-xs uppercase tracking-[0.2em] border-b border-white/30 pb-1 group-hover:border-hyle-clay transition-colors">
-                              О мастере
-                          </span>
+                          <span class="font-mono text-xs uppercase tracking-[0.2em] border-b border-white/30 pb-1 group-hover:border-hyle-clay transition-colors">О мастере</span>
                           <span class="text-lg font-serif italic relative top-[-1px]">→</span>
                       </a>
                   </div>
@@ -179,13 +201,39 @@ const categoryMap = allCategories.reduce((acc, cat) => {
           </div>
       </section>
 
-      <!-- GLOBAL FOOTER COMPONENT -->
-      <Footer />
+      <!-- FOOTER Component (Imported) -->
+      <footer class="pb-16 md:pb-20 pt-0 relative z-10">
+          <div class="container-main flex flex-col items-center text-center">
+              <div class="mb-8 md:mb-10 opacity-10 w-full h-px bg-white"></div>
+              <div class="flex flex-col items-center gap-6">
+                  <span class="font-serif text-3xl text-[#F9F8F6]">Hyle.</span>
+                  <nav class="flex flex-wrap justify-center gap-6 md:gap-12 font-sans text-[10px] md:text-[11px] text-white/60 uppercase tracking-[0.2em]">
+                      <a href="/catalog" class="hover:text-hyle-clay transition-colors">каталог</a>
+                      <a href="/about" class="hover:text-hyle-clay transition-colors">о мастере</a>
+                      <a href="/blog" class="hover:text-hyle-clay transition-colors">блог</a>
+                  </nav>
+                  <div class="flex gap-6 mt-2">
+                      <a href="#" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:border-hyle-clay hover:text-hyle-clay transition-colors text-white/40"><span class="sr-only">Tg</span></a>
+                  </div>
+                  <p class="mt-8 text-[9px] text-white/20 font-mono tracking-[0.2em] uppercase">© 2026 Москва</p>
+              </div>
+          </div>
+      </footer>
   </div>
 </Layout>
 
 <script>
-    // ... Parallax & Scroll Scripts ...
+    // MENU LOGIC (Added)
+    const openBtn = document.getElementById('open-menu');
+    const closeBtn = document.getElementById('close-menu');
+    const menu = document.getElementById('mobile-menu');
+
+    if (openBtn && closeBtn && menu) {
+        openBtn.addEventListener('click', () => menu.classList.remove('translate-x-full'));
+        closeBtn.addEventListener('click', () => menu.classList.add('translate-x-full'));
+    }
+
+    // Scroll Logic
     const showcase = document.getElementById('horizontal-showcase');
     let target = 0;
     let current = 0;
@@ -226,20 +274,5 @@ const categoryMap = allCategories.reduce((acc, cat) => {
             isAnimating = false;
             showcase.scrollLeft = target;
         }
-    }
-
-    const heroSection = document.getElementById('hero-section');
-    const heroImage = document.getElementById('hero-image');
-    if (heroSection && heroImage) {
-        heroSection.addEventListener('mousemove', (e) => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                // @ts-ignore
-                const { clientX, clientY } = e;
-                const { innerWidth, innerHeight } = window;
-                const moveX = (clientX / innerWidth - 0.5) * 15;
-                const moveY = (clientY / innerHeight - 0.5) * 15;
-                heroImage.style.transform = `translate(${-moveX}px, ${-moveY}px) scale(1.05)`;
-            }
-        });
     }
 </script>
