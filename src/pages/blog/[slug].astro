@@ -2,7 +2,6 @@
 // src/pages/blog/[slug].astro
 import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-// Импортируем виджет
 import ProductWidget from '../../components/ProductWidget.astro';
 
 export async function getStaticPaths() {
@@ -22,16 +21,15 @@ const formattedDate = post.data.publishedDate
       })
     : '';
 
-// --- LOOKUP TAGS ---
 const rawTags = post.data.tags || [];
-// Берем первый ID (строка или объект)
-const mainTagId = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean)[0];
+const tagIds = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean);
+const mainTagId = tagIds.length > 0 ? tagIds[0] : null;
 
 let tagName = mainTagId; 
 if (mainTagId) {
     try {
         const tagEntry = await getEntry('tags', mainTagId);
-        if (tagEntry) tagName = tagEntry.data.title; // FIX: title
+        if (tagEntry) tagName = tagEntry.data.title;
     } catch (e) {}
 }
 ---
@@ -73,13 +71,11 @@ if (mainTagId) {
             prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
             <!-- 
-                FIX: CMS INTEGRATION MAPPING
-                Маппим имя блока из Keystatic ('productWidget') на наш компонент.
+                FIX: MAPPING
+                Связываем ключ 'productWidget' (из CMS) с компонентом ProductWidget.
             -->
             <Content components={{ 
-                productWidget: ProductWidget,
-                // На всякий случай оставляем и PascalCase, если вставили руками
-                ProductWidget: ProductWidget 
+                productWidget: ProductWidget
             }} />
 
         </div>
