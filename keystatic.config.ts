@@ -1,26 +1,25 @@
 import { config, fields, collection, singleton } from '@keystatic/core';
-import { component, fields as componentFields } from '@keystatic/core/component-blocks';
 
-// --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ ---
+// --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ (КАК ОБЪЕКТЫ) ---
 
-// Блок "Карточка товара" для вставки в статьи
-const productCardBlock = component({
+// Блок "Карточка товара" - определяем как простой объект
+const productCard = {
   label: '🛍️ Карточка товара',
   schema: {
-    // Поле выбора товара (Relationship)
-    item: componentFields.relationship({
+    item: fields.relationship({
       label: 'Выберите товар',
       collection: 'products',
       validation: { isRequired: true },
     }),
   },
-  // Админское превью (то, что видит мастер в редакторе)
-  preview: (props) => {
-    return props.fields.item.value 
-      ? `📦 Вставлен товар: ${props.fields.item.value}` 
-      : '⚠️ Выберите товар...';
+  preview: (props: any) => {
+    // Простое превью для админки
+    const selectedItem = props.fields.item.value;
+    return selectedItem 
+      ? `📦 Товар выбран: ${selectedItem}` 
+      : '⚠️ Выберите товар из списка справа...';
   },
-});
+};
 
 export default config({
   storage: import.meta.env.PROD
@@ -33,6 +32,7 @@ export default config({
       },
 
   singletons: {
+    // 1. LANDING
     landing: singleton({
       label: 'Главная страница',
       path: 'src/content/landing/home',
@@ -56,6 +56,7 @@ export default config({
       },
     }),
 
+    // 2. ABOUT
     about: singleton({
       label: 'О Мастере',
       path: 'src/content/about/main',
@@ -78,6 +79,7 @@ export default config({
       },
     }),
 
+    // 3. B2B
     b2b: singleton({
       label: 'Страница B2B',
       path: 'src/content/b2b/main',
@@ -90,6 +92,7 @@ export default config({
   },
 
   collections: {
+    // СПРАВОЧНИКИ
     categories: collection({
       label: 'Справочник: Категории',
       slugField: 'title',
@@ -104,6 +107,7 @@ export default config({
       schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
+    // ТОВАРЫ
     products: collection({
       label: 'Товары',
       slugField: 'title',
@@ -127,11 +131,7 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-        category: fields.relationship({ 
-          label: 'Категория', 
-          collection: 'categories',
-          validation: { isRequired: false }
-        }),
+        category: fields.relationship({ label: 'Категория', collection: 'categories', validation: { isRequired: false } }),
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
           { label: 'Теги', itemLabel: (props) => props.value }
@@ -141,19 +141,21 @@ export default config({
           { label: 'С этим покупают' }
         ),
         specs: fields.object({
-          volume: fields.text({ label: 'Объем' }),
-          size: fields.text({ label: 'Размер' }),
+          volume: fields.text({ label: 'Объем (мл)' }),
+          size: fields.text({ label: 'Размер (см)' }),
           material: fields.text({ label: 'Материал' }),
         }, { label: 'Характеристики' }),
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
         description: fields.document({ label: 'Описание', formatting: true }),
+        // Legacy
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
         care: fields.text({ label: '⚠️ Old: care', multiline: true }),
       },
     }),
 
+    // БЛОГ
     blog: collection({
       label: 'Блог',
       slugField: 'title',
@@ -177,9 +179,9 @@ export default config({
           formatting: true,
           images: { directory: 'public/images/blog/content', publicPath: '/images/blog/content/' },
           
-          // ПОДКЛЮЧАЕМ БЛОКИ
+          // 🔥 ПОДКЛЮЧЕНИЕ БЛОКА
           componentBlocks: {
-            productCard: productCardBlock, // Регистрируем наш блок
+            productCard: productCard, 
           },
         }),
       },
