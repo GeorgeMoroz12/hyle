@@ -1,52 +1,48 @@
 ---
 import { getEntry } from 'astro:content';
 
-interface Props {
-  item: string;
-}
+// 1. Принимаем проп (в базе он называется item)
+const { item } = Astro.props;
 
-const { item: productId } = Astro.props;
-
-// 1. Безопасное получение товара
+// 2. Логика получения данных
 let productEntry = null;
 let productData = null;
 
-if (productId && typeof productId === 'string') {
+// Пытаемся найти товар, если передан ID
+if (item && typeof item === 'string') {
     try {
-        productEntry = await getEntry('products', productId);
+        productEntry = await getEntry('products', item);
         if (productEntry) {
             productData = productEntry.data;
         }
     } catch (e) {
-        console.warn(`ProductWidget: Товар '${productId}' не найден.`);
+        console.warn(`ProductWidget Error: ${e.message}`);
     }
 }
 
-// 2. Подготовка переменных для шаблона (только если товар найден)
+// 3. Подготовка данных для верстки (безопасная проверка)
 const mainImage = productData?.images?.[0] || '/images/placeholder.jpg';
-const formattedPrice = productData?.price 
-    ? `${productData.price.toLocaleString('ru-RU')} ₽` 
-    : 'По запросу';
-
+const formattedPrice = productData?.price ? `${productData.price} ₽` : 'Цена по запросу';
 const isSold = productData?.status === 'sold' || productData?.status === 'продано';
+const slug = productEntry?.slug || '#';
 ---
 
-{/* ВАРИАНТ А: ОШИБКА (Товара нет) */}
-{ !productEntry && (
+{/* ВАРИАНТ 1: ТОВАР НЕ НАЙДЕН (Выводим ошибку для отладки) */}
+{ !productData && (
     <div class="my-8 p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono text-sm not-prose">
         <strong>🚨 WIDGET ERROR:</strong><br/>
-        Product with slug <code>"{productId}"</code> not found in DB.<br/>
-        Check if the product exists and is published.
+        Товар с ID <code>"{item}"</code> не найден в базе.<br/>
+        Проверьте, правильно ли указан slug в админке.
     </div>
 )}
 
-{/* ВАРИАНТ Б: УСПЕХ (Товар есть) */}
-{ productEntry && productData && (
+{/* ВАРИАНТ 2: ТОВАР НАЙДЕН (Рисуем карточку) */}
+{ productData && (
     <div class="my-12 w-full max-w-2xl mx-auto not-prose">
         <div class="relative flex flex-col sm:flex-row bg-white border border-black/5 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-500">
 
-            {/* Картинка (Слева) */}
-            <a href={`/products/${productEntry.slug}`} class="block w-full sm:w-1/3 aspect-[4/3] sm:aspect-auto relative group overflow-hidden">
+            {/* Левая часть: Картинка */}
+            <a href={`/products/${slug}`} class="block w-full sm:w-1/3 aspect-[4/3] sm:aspect-auto relative group overflow-hidden">
                 <img
                     src={mainImage}
                     alt={productData.title}
@@ -59,13 +55,13 @@ const isSold = productData?.status === 'sold' || productData?.status === 'про
                 )}
             </a>
 
-            {/* Контент (Справа) */}
+            {/* Правая часть: Контент */}
             <div class="flex-1 p-6 flex flex-col justify-between items-start gap-4">
                 <div>
                     <span class="font-mono text-[10px] uppercase tracking-widest text-black/40 mb-2 block">
                         Упомянуто в статье
                     </span>
-                    <a href={`/products/${productEntry.slug}`} class="block">
+                    <a href={`/products/${slug}`} class="block">
                         <h3 class="font-serif text-xl md:text-2xl text-black leading-tight hover:text-orange-600 transition-colors">
                             {productData.title}
                         </h3>
@@ -73,16 +69,11 @@ const isSold = productData?.status === 'sold' || productData?.status === 'про
                 </div>
 
                 <div class="w-full flex items-end justify-between border-t border-black/5 pt-4 mt-2">
-                    <div class="flex flex-col">
-                        <span class="font-hand text-2xl text-orange-600 -rotate-2 origin-left">
-                            {formattedPrice}
-                        </span>
-                    </div>
+                    <span class="font-hand text-2xl text-orange-600 -rotate-2 origin-left">
+                        {formattedPrice}
+                    </span>
 
-                    <a
-                        href={`/products/${productEntry.slug}`}
-                        class="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-black hover:text-orange-600 transition-colors"
-                    >
+                    <a href={`/products/${slug}`} class="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-black hover:text-orange-600 transition-colors">
                         Смотреть
                         <span class="text-lg font-serif italic relative top-[-1px] group-hover:translate-x-1 transition-transform">→</span>
                     </a>
