@@ -1,6 +1,6 @@
 ---
 // src/pages/blog/[slug].astro
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 // Импортируем виджет
 import ProductWidget from '../../components/ProductWidget.astro';
@@ -22,16 +22,16 @@ const formattedDate = post.data.publishedDate
       })
     : '';
 
-// LOOKUP TAGS (Сохраняем старую логику)
+// --- LOOKUP TAGS ---
 const rawTags = post.data.tags || [];
-const tagIds = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean);
-const mainTagId = tagIds.length > 0 ? tagIds[0] : null;
+// Берем первый ID (строка или объект)
+const mainTagId = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean)[0];
 
 let tagName = mainTagId; 
 if (mainTagId) {
     try {
         const tagEntry = await getEntry('tags', mainTagId);
-        if (tagEntry) tagName = tagEntry.data.title;
+        if (tagEntry) tagName = tagEntry.data.title; // FIX: title
     } catch (e) {}
 }
 ---
@@ -73,11 +73,14 @@ if (mainTagId) {
             prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
             <!-- 
-                FIX: Передаем компоненты для рендера внутри MDX/Markdoc 
-                Если в тексте встретится тег <ProductWidget item="..." /> или {% productCard %},
-                Astro использует наш компонент.
+                FIX: CMS INTEGRATION MAPPING
+                Маппим имя блока из Keystatic ('productWidget') на наш компонент.
             -->
-            <Content components={{ ProductWidget, productCard: ProductWidget }} />
+            <Content components={{ 
+                productWidget: ProductWidget,
+                // На всякий случай оставляем и PascalCase, если вставили руками
+                ProductWidget: ProductWidget 
+            }} />
 
         </div>
 
