@@ -1,85 +1,59 @@
 ---
 import { getEntry } from 'astro:content';
 
-// 1. Принимаем проп (в базе он называется item)
+// 1. Принимаем данные (prop называется item, как мы выяснили из базы)
 const { item } = Astro.props;
 
-// 2. Логика получения данных
-let productEntry = null;
-let productData = null;
+// 2. Логика: ищем товар
+let product = null;
+let slug = null;
 
-// Пытаемся найти товар, если передан ID
-if (item && typeof item === 'string') {
-    try {
-        productEntry = await getEntry('products', item);
-        if (productEntry) {
-            productData = productEntry.data;
-        }
-    } catch (e) {
-        console.warn(`ProductWidget Error: ${e.message}`);
-    }
+if (item) {
+  const entry = await getEntry('products', item);
+  if (entry) {
+    product = entry.data;
+    slug = entry.slug;
+  }
 }
-
-// 3. Подготовка данных для верстки (безопасная проверка)
-const mainImage = productData?.images?.[0] || '/images/placeholder.jpg';
-const formattedPrice = productData?.price ? `${productData.price} ₽` : 'Цена по запросу';
-const isSold = productData?.status === 'sold' || productData?.status === 'продано';
-const slug = productEntry?.slug || '#';
 ---
 
-{/* ВАРИАНТ 1: ТОВАР НЕ НАЙДЕН (Выводим ошибку для отладки) */}
-{ !productData && (
-    <div class="my-8 p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono text-sm not-prose">
-        <strong>🚨 WIDGET ERROR:</strong><br/>
-        Товар с ID <code>"{item}"</code> не найден в базе.<br/>
-        Проверьте, правильно ли указан slug в админке.
-    </div>
+{/* ВАРИАНТ 1: Если товара нет — выводим ошибку для дебага (только в dev режиме или стилизованную) */}
+{ !product && (
+  <div class="my-6 p-4 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-mono text-sm">
+    <strong>WIDGET ERROR:</strong> Товар с ID "{item}" не найден.
+  </div>
 )}
 
-{/* ВАРИАНТ 2: ТОВАР НАЙДЕН (Рисуем карточку) */}
-{ productData && (
-    <div class="my-12 w-full max-w-2xl mx-auto not-prose">
-        <div class="relative flex flex-col sm:flex-row bg-white border border-black/5 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-500">
+{/* ВАРИАНТ 2: Если товар есть — рисуем красивую карточку */}
+{ product && (
+  <div class="not-prose my-8 flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-neutral-900">
+    
+    {/* Картинка */}
+    {product.images && product.images[0] && (
+      <img 
+        src={product.images[0]} 
+        alt={product.title} 
+        class="h-20 w-20 shrink-0 rounded-md object-cover"
+      />
+    )}
 
-            {/* Левая часть: Картинка */}
-            <a href={`/products/${slug}`} class="block w-full sm:w-1/3 aspect-[4/3] sm:aspect-auto relative group overflow-hidden">
-                <img
-                    src={mainImage}
-                    alt={productData.title}
-                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {isSold && (
-                    <div class="absolute inset-0 bg-white/40 flex items-center justify-center">
-                        <span class="text-[10px] uppercase tracking-widest bg-white px-2 py-1 font-mono">Продано</span>
-                    </div>
-                )}
-            </a>
-
-            {/* Правая часть: Контент */}
-            <div class="flex-1 p-6 flex flex-col justify-between items-start gap-4">
-                <div>
-                    <span class="font-mono text-[10px] uppercase tracking-widest text-black/40 mb-2 block">
-                        Упомянуто в статье
-                    </span>
-                    <a href={`/products/${slug}`} class="block">
-                        <h3 class="font-serif text-xl md:text-2xl text-black leading-tight hover:text-orange-600 transition-colors">
-                            {productData.title}
-                        </h3>
-                    </a>
-                </div>
-
-                <div class="w-full flex items-end justify-between border-t border-black/5 pt-4 mt-2">
-                    <span class="font-hand text-2xl text-orange-600 -rotate-2 origin-left">
-                        {formattedPrice}
-                    </span>
-
-                    <a href={`/products/${slug}`} class="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-black hover:text-orange-600 transition-colors">
-                        Смотреть
-                        <span class="text-lg font-serif italic relative top-[-1px] group-hover:translate-x-1 transition-transform">→</span>
-                    </a>
-                </div>
-            </div>
-
-        </div>
+    {/* Текст */}
+    <div class="min-w-0 flex-1">
+      <h4 class="m-0 mb-1 truncate text-base font-semibold text-neutral-900 dark:text-white">
+        {product.title}
+      </h4>
+      <p class="m-0 text-sm font-bold text-amber-600 dark:text-amber-500">
+        {product.price} ₽
+      </p>
     </div>
+
+    {/* Кнопка */}
+    <a 
+      href={`/products/${slug}`} 
+      class="shrink-0 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+    >
+      Купить
+    </a>
+
+  </div>
 )}
