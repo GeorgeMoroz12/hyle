@@ -2,7 +2,8 @@
 // src/pages/blog/[slug].astro
 import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import ProductWidget from '../../components/ProductWidget.astro';
+// FIX: Обновленный путь к виджету (в папке widgets)
+import ProductWidget from '../../components/widgets/ProductWidget.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -68,13 +69,13 @@ if (mainTagId) {
             prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
             <!-- 
-                FIX: CRITICAL MAPPING
-                Мы ловим тег 'product-card', который генерирует CMS, 
-                и передаем его в наш ProductWidget.
+                MAPPING:
+                'product-card' -> ProductWidget
+                productCard -> ProductWidget
             -->
             <Content components={{ 
-                'product-card': ProductWidget, // Kebab-case (из базы)
-                productCard: ProductWidget     // CamelCase (на всякий случай)
+                'product-card': ProductWidget,
+                productCard: ProductWidget
             }} />
 
         </div>

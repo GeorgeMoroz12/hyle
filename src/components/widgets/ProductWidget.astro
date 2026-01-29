@@ -20,8 +20,17 @@ if (productId && typeof productId === 'string') {
     }
 }
 
-// 2. Если товара нет — ничего не рисуем (Graceful Degradation)
-if (!productEntry) return null;
+// 2. DEBUG MODE (ВРЕМЕННО)
+// Если товар не найден — кричим об этом, чтобы видеть в верстке
+if (!productEntry) {
+    return (
+        <div class="my-8 p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono text-sm not-prose">
+            <strong>🚨 WIDGET ERROR:</strong><br/>
+            Product with slug <code>"{productId}"</code> not found in DB.<br/>
+            Check if the product exists and is published.
+        </div>
+    );
+}
 
 const { title, price, images, status } = productEntry.data;
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
