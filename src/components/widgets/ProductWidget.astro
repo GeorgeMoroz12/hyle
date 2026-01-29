@@ -17,20 +17,20 @@ if (item) {
 }
 ---
 
-{/* ВАРИАНТ 1: Ошибка (видна только при разработке или если явно сломано) */}
+{/* ВАРИАНТ 1: Ошибка (видна только при разработке) */}
 { !product && (
-  <div class="my-6 p-4 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-mono text-sm">
-    <strong>WIDGET ERROR:</strong> Товар с ID "{item}" не найден.
+  <div class="my-4 p-2 border-l-2 border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-mono text-xs">
+    Product "{item}" not found.
   </div>
 )}
 
-{/* ВАРИАНТ 2: Стильный виджет без подложки */}
+{/* ВАРИАНТ 2: Минималистичный блок */}
 { product && (
-  <div class="not-prose my-12 flex flex-col sm:flex-row items-center gap-6 border-y border-neutral-200 py-8 transition-colors dark:border-white/10">
+  <div class="not-prose my-8 flex items-center gap-5 group">
     
-    {/* Картинка (убрал bg-neutral-100 dark:bg-white/5) */}
+    {/* Картинка: Компактная, без лишних оберток */}
     {product.images && product.images[0] && (
-      <a href={`/products/${slug}`} class="shrink-0 group overflow-hidden rounded-sm w-full sm:w-32 aspect-square">
+      <a href={`/products/${slug}`} class="shrink-0 w-20 h-20 overflow-hidden rounded-sm bg-neutral-100 dark:bg-white/5">
         <img 
           src={product.images[0]} 
           alt={product.title} 
@@ -39,29 +39,26 @@ if (item) {
       </a>
     )}
 
-    {/* Информация */}
-    <div class="flex-1 text-center sm:text-left w-full">
-      <h4 class="m-0 mb-2 font-serif text-xl leading-tight text-neutral-900 dark:text-white">
-        {product.title}
-      </h4>
-      <p class="m-0 font-sans text-sm font-light text-neutral-500 dark:text-neutral-400">
-        Ручная работа
-      </p>
-    </div>
-
-    {/* Цена и Кнопка */}
-    <div class="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto justify-between sm:justify-center">
-      <span class="font-hand text-2xl text-[#B35A32] dark:text-[#D68C5A] -rotate-2">
-        {product.price} ₽
-      </span>
-      
-      <a 
-        href={`/products/${slug}`} 
-        class="group flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-neutral-900 dark:text-white hover:text-[#B35A32] dark:hover:text-[#D68C5A] transition-colors"
-      >
-        <span>Купить</span>
-        <span class="text-lg transition-transform group-hover:translate-x-1">→</span>
+    {/* Информация: Сжатая и четкая */}
+    <div class="flex-1 min-w-0 flex flex-col justify-center gap-1">
+      <a href={`/products/${slug}`} class="block">
+        <h4 class="font-serif text-lg leading-tight text-neutral-900 dark:text-white truncate group-hover:text-[#B35A32] transition-colors">
+          {product.title}
+        </h4>
       </a>
+
+      <div class="flex items-center gap-4">
+        <span class="font-hand text-xl text-[#B35A32] dark:text-[#D68C5A] -rotate-1">
+          {product.price} ₽
+        </span>
+        
+        <a 
+          href={`/products/${slug}`} 
+          class="text-[10px] uppercase tracking-widest text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white transition-colors"
+        >
+          Купить →
+        </a>
+      </div>
     </div>
 
   </div>
