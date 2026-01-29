@@ -1,4 +1,26 @@
 import { config, fields, collection, singleton } from '@keystatic/core';
+import { component, fields as componentFields } from '@keystatic/core/component-blocks';
+
+// --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ ---
+
+// Блок "Карточка товара" для вставки в статьи
+const productCardBlock = component({
+  label: '🛍️ Карточка товара',
+  schema: {
+    // Поле выбора товара (Relationship)
+    item: componentFields.relationship({
+      label: 'Выберите товар',
+      collection: 'products',
+      validation: { isRequired: true },
+    }),
+  },
+  // Админское превью (то, что видит мастер в редакторе)
+  preview: (props) => {
+    return props.fields.item.value 
+      ? `📦 Вставлен товар: ${props.fields.item.value}` 
+      : '⚠️ Выберите товар...';
+  },
+});
 
 export default config({
   storage: import.meta.env.PROD
@@ -11,7 +33,6 @@ export default config({
       },
 
   singletons: {
-    // 1. LANDING
     landing: singleton({
       label: 'Главная страница',
       path: 'src/content/landing/home',
@@ -35,7 +56,6 @@ export default config({
       },
     }),
 
-    // 2. ABOUT
     about: singleton({
       label: 'О Мастере',
       path: 'src/content/about/main',
@@ -58,7 +78,6 @@ export default config({
       },
     }),
 
-    // 3. B2B
     b2b: singleton({
       label: 'Страница B2B',
       path: 'src/content/b2b/main',
@@ -71,29 +90,20 @@ export default config({
   },
 
   collections: {
-    // 1. СПРАВОЧНИК: КАТЕГОРИИ
     categories: collection({
       label: 'Справочник: Категории',
-      slugField: 'title', // Генерируем slug из поля title
+      slugField: 'title',
       path: 'src/content/categories/*',
-      schema: {
-        // ВАЖНО: Поле называется title (раньше могло быть name)
-        title: fields.slug({ name: { label: 'Название' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // 2. СПРАВОЧНИК: ТЕГИ
     tags: collection({
       label: 'Справочник: Теги',
-      slugField: 'title', // Генерируем slug из поля title
+      slugField: 'title',
       path: 'src/content/tags/*',
-      schema: {
-        // ВАЖНО: Поле называется title
-        title: fields.slug({ name: { label: 'Название' } }),
-      },
+      schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // 3. ТОВАРЫ
     products: collection({
       label: 'Товары',
       slugField: 'title',
@@ -117,42 +127,33 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-        
         category: fields.relationship({ 
           label: 'Категория', 
           collection: 'categories',
           validation: { isRequired: false }
         }),
-        
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
           { label: 'Теги', itemLabel: (props) => props.value }
         ),
-        
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }), 
           { label: 'С этим покупают' }
         ),
-
         specs: fields.object({
           volume: fields.text({ label: 'Объем' }),
           size: fields.text({ label: 'Размер' }),
           material: fields.text({ label: 'Материал' }),
         }, { label: 'Характеристики' }),
-        
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
-        
         description: fields.document({ label: 'Описание', formatting: true }),
-
-        // LEGACY (Для совместимости)
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
         care: fields.text({ label: '⚠️ Old: care', multiline: true }),
       },
     }),
 
-    // 4. БЛОГ
     blog: collection({
       label: 'Блог',
       slugField: 'title',
@@ -167,10 +168,6 @@ export default config({
           directory: 'public/images/blog',
           publicPath: '/images/blog/',
         }),
-        tags: fields.array(
-          fields.relationship({ label: 'Тег', collection: 'tags' }),
-          { label: 'Теги', itemLabel: (props) => props.value }
-        ),
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'Товары' }
@@ -179,6 +176,11 @@ export default config({
           label: 'Текст',
           formatting: true,
           images: { directory: 'public/images/blog/content', publicPath: '/images/blog/content/' },
+          
+          // ПОДКЛЮЧАЕМ БЛОКИ
+          componentBlocks: {
+            productCard: productCardBlock, // Регистрируем наш блок
+          },
         }),
       },
     }),

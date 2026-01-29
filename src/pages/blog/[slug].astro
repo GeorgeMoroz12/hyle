@@ -2,6 +2,8 @@
 // src/pages/blog/[slug].astro
 import { getCollection, getEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+// Импортируем виджет
+import ProductWidget from '../../components/ProductWidget.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -20,11 +22,12 @@ const formattedDate = post.data.publishedDate
       })
     : '';
 
+// LOOKUP TAGS (Сохраняем старую логику)
 const rawTags = post.data.tags || [];
 const tagIds = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean);
 const mainTagId = tagIds.length > 0 ? tagIds[0] : null;
-let tagName = mainTagId; 
 
+let tagName = mainTagId; 
 if (mainTagId) {
     try {
         const tagEntry = await getEntry('tags', mainTagId);
@@ -37,6 +40,7 @@ if (mainTagId) {
   
   <article class="min-h-screen pt-32 pb-24 bg-hyle-bg">
     
+    <!-- HEADER -->
     <div class="container-main max-w-4xl mx-auto text-center mb-16 animate-appear">
         <div class="flex items-center justify-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-hyle-text/40">
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
@@ -46,18 +50,38 @@ if (mainTagId) {
         <p class="font-mono text-xs text-hyle-text/40 uppercase tracking-widest">{formattedDate}</p>
     </div>
 
+    <!-- COVER -->
     {post.data.coverImage && (
         <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
             <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
-                <img src={post.data.coverImage} alt={post.data.title} class="w-full h-full object-cover transition-all duration-[2s]" />
+                <img 
+                    src={post.data.coverImage} 
+                    alt={post.data.title} 
+                    class="w-full h-full object-cover transition-all duration-[2s]"
+                />
             </div>
         </div>
     )}
 
+    <!-- CONTENT -->
     <div class="container-main max-w-[680px] mx-auto animate-appear" style="animation-delay: 200ms;">
-        <div class="prose prose-stone prose-lg md:prose-xl prose-p:text-hyle-text/80">
-            <Content />
+        <div class="prose prose-stone prose-lg md:prose-xl 
+            prose-headings:font-serif prose-headings:font-normal prose-headings:text-hyle-text 
+            prose-p:font-sans prose-p:font-light prose-p:text-hyle-text/80 prose-p:leading-relaxed
+            prose-a:text-hyle-clay prose-a:no-underline hover:prose-a:underline
+            prose-li:font-light prose-li:text-hyle-text/80
+            prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
+            
+            <!-- 
+                FIX: Передаем компоненты для рендера внутри MDX/Markdoc 
+                Если в тексте встретится тег <ProductWidget item="..." /> или {% productCard %},
+                Astro использует наш компонент.
+            -->
+            <Content components={{ ProductWidget, productCard: ProductWidget }} />
+
         </div>
+
+        <!-- AUTHOR -->
         <div class="mt-16 pt-12 border-t border-hyle-text/10 flex flex-col items-center text-center gap-4">
             <div class="w-12 h-12 rounded-full bg-hyle-stone/30 overflow-hidden">
                 <div class="w-full h-full bg-hyle-text flex items-center justify-center text-white font-serif text-xl">H</div>
@@ -66,6 +90,7 @@ if (mainTagId) {
         </div>
     </div>
 
+    <!-- FOOTER NAV -->
     <div class="container-main mt-24 pt-12 border-t border-hyle-text/5">
         <div class="flex justify-between items-center">
             <a href="/blog" class="group flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-hyle-text/60 hover:text-hyle-clay transition-colors"><span class="group-hover:-translate-x-1 transition-transform">←</span>Назад в журнал</a>
