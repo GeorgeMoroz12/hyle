@@ -15,20 +15,27 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// Извлекаем все данные, включая SEO
-const { title, price, images, specs, status, masterNote, care_instructions, category, tags, seo } = entry.data;
 const { Content } = await entry.render();
 
-// --- 1. SEO LOGIC (STRATEGY) ---
-const pageTitle = seo?.title || title;
+// --- 1. SAFE DATA & SEO FETCHING ---
+// Достаем данные безопасно через промежуточную переменную
+const product = entry.data;
+const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = product;
 
-const pageDescription = seo?.description 
+// Гарантируем, что seo - это объект (даже если в базе пусто)
+const seo = product.seo || {}; 
+
+// Вычисляем мета-теги с фолбэками
+const pageTitle = seo.title || title;
+
+// Используем seo.description, если его нет -> берем masterNote (т.к. основного description в data больше нет)
+const pageDescription = seo.description 
     || (masterNote ? masterNote.slice(0, 160) : "Авторская керамика ручной работы. Уникальные изделия из глины.");
 
-// Картинка: SEO Image -> Первое фото товара -> Заглушка
+// Картинки
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
 const galleryImages = images && images.length > 0 ? images : ['/images/placeholder.jpg'];
-const pageImage = seo?.ogImage || mainImage || "/default-og.jpg";
+const pageImage = seo.ogImage || mainImage || "/default-og.jpg";
 
 
 // --- 2. DATA FETCHING HELPERS ---
@@ -272,7 +279,7 @@ const specMap: Record<string, string> = {
 </Layout>
 
 <script>
-    // --- 1. DESKTOP ZOOM ---
+    // 1. ZOOM LOGIC (Desktop Only)
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
 
@@ -285,98 +292,35 @@ const specMap: Record<string, string> = {
                 const x = ((e.clientX - left) / width) * 100;
                 // @ts-ignore
                 const y = ((e.clientY - top) / height) * 100;
+                
                 img.style.transformOrigin = `${x}% ${y}%`;
                 img.style.transform = 'scale(1.5)';
             }
         });
+
         container.addEventListener('mouseleave', () => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
                 img.style.transform = 'scale(1)';
-                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
+                setTimeout(() => {
+                    img.style.transformOrigin = 'center center';
+                }, 300);
             }
         });
     }
 
-    // --- 2. MOBILE PINCH & ZOOM ---
-    const mobileWrappers = document.querySelectorAll('.mobile-zoom-wrapper');
-    
-    mobileWrappers.forEach(wrapper => {
-        const mobileImg = wrapper.querySelector('.mobile-zoom-img');
-        if (!mobileImg) return;
-        
-        let startDist = 0;
-        let startScale = 1;
-        let currentScale = 1;
-        let isPinching = false;
-        
-        wrapper.addEventListener('touchstart', (e) => {
-            // @ts-ignore
-            if (e.touches.length === 2) {
-                isPinching = true;
-                // @ts-ignore
-                startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                startScale = currentScale;
-            }
-        }, { passive: true });
-
-        wrapper.addEventListener('touchmove', (e) => {
-            // @ts-ignore
-            if (isPinching && e.touches.length === 2) {
-                e.preventDefault(); 
-                // @ts-ignore
-                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                const scale = Math.min(Math.max(1, startScale * (dist / startDist)), 3);
-                currentScale = scale;
-                // @ts-ignore
-                mobileImg.style.transform = `scale(${scale})`;
-            }
-        }, { passive: false });
-
-        wrapper.addEventListener('touchend', (e) => {
-            // @ts-ignore
-            if (e.touches.length < 2) {
-                isPinching = false;
-                if (currentScale < 1.1) {
-                     // @ts-ignore
-                     mobileImg.style.transform = `scale(1)`;
-                     currentScale = 1;
-                }
-            }
-        });
-
-        // 1-Tap Toggle
-        let lastTap = 0;
-        wrapper.addEventListener('click', (e) => {
-            const now = Date.now();
-            if (now - lastTap > 300) {
-                if (!isPinching) {
-                    if (currentScale > 1.2) {
-                        currentScale = 1;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1)`;
-                    } else {
-                        currentScale = 1.5;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1.5)`;
-                    }
-                }
-            }
-            lastTap = now;
-        });
-    });
-
-    // --- 3. OTHER SCRIPTS ---
+    // 2. THUMBNAILS LOGIC
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
-            // @ts-ignore
-            if (img && src) img.src = src;
+            if (img && src) img.setAttribute('src', src);
+            
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
 
+    // 3. HORIZONTAL WHEEL SCROLL
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
