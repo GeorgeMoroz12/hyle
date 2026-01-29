@@ -38,7 +38,6 @@ if (mainTagId) {
   
   <article class="min-h-screen pt-32 pb-24 bg-hyle-bg">
     
-    <!-- HEADER -->
     <div class="container-main max-w-4xl mx-auto text-center mb-16 animate-appear">
         <div class="flex items-center justify-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-hyle-text/40">
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
@@ -48,7 +47,6 @@ if (mainTagId) {
         <p class="font-mono text-xs text-hyle-text/40 uppercase tracking-widest">{formattedDate}</p>
     </div>
 
-    <!-- COVER -->
     {post.data.coverImage && (
         <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
             <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
@@ -61,7 +59,6 @@ if (mainTagId) {
         </div>
     )}
 
-    <!-- CONTENT -->
     <div class="container-main max-w-[680px] mx-auto animate-appear" style="animation-delay: 200ms;">
         <div class="prose prose-stone prose-lg md:prose-xl 
             prose-headings:font-serif prose-headings:font-normal prose-headings:text-hyle-text 
@@ -71,16 +68,17 @@ if (mainTagId) {
             prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
             <!-- 
-                FIX: MAPPING
-                Связываем ключ 'productWidget' (из CMS) с компонентом ProductWidget.
+                FIX: CRITICAL MAPPING
+                Мы ловим тег 'product-card', который генерирует CMS, 
+                и передаем его в наш ProductWidget.
             -->
             <Content components={{ 
-                productWidget: ProductWidget
+                'product-card': ProductWidget, // Kebab-case (из базы)
+                productCard: ProductWidget     // CamelCase (на всякий случай)
             }} />
 
         </div>
 
-        <!-- AUTHOR -->
         <div class="mt-16 pt-12 border-t border-hyle-text/10 flex flex-col items-center text-center gap-4">
             <div class="w-12 h-12 rounded-full bg-hyle-stone/30 overflow-hidden">
                 <div class="w-full h-full bg-hyle-text flex items-center justify-center text-white font-serif text-xl">H</div>
@@ -89,7 +87,6 @@ if (mainTagId) {
         </div>
     </div>
 
-    <!-- FOOTER NAV -->
     <div class="container-main mt-24 pt-12 border-t border-hyle-text/5">
         <div class="flex justify-between items-center">
             <a href="/blog" class="group flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-hyle-text/60 hover:text-hyle-clay transition-colors"><span class="group-hover:-translate-x-1 transition-transform">←</span>Назад в журнал</a>
