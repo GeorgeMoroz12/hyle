@@ -1,90 +1,94 @@
 ---
-// src/components/ProductWidget.astro
 import { getEntry } from 'astro:content';
 
 interface Props {
-  // FIX: Принимаем 'item', так как в базе записано item="slug"
-  item: string; 
+  item: string;
 }
 
 const { item: productId } = Astro.props;
 
 // 1. Безопасное получение товара
 let productEntry = null;
+let productData = null;
 
 if (productId && typeof productId === 'string') {
     try {
         productEntry = await getEntry('products', productId);
+        if (productEntry) {
+            productData = productEntry.data;
+        }
     } catch (e) {
         console.warn(`ProductWidget: Товар '${productId}' не найден.`);
     }
 }
 
-// 2. DEBUG MODE (ВРЕМЕННО)
-// Если товар не найден — кричим об этом, чтобы видеть в верстке
-if (!productEntry) {
-    return (
-        <div class="my-8 p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono text-sm not-prose">
-            <strong>🚨 WIDGET ERROR:</strong><br/>
-            Product with slug <code>"{productId}"</code> not found in DB.<br/>
-            Check if the product exists and is published.
-        </div>
-    );
-}
+// 2. Подготовка переменных для шаблона (только если товар найден)
+const mainImage = productData?.images?.[0] || '/images/placeholder.jpg';
+const formattedPrice = productData?.price 
+    ? `${productData.price.toLocaleString('ru-RU')} ₽` 
+    : 'По запросу';
 
-const { title, price, images, status } = productEntry.data;
-const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
-const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
-const isSold = status === 'sold' || status === 'продано';
+const isSold = productData?.status === 'sold' || productData?.status === 'продано';
 ---
 
-<!-- WIDGET CONTAINER -->
-<div class="my-12 w-full max-w-2xl mx-auto not-prose">
-    <div class="relative flex flex-col sm:flex-row bg-hyle-surface border border-hyle-text/5 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-500">
-        
-        <!-- Image (Left) -->
-        <a href={`/products/${productEntry.slug}`} class="block w-full sm:w-1/3 aspect-[4/3] sm:aspect-auto relative group overflow-hidden">
-            <img 
-                src={mainImage} 
-                alt={title} 
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            {isSold && (
-                <div class="absolute inset-0 bg-white/40 flex items-center justify-center">
-                    <span class="text-[10px] uppercase tracking-widest bg-white px-2 py-1 font-mono">Продано</span>
-                </div>
-            )}
-        </a>
-
-        <!-- Content (Right) -->
-        <div class="flex-1 p-6 flex flex-col justify-between items-start gap-4">
-            <div>
-                <span class="font-mono text-[10px] uppercase tracking-widest text-hyle-text/40 mb-2 block">
-                    Упомянуто в статье
-                </span>
-                <a href={`/products/${productEntry.slug}`} class="block">
-                    <h3 class="font-serif text-xl md:text-2xl text-hyle-text leading-tight hover:text-hyle-clay transition-colors">
-                        {title}
-                    </h3>
-                </a>
-            </div>
-
-            <div class="w-full flex items-end justify-between border-t border-hyle-text/5 pt-4 mt-2">
-                <div class="flex flex-col">
-                    <span class="font-hand text-2xl text-hyle-clay -rotate-2 origin-left">
-                        {formattedPrice}
-                    </span>
-                </div>
-
-                <a 
-                    href={`/products/${productEntry.slug}`} 
-                    class="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-hyle-text hover:text-hyle-clay transition-colors"
-                >
-                    Смотреть
-                    <span class="text-lg font-serif italic relative top-[-1px] group-hover:translate-x-1 transition-transform">→</span>
-                </a>
-            </div>
-        </div>
-
+{/* ВАРИАНТ А: ОШИБКА (Товара нет) */}
+{ !productEntry && (
+    <div class="my-8 p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono text-sm not-prose">
+        <strong>🚨 WIDGET ERROR:</strong><br/>
+        Product with slug <code>"{productId}"</code> not found in DB.<br/>
+        Check if the product exists and is published.
     </div>
-</div>
+)}
+
+{/* ВАРИАНТ Б: УСПЕХ (Товар есть) */}
+{ productEntry && productData && (
+    <div class="my-12 w-full max-w-2xl mx-auto not-prose">
+        <div class="relative flex flex-col sm:flex-row bg-white border border-black/5 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-500">
+
+            {/* Картинка (Слева) */}
+            <a href={`/products/${productEntry.slug}`} class="block w-full sm:w-1/3 aspect-[4/3] sm:aspect-auto relative group overflow-hidden">
+                <img
+                    src={mainImage}
+                    alt={productData.title}
+                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                {isSold && (
+                    <div class="absolute inset-0 bg-white/40 flex items-center justify-center">
+                        <span class="text-[10px] uppercase tracking-widest bg-white px-2 py-1 font-mono">Продано</span>
+                    </div>
+                )}
+            </a>
+
+            {/* Контент (Справа) */}
+            <div class="flex-1 p-6 flex flex-col justify-between items-start gap-4">
+                <div>
+                    <span class="font-mono text-[10px] uppercase tracking-widest text-black/40 mb-2 block">
+                        Упомянуто в статье
+                    </span>
+                    <a href={`/products/${productEntry.slug}`} class="block">
+                        <h3 class="font-serif text-xl md:text-2xl text-black leading-tight hover:text-orange-600 transition-colors">
+                            {productData.title}
+                        </h3>
+                    </a>
+                </div>
+
+                <div class="w-full flex items-end justify-between border-t border-black/5 pt-4 mt-2">
+                    <div class="flex flex-col">
+                        <span class="font-hand text-2xl text-orange-600 -rotate-2 origin-left">
+                            {formattedPrice}
+                        </span>
+                    </div>
+
+                    <a
+                        href={`/products/${productEntry.slug}`}
+                        class="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-black hover:text-orange-600 transition-colors"
+                    >
+                        Смотреть
+                        <span class="text-lg font-serif italic relative top-[-1px] group-hover:translate-x-1 transition-transform">→</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+)}
