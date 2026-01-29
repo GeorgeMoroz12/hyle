@@ -2,7 +2,6 @@
 // src/pages/blog/[slug].astro
 import { getCollection, getEntry, getEntries } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-// FIX: Обновленный путь к виджету (в папке widgets)
 import ProductWidget from '../../components/widgets/ProductWidget.astro';
 
 export async function getStaticPaths() {
@@ -16,13 +15,29 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await post.render();
 
-const formattedDate = post.data.publishedDate 
-    ? new Date(post.data.publishedDate).toLocaleDateString('ru-RU', {
+// --- SEO LOGIC (BLOG STRATEGY) ---
+const { title, excerpt, coverImage, publishedDate, tags, seo } = post.data;
+
+// 1. Title
+const pageTitle = seo?.title || title;
+
+// 2. Description (SEO -> Excerpt -> Truncated Body fallback)
+const pageDescription = seo?.description 
+    || excerpt 
+    || "Заметки о керамике, процессе и вдохновении Hyle Ceramics.";
+
+// 3. Image (SEO -> Cover -> Default)
+const pageImage = seo?.ogImage || coverImage || "/default-og.jpg";
+
+
+// --- UI HELPERS ---
+const formattedDate = publishedDate 
+    ? new Date(publishedDate).toLocaleDateString('ru-RU', {
         year: 'numeric', month: 'long', day: 'numeric'
       })
     : '';
 
-const rawTags = post.data.tags || [];
+const rawTags = tags || [];
 const tagIds = rawTags.map(t => (typeof t === 'string' ? t : t?.id)).filter(Boolean);
 const mainTagId = tagIds.length > 0 ? tagIds[0] : null;
 
@@ -35,7 +50,8 @@ if (mainTagId) {
 }
 ---
 
-<Layout title={post.data.title} description={post.data.excerpt}>
+<!-- Передаем SEO данные в Layout -->
+<Layout title={pageTitle} description={pageDescription} image={pageImage}>
   
   <article class="min-h-screen pt-32 pb-24 bg-hyle-bg">
     
@@ -44,16 +60,16 @@ if (mainTagId) {
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
             {tagName && <><span>/</span><span class="text-hyle-clay">#{tagName}</span></>}
         </div>
-        <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl text-hyle-text leading-[1.1] mb-8">{post.data.title}</h1>
+        <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl text-hyle-text leading-[1.1] mb-8">{title}</h1>
         <p class="font-mono text-xs text-hyle-text/40 uppercase tracking-widest">{formattedDate}</p>
     </div>
 
-    {post.data.coverImage && (
+    {coverImage && (
         <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
             <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
                 <img 
-                    src={post.data.coverImage} 
-                    alt={post.data.title} 
+                    src={coverImage} 
+                    alt={title} 
                     class="w-full h-full object-cover transition-all duration-[2s]"
                 />
             </div>
@@ -68,11 +84,6 @@ if (mainTagId) {
             prose-li:font-light prose-li:text-hyle-text/80
             prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:border-l-hyle-clay/50 prose-blockquote:text-hyle-text/90">
             
-            <!-- 
-                MAPPING:
-                'product-card' -> ProductWidget
-                productCard -> ProductWidget
-            -->
             <Content components={{ 
                 'product-card': ProductWidget,
                 productCard: ProductWidget
