@@ -1,25 +1,23 @@
 import { config, fields, collection, singleton } from '@keystatic/core';
+import { component, fields as componentFields } from '@keystatic/core/component-blocks';
 
-// --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ (КАК ОБЪЕКТЫ) ---
+// --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ ---
 
-// Блок "Карточка товара" - определяем как простой объект
-const productCard = {
+const productCardBlock = component({
   label: '🛍️ Карточка товара',
   schema: {
-    item: fields.relationship({
+    item: componentFields.relationship({
       label: 'Выберите товар',
       collection: 'products',
       validation: { isRequired: true },
     }),
   },
-  preview: (props: any) => {
-    // Простое превью для админки
-    const selectedItem = props.fields.item.value;
-    return selectedItem 
-      ? `📦 Товар выбран: ${selectedItem}` 
-      : '⚠️ Выберите товар из списка справа...';
+  preview: (props) => {
+    return props.fields.item.value 
+      ? `📦 Вставлен товар: ${props.fields.item.value}` 
+      : '⚠️ Выберите товар...';
   },
-};
+});
 
 export default config({
   storage: import.meta.env.PROD
@@ -32,7 +30,6 @@ export default config({
       },
 
   singletons: {
-    // 1. LANDING
     landing: singleton({
       label: 'Главная страница',
       path: 'src/content/landing/home',
@@ -56,7 +53,6 @@ export default config({
       },
     }),
 
-    // 2. ABOUT
     about: singleton({
       label: 'О Мастере',
       path: 'src/content/about/main',
@@ -79,7 +75,6 @@ export default config({
       },
     }),
 
-    // 3. B2B
     b2b: singleton({
       label: 'Страница B2B',
       path: 'src/content/b2b/main',
@@ -92,7 +87,6 @@ export default config({
   },
 
   collections: {
-    // СПРАВОЧНИКИ
     categories: collection({
       label: 'Справочник: Категории',
       slugField: 'title',
@@ -107,7 +101,6 @@ export default config({
       schema: { title: fields.slug({ name: { label: 'Название' } }) },
     }),
 
-    // ТОВАРЫ
     products: collection({
       label: 'Товары',
       slugField: 'title',
@@ -115,6 +108,28 @@ export default config({
       format: { contentField: 'description' },
       columns: ['title', 'status', 'price', 'category'],
       schema: {
+        // --- SEO BLOCK ---
+        seo: fields.object({
+          title: fields.text({ 
+            label: 'SEO Заголовок (Title)', 
+            description: 'Синим цветом в выдаче Google. Если пусто — берем название товара. (Макс 60)',
+            validation: { length: { max: 60 } }
+          }),
+          description: fields.text({ 
+            label: 'SEO Описание (Meta Description)', 
+            multiline: true, 
+            description: 'Серый текст под заголовком в Google. (Макс 160)',
+            validation: { length: { max: 160 } }
+          }),
+          ogImage: fields.image({ 
+            label: 'Картинка для соцсетей (OG:Image)', 
+            description: 'Картинка для шаринга (Telegram, VK). Если пусто — берем первое фото товара.',
+            directory: 'public/images/products/seo', 
+            publicPath: '/images/products/seo/' 
+          }),
+        }, { label: '🔍 SEO Настройки' }),
+        // -----------------
+
         images: fields.array(
           fields.image({ label: 'Фото', directory: 'public/images/products', publicPath: '/images/products/' }),
           { label: 'Фотографии', itemLabel: (props) => `Фото #${props.index + 1}` }
@@ -148,6 +163,7 @@ export default config({
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
         description: fields.document({ label: 'Описание', formatting: true }),
+        
         // Legacy
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNew: fields.checkbox({ label: '⚠️ Old: isNew' }),
@@ -155,7 +171,6 @@ export default config({
       },
     }),
 
-    // БЛОГ
     blog: collection({
       label: 'Блог',
       slugField: 'title',
@@ -163,6 +178,28 @@ export default config({
       format: { contentField: 'content' },
       columns: ['title', 'pubDate'],
       schema: {
+        // --- SEO BLOCK ---
+        seo: fields.object({
+          title: fields.text({ 
+            label: 'SEO Заголовок (Title)', 
+            description: 'Если пусто — берем название статьи. (Макс 60)',
+            validation: { length: { max: 60 } }
+          }),
+          description: fields.text({ 
+            label: 'SEO Описание (Meta Description)', 
+            multiline: true, 
+            description: 'Серый текст в Google. (Макс 160)',
+            validation: { length: { max: 160 } }
+          }),
+          ogImage: fields.image({ 
+            label: 'Картинка для соцсетей (OG:Image)', 
+            description: 'Если пусто — берем обложку статьи.',
+            directory: 'public/images/blog/seo', 
+            publicPath: '/images/blog/seo/' 
+          }),
+        }, { label: '🔍 SEO Настройки' }),
+        // -----------------
+
         title: fields.slug({ name: { label: 'Заголовок' } }),
         pubDate: fields.date({ label: 'Дата', defaultValue: { kind: 'today' } }),
         coverImage: fields.image({
@@ -179,9 +216,8 @@ export default config({
           formatting: true,
           images: { directory: 'public/images/blog/content', publicPath: '/images/blog/content/' },
           
-          // 🔥 ПОДКЛЮЧЕНИЕ БЛОКА
           componentBlocks: {
-            productCard: productCard, 
+            productCard: productCardBlock, 
           },
         }),
       },
