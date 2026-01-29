@@ -1,7 +1,7 @@
 ---
 import { getEntry } from 'astro:content';
 
-// 1. Принимаем данные (prop называется item, как мы выяснили из базы)
+// 1. Принимаем данные
 const { item } = Astro.props;
 
 // 2. Логика: ищем товар
@@ -17,43 +17,52 @@ if (item) {
 }
 ---
 
-{/* ВАРИАНТ 1: Если товара нет — выводим ошибку для дебага (только в dev режиме или стилизованную) */}
+{/* ВАРИАНТ 1: Ошибка (видна только при разработке или если явно сломано) */}
 { !product && (
   <div class="my-6 p-4 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-mono text-sm">
     <strong>WIDGET ERROR:</strong> Товар с ID "{item}" не найден.
   </div>
 )}
 
-{/* ВАРИАНТ 2: Если товар есть — рисуем красивую карточку */}
+{/* ВАРИАНТ 2: Стильный виджет без подложки */}
 { product && (
-  <div class="not-prose my-8 flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-neutral-900">
+  <div class="not-prose my-12 flex flex-col sm:flex-row items-center gap-6 border-y border-neutral-200 py-8 transition-colors dark:border-white/10">
     
     {/* Картинка */}
     {product.images && product.images[0] && (
-      <img 
-        src={product.images[0]} 
-        alt={product.title} 
-        class="h-20 w-20 shrink-0 rounded-md object-cover"
-      />
+      <a href={`/products/${slug}`} class="shrink-0 group overflow-hidden rounded-sm w-full sm:w-32 aspect-square bg-neutral-100 dark:bg-white/5">
+        <img 
+          src={product.images[0]} 
+          alt={product.title} 
+          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+      </a>
     )}
 
-    {/* Текст */}
-    <div class="min-w-0 flex-1">
-      <h4 class="m-0 mb-1 truncate text-base font-semibold text-neutral-900 dark:text-white">
+    {/* Информация */}
+    <div class="flex-1 text-center sm:text-left w-full">
+      <h4 class="m-0 mb-2 font-serif text-xl leading-tight text-neutral-900 dark:text-white">
         {product.title}
       </h4>
-      <p class="m-0 text-sm font-bold text-amber-600 dark:text-amber-500">
-        {product.price} ₽
+      <p class="m-0 font-sans text-sm font-light text-neutral-500 dark:text-neutral-400">
+        Ручная работа
       </p>
     </div>
 
-    {/* Кнопка */}
-    <a 
-      href={`/products/${slug}`} 
-      class="shrink-0 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white no-underline transition-colors hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
-    >
-      Купить
-    </a>
+    {/* Цена и Кнопка */}
+    <div class="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto justify-between sm:justify-center">
+      <span class="font-hand text-2xl text-[#B35A32] dark:text-[#D68C5A] -rotate-2">
+        {product.price} ₽
+      </span>
+      
+      <a 
+        href={`/products/${slug}`} 
+        class="group flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-neutral-900 dark:text-white hover:text-[#B35A32] dark:hover:text-[#D68C5A] transition-colors"
+      >
+        <span>Купить</span>
+        <span class="text-lg transition-transform group-hover:translate-x-1">→</span>
+      </a>
+    </div>
 
   </div>
 )}
