@@ -23,18 +23,21 @@ const product = entry.data;
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = product;
 
 // Гарантируем, что seo - это объект (даже если в базе пусто)
-const seo = product.seo || {}; 
+// Используем any, так как seo пробрасывается через passthrough и TS может ругаться
+const seo: any = product['seo'] || {}; 
 
 // Вычисляем мета-теги с фолбэками
+// 1. Title Strategy: seo.title -> product.title
 const pageTitle = seo.title || title;
 
-// Используем seo.description, если его нет -> берем masterNote (т.к. основного description в data больше нет)
+// 2. Description Strategy: seo.description -> masterNote (sliced) -> Default
 const pageDescription = seo.description 
     || (masterNote ? masterNote.slice(0, 160) : "Авторская керамика ручной работы. Уникальные изделия из глины.");
 
-// Картинки
+// 3. Image Strategy: seo.ogImage -> product.images[0] -> Default
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
 const galleryImages = images && images.length > 0 ? images : ['/images/placeholder.jpg'];
+
 const pageImage = seo.ogImage || mainImage || "/default-og.jpg";
 
 
@@ -220,7 +223,7 @@ const specMap: Record<string, string> = {
             </div>
 
             <ExpandableText maxHeight="140px" gradientFrom="from-hyle-surface">
-                <div class="prose prose-sm prose-stone prose-p:text-hyle-text/80 leading-relaxed font-light">
+                <div class="prose prose-stone prose-sm prose-p:text-hyle-text/80 leading-relaxed font-light">
                     <Content />
                 </div>
             </ExpandableText>

@@ -7,20 +7,25 @@ import Footer from '../components/Footer.astro';
 interface Props {
 	title: string;
 	description?: string;
-    image?: string; // Новый проп для OG картинки
+    image?: string; // OG Image URL (absolute or relative)
     hideHeader?: boolean;
 }
 
 const { 
     title, 
-    description = "Авторская керамика ручной работы. Эстетика минимализма и природных текстур.", 
-    image = "/default-og.jpg", // Дефолтная картинка, если не передана
+    description = "Авторская керамика ручной работы. Эстетика минимализма и природных текстур.",
+    image = "/default-og.jpg", // Fallback image
     hideHeader = false 
 } = Astro.props;
 
-// Формируем абсолютный URL для картинки (требование соцсетей)
-const socialImageURL = new URL(image, Astro.site);
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+// Формируем абсолютные URL для мета-тегов (важно для соцсетей)
+// Astro.site должен быть настроен в astro.config.mjs, иначе new URL(..., Astro.site) может упасть, 
+// поэтому добавим безопасную проверку или будем считать, что site настроен.
+// Для надежности используем Astro.url.origin если Astro.site не задан, но в SSG Astro.site обязателен.
+// Предполагаем, что Astro.site задан.
+const siteUrl = Astro.site || new URL('https://hyle-ceramics.com'); // Fallback domain
+const socialImageURL = new URL(image, siteUrl).href;
+const canonicalURL = new URL(Astro.url.pathname, siteUrl).href;
 ---
 
 <!doctype html>
@@ -42,14 +47,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={Astro.url} />
+        <meta property="og:url" content={canonicalURL} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:image" content={socialImageURL} />
 
         <!-- Twitter -->
         <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={Astro.url} />
+        <meta property="twitter:url" content={canonicalURL} />
         <meta property="twitter:title" content={title} />
         <meta property="twitter:description" content={description} />
         <meta property="twitter:image" content={socialImageURL} />
