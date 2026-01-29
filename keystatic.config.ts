@@ -1,23 +1,24 @@
 import { config, fields, collection, singleton } from '@keystatic/core';
-import { component, fields as componentFields } from '@keystatic/core/component-blocks';
 
 // --- ОПРЕДЕЛЕНИЕ КАСТОМНЫХ БЛОКОВ ---
 
-const productCardBlock = component({
+// ФИКС: Определяем блок как простой объект, без функции component()
+// Это предотвращает ошибку импорта при сборке
+const productCardBlock = {
   label: '🛍️ Карточка товара',
   schema: {
-    item: componentFields.relationship({
+    item: fields.relationship({
       label: 'Выберите товар',
       collection: 'products',
       validation: { isRequired: true },
     }),
   },
-  preview: (props) => {
+  preview: (props: any) => {
     return props.fields.item.value 
       ? `📦 Вставлен товар: ${props.fields.item.value}` 
       : '⚠️ Выберите товар...';
   },
-});
+};
 
 export default config({
   storage: import.meta.env.PROD
@@ -108,7 +109,7 @@ export default config({
       format: { contentField: 'description' },
       columns: ['title', 'status', 'price', 'category'],
       schema: {
-        // --- SEO BLOCK ---
+        // --- ГРУППА SEO ---
         seo: fields.object({
           title: fields.text({ 
             label: 'SEO Заголовок (Title)', 
@@ -178,27 +179,25 @@ export default config({
       format: { contentField: 'content' },
       columns: ['title', 'pubDate'],
       schema: {
-        // --- SEO BLOCK ---
+        // --- ГРУППА SEO ДЛЯ БЛОГА ---
         seo: fields.object({
           title: fields.text({ 
             label: 'SEO Заголовок (Title)', 
-            description: 'Если пусто — берем название статьи. (Макс 60)',
+            description: 'Если пусто — берем название статьи.',
             validation: { length: { max: 60 } }
           }),
           description: fields.text({ 
             label: 'SEO Описание (Meta Description)', 
             multiline: true, 
-            description: 'Серый текст в Google. (Макс 160)',
             validation: { length: { max: 160 } }
           }),
           ogImage: fields.image({ 
             label: 'Картинка для соцсетей (OG:Image)', 
-            description: 'Если пусто — берем обложку статьи.',
             directory: 'public/images/blog/seo', 
             publicPath: '/images/blog/seo/' 
           }),
         }, { label: '🔍 SEO Настройки' }),
-        // -----------------
+        // ----------------------------
 
         title: fields.slug({ name: { label: 'Заголовок' } }),
         pubDate: fields.date({ label: 'Дата', defaultValue: { kind: 'today' } }),
@@ -216,6 +215,7 @@ export default config({
           formatting: true,
           images: { directory: 'public/images/blog/content', publicPath: '/images/blog/content/' },
           
+          // Подключаем блок как объект
           componentBlocks: {
             productCard: productCardBlock, 
           },
