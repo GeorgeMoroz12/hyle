@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { title, price, images, specs, status, masterNote, care_instructions, category, tags, isSale, oldPrice } = entry.data;
+const { title, price, images, specs, status, masterNote, care_instructions, category, tags, isSale, oldPrice, description, seo } = entry.data;
 const { Content } = await entry.render();
 
 const resolveId = (item: any) => {
@@ -25,7 +25,7 @@ const resolveId = (item: any) => {
     return null;
 };
 
-// --- DATA LOGIC: CATEGORY ---
+// Data Logic
 const currentCategoryId = resolveId(category);
 let categoryTitle = 'Каталог';
 if (currentCategoryId) {
@@ -35,7 +35,6 @@ if (currentCategoryId) {
     } catch (e) { categoryTitle = currentCategoryId; }
 }
 
-// --- DATA LOGIC: TAGS ---
 const rawTags = Array.isArray(tags) ? tags : [];
 const tagIdsToLoad = rawTags.map(resolveId).filter(id => id !== null);
 let displayTags = [];
@@ -49,7 +48,6 @@ if (tagIdsToLoad.length > 0) {
     }
 }
 
-// --- DATA LOGIC: RELATED PRODUCTS ---
 const allProducts = await getCollection('products');
 const relatedProducts = allProducts.filter(p => {
     if (p.id === entry.id) return false;
@@ -72,10 +70,8 @@ const categoryMap = allCategories.reduce((acc, cat) => {
     return acc;
 }, {} as Record<string, string>);
 
-// --- UI HELPERS ---
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'Цена по запросу';
 const formattedOldPrice = oldPrice ? `${oldPrice.toLocaleString('ru-RU')} ₽` : '';
-
 const s = status?.toLowerCase() || '';
 const isSoldOut = s === 'sold' || s === 'продано';
 const showSale = isSale && oldPrice && !isSoldOut;
@@ -89,85 +85,58 @@ const specMap: Record<string, string> = {
     'size': 'Размер', 'volume': 'Объем', 'material': 'Материал',
     'weight': 'Вес', 'color': 'Цвет', 'technique': 'Техника'
 };
+
+// SEO PREP
+// Если нет явного SEO, берем данные из товара
+const seoTitle = title;
+const seoDesc = description || `Купить ${title} ручной работы.`;
+const seoImage = mainImage;
+
 ---
 
-<Layout title={title} hideHeader={true}>
+<Layout 
+    title={seoTitle} 
+    description={seoDesc} 
+    image={seoImage} 
+    seo={seo}
+    hideHeader={true}
+>
   
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
-    
-    <!-- LEFT: PRODUCT STAGE (IMAGE) -->
+    <!-- LEFT: PRODUCT STAGE -->
     <div class="relative w-full lg:w-[70%] h-[70vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
-        
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">
-            Hyle.
-        </a>
-        
-        <!-- BREADCRUMBS -->
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">Hyle.</a>
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
-             {categoryTitle && (
-                <>
-                    <span class="text-hyle-text/30">/</span>
-                    <a href={`/catalog?categories=${currentCategoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">
-                        {categoryTitle}
-                    </a>
-                </>
-             )}
+             {categoryTitle && <><span class="text-hyle-text/30">/</span><a href={`/catalog?categories=${currentCategoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">{categoryTitle}</a></>}
         </div>
-
-        <!-- DESKTOP IMAGE (ZOOM + Lightbox) -->
         <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group">
-             <img 
-                src={mainImage} 
-                alt={title} 
-                id="main-product-image" 
-                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl lightbox-trigger" 
-                data-src={mainImage}
-            />
+             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl lightbox-trigger" data-src={mainImage}/>
         </div>
-
-        <!-- MOBILE GALLERY (Native Scroll + Lightbox) -->
         <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" id="mobile-gallery">
             {galleryImages.map((img) => (
                 <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative">
-                    <img 
-                        src={img} 
-                        alt={title} 
-                        class="max-w-full max-h-full object-contain drop-shadow-lg lightbox-trigger"
-                        data-src={img} 
-                    />
+                    <img src={img} alt={title} class="max-w-full max-h-full object-contain drop-shadow-lg lightbox-trigger" data-src={img} />
                 </div>
             ))}
         </div>
-        
-        <!-- Pagination Dots -->
         {galleryImages.length > 1 && (
             <div class="lg:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20 pointer-events-none">
-                {galleryImages.map((_, idx) => (
-                    <div class="w-1.5 h-1.5 rounded-full bg-hyle-text/20"></div>
-                ))}
+                {galleryImages.map((_, idx) => <div class="w-1.5 h-1.5 rounded-full bg-hyle-text/20"></div>)}
             </div>
         )}
-
-        <!-- Desktop Thumbnails -->
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
-                    <button 
-                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" 
-                        data-src={img}
-                    >
-                        <img src={img} class="w-full h-full object-cover" />
-                    </button>
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}><img src={img} class="w-full h-full object-cover" /></button>
                 ))}
             </div>
         )}
     </div>
 
-    <!-- RIGHT: SIDEBAR (INFO) -->
+    <!-- RIGHT: SIDEBAR -->
     <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface/90 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
-            
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
@@ -177,68 +146,42 @@ const specMap: Record<string, string> = {
                     </div>
                     {isSoldOut && <span class="text-[10px] border border-hyle-text/20 px-2 py-1 uppercase tracking-widest opacity-50 mt-1 shrink-0 text-hyle-text">Архив</span>}
                 </div>
-                
                 <div class="flex flex-col gap-2 mt-4 lg:mt-6 border-b border-hyle-text/5 pb-6">
-                    {/* PRICE BLOCK */}
                     {showSale ? (
-                        <div class="flex flex-col gap-1">
-                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-sans font-bold uppercase tracking-widest text-white px-2 py-0.5 bg-[#B35A32] rounded-sm">Акция</span>
-                                <span class="font-mono text-sm text-hyle-text/40 line-through decoration-hyle-text/30">
-                                    {formattedOldPrice}
-                                </span>
-                             </div>
-                             <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-[#B35A32] -rotate-2 inline-block origin-left">
-                                {formattedPrice}
-                             </span>
+                        <div class="flex items-baseline gap-4">
+                             <span class="font-mono text-sm text-hyle-text/40 line-through decoration-hyle-text/30">{formattedOldPrice}</span>
+                             <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-[#B35A32] -rotate-2 inline-block origin-left">{formattedPrice}</span>
                         </div>
                     ) : (
-                        <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">
-                            {formattedPrice}
-                        </span>
+                        <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-hyle-clay -rotate-2 inline-block origin-left">{formattedPrice}</span>
                     )}
-                    
-                    {!isSoldOut && status !== 'В наличии' && (
-                        <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>
-                    )}
-                    
-                    {/* TAGS */}
+                    {!isSoldOut && status !== 'В наличии' && <span class="text-xs text-hyle-text/40 uppercase tracking-widest mt-1">{status}</span>}
                     {displayTags.length > 0 && (
                         <div class="flex flex-wrap gap-3 mt-2">
                             {displayTags.map((tag) => (
-                                <a href={`/catalog?tag=${tag.id}`} class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0">
-                                    #{tag.title}
-                                </a>
+                                <a href={`/catalog?tag=${tag.id}`} class="text-base lg:text-lg font-hand text-hyle-text/50 hover:text-hyle-clay transition-colors -rotate-2 hover:rotate-0">#{tag.title}</a>
                             ))}
                         </div>
                     )}
                 </div>
             </div>
-
-            <!-- Master Note -->
             <div class="bg-hyle-text/5 p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-text/5 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
                  <ExpandableText maxHeight="120px" gradientFrom="from-hyle-surface">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">"{noteText}"</p>
                  </ExpandableText>
             </div>
-
-            <!-- Description (Content) -->
             <ExpandableText maxHeight="140px" gradientFrom="from-hyle-surface">
                 <div class="prose prose-stone prose-sm prose-p:text-hyle-text/80 leading-relaxed font-light">
                     <Content />
                 </div>
             </ExpandableText>
-
-            <!-- Specs & Care -->
             <div class="border-t border-hyle-text/10 pt-4 lg:pt-6">
                 {specs && (
                     <dl class="text-xs grid grid-cols-2 gap-y-3 opacity-70 mb-4 text-hyle-text">
                         {Object.entries(specs).map(([key, value]) => (
                             <>
-                                <dt class="font-medium uppercase tracking-wider text-hyle-text/60">
-                                    {specMap[key.toLowerCase()] || key}
-                                </dt>
+                                <dt class="font-medium uppercase tracking-wider text-hyle-text/60">{specMap[key.toLowerCase()] || key}</dt>
                                 <dd>{value}</dd>
                             </>
                         ))}
@@ -254,8 +197,6 @@ const specMap: Record<string, string> = {
                     </details>
                 )}
             </div>
-
-            <!-- CTA -->
             <div class="mt-2">
                  {isSoldOut ? (
                     <button disabled class="w-full py-4 bg-hyle-text/10 text-hyle-text/40 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
@@ -263,8 +204,6 @@ const specMap: Record<string, string> = {
                     <OrderButton productName={title} price={price} url={currentUrl} />
                 )}
             </div>
-
-            <!-- RELATED PRODUCTS (SCROLL) -->
             <div class="mt-8 lg:mt-auto pt-8 border-t border-hyle-text/5 pb-8 lg:pb-0">
                 <div class="flex justify-between items-baseline mb-4">
                     <h3 class="font-hand text-xl lg:text-2xl text-hyle-text/60">Вам может понравиться:</h3>
@@ -283,55 +222,24 @@ const specMap: Record<string, string> = {
             </div>
         </div>
     </div>
-  </div>
 
-  <!-- LIGHTBOX OVERLAY -->
-  <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 hidden flex items-center justify-center opacity-0 transition-opacity duration-300 cursor-zoom-out">
+    <!-- Lightbox, Scripts ... (Same as before) -->
+    <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 hidden flex items-center justify-center opacity-0 transition-opacity duration-300 cursor-zoom-out">
       <button id="lightbox-close" class="absolute top-6 right-6 text-white/70 hover:text-white p-4">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
       <img id="lightbox-img" src="" alt="Full view" class="max-w-[95vw] max-h-[90vh] object-contain transition-transform duration-300" />
+    </div>
   </div>
-
 </Layout>
 
 <script>
-    // 1. DESKTOP ZOOM (HOVER LOUPE)
-    const container = document.querySelector('.zoom-container');
-    const img = document.getElementById('main-product-image');
-
-    if (container && img) {
-        container.addEventListener('mousemove', (e) => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                // @ts-ignore
-                const { left, top, width, height } = container.getBoundingClientRect();
-                // @ts-ignore
-                const x = ((e.clientX - left) / width) * 100;
-                // @ts-ignore
-                const y = ((e.clientY - top) / height) * 100;
-                
-                img.style.transformOrigin = `${x}% ${y}%`;
-                img.style.transform = 'scale(2.0)';
-            }
-        });
-
-        container.addEventListener('mouseleave', () => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                img.style.transform = 'scale(1)';
-                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
-            }
-        });
-    }
-
-    // 2. LIGHTBOX
+    // ... Scripts (Zoom, Lightbox, Thumbs, Wheel) ...
+    // LIGHTBOX
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxClose = document.getElementById('lightbox-close');
     const triggers = document.querySelectorAll('.lightbox-trigger');
-
     function openLightbox(src) {
         if (lightbox && lightboxImg) {
             // @ts-ignore
@@ -341,7 +249,6 @@ const specMap: Record<string, string> = {
             document.body.style.overflow = 'hidden';
         }
     }
-
     function closeLightbox() {
         if (lightbox) {
             lightbox.classList.add('opacity-0');
@@ -353,40 +260,35 @@ const specMap: Record<string, string> = {
             }, 300);
         }
     }
-
     triggers.forEach(trigger => {
         trigger.addEventListener('click', (e) => {
-            // Если десктоп - открываем по клику. На мобайле нативное поведение скролла в приоритете,
-            // но если нажали на конкретное фото - открываем.
             e.stopPropagation();
             const src = trigger.getAttribute('data-src') || trigger.getAttribute('src');
             if (src) openLightbox(src);
         });
     });
-
     if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
     if (lightbox) {
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox || e.target === lightboxImg) closeLightbox();
         });
     }
-
-    // 3. THUMBNAILS
+    // THUMBS
     const thumbs = document.querySelectorAll('.thumb-btn');
+    const mainImg = document.getElementById('main-product-image');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
-            if (img && src) {
+            if (mainImg && src) {
                 // @ts-ignore
-                img.src = src;
-                img.setAttribute('data-src', src);
+                mainImg.src = src;
+                mainImg.setAttribute('data-src', src);
             }
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
-
-    // 4. WHEEL SCROLL
+    // WHEEL
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
@@ -396,4 +298,49 @@ const specMap: Record<string, string> = {
             }
         }, { passive: false });
     }
+    // ZOOM DESKTOP
+    const container = document.querySelector('.zoom-container');
+    const img = document.getElementById('main-product-image');
+    if (container && img) {
+        container.addEventListener('mousemove', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { left, top, width, height } = container.getBoundingClientRect();
+                // @ts-ignore
+                const x = ((e.clientX - left) / width) * 100;
+                // @ts-ignore
+                const y = ((e.clientY - top) / height) * 100;
+                img.style.transformOrigin = `${x}% ${y}%`;
+                img.style.transform = 'scale(1.5)';
+            }
+        });
+        container.addEventListener('mouseleave', () => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                img.style.transform = 'scale(1)';
+                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
+            }
+        });
+    }
 </script>
+
+<!-- SCHEMA.ORG -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": title,
+  "description": description ? description.substring(0, 160) : `Авторская керамика ручной работы Hyle: ${title}. ${price}₽.`,
+  "image": mainImage,
+  "sku": entry.slug,
+  "brand": {
+    "@type": "Brand",
+    "name": "Hyle Ceramics"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": currentUrl,
+    "priceCurrency": "RUB",
+    "price": price,
+    "availability": isSoldOut ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition"
+  }
+})} />

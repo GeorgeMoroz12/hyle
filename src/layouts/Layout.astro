@@ -5,27 +5,36 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 interface Props {
-	title: string;
-	description?: string;
-    image?: string; // OG Image URL (absolute or relative)
+	title?: string;       // Fallback заголовок
+	description?: string; // Fallback описание
+    image?: string;       // Fallback картинка
+    seo?: {               // Объект из CMS
+        title?: string;
+        description?: string;
+        ogImage?: string;
+    };
     hideHeader?: boolean;
 }
 
 const { 
-    title, 
-    description = "Авторская керамика ручной работы. Эстетика минимализма и природных текстур.",
-    image = "/default-og.jpg", // Fallback image
+    title = "Керамика ручной работы", 
+    description = "Авторская керамика ручной работы Hyle. Посуда с характером, созданная в тишине.", 
+    image = "/images/hero-minimal.jpg",
+    seo = {}, 
     hideHeader = false 
 } = Astro.props;
 
-// Формируем абсолютные URL для мета-тегов (важно для соцсетей)
-// Astro.site должен быть настроен в astro.config.mjs, иначе new URL(..., Astro.site) может упасть, 
-// поэтому добавим безопасную проверку или будем считать, что site настроен.
-// Для надежности используем Astro.url.origin если Astro.site не задан, но в SSG Astro.site обязателен.
-// Предполагаем, что Astro.site задан.
-const siteUrl = Astro.site || new URL('https://hyle-ceramics.com'); // Fallback domain
-const socialImageURL = new URL(image, siteUrl).href;
-const canonicalURL = new URL(Astro.url.pathname, siteUrl).href;
+// --- CASCADE LOGIC ---
+// 1. Берем из SEO-блока CMS
+// 2. Если нет — берем проп title/description (переданный со страницы)
+// 3. Если нет — дефолтные значения (выше)
+const finalTitle = seo.title || title;
+const finalDescription = seo.description || description;
+const finalImage = seo.ogImage || image;
+
+// Формируем полный URL для OG картинки
+const siteUrl = Astro.site ? Astro.site.href : 'https://hyle-ceramics.com'; // Замените на реальный домен
+const ogImageUrl = finalImage.startsWith('http') ? finalImage : new URL(finalImage, siteUrl).href;
 ---
 
 <!doctype html>
@@ -34,30 +43,30 @@ const canonicalURL = new URL(Astro.url.pathname, siteUrl).href;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        
+        <!-- PRIMARY META -->
+		<title>{finalTitle} | Hyle.</title>
+		<meta name="title" content={finalTitle} />
+		<meta name="description" content={finalDescription} />
+
+        <!-- OPEN GRAPH / FACEBOOK -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={Astro.url.href} />
+        <meta property="og:title" content={finalTitle} />
+        <meta property="og:description" content={finalDescription} />
+        <meta property="og:image" content={ogImageUrl} />
+
+        <!-- TWITTER -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={Astro.url.href} />
+        <meta property="twitter:title" content={finalTitle} />
+        <meta property="twitter:description" content={finalDescription} />
+        <meta property="twitter:image" content={ogImageUrl} />
 		
-        <!-- Fonts -->
+        <!-- FONTS -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-
-        <!-- SEO / Meta Tags -->
-		<title>{title} | Hyle Ceramics</title>
-		<meta name="description" content={description} />
-        <link rel="canonical" href={canonicalURL} />
-
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalURL} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:image" content={socialImageURL} />
-
-        <!-- Twitter -->
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={canonicalURL} />
-        <meta property="twitter:title" content={title} />
-        <meta property="twitter:description" content={description} />
-        <meta property="twitter:image" content={socialImageURL} />
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;500;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 	</head>
 	<body class="flex flex-col min-h-screen antialiased selection:bg-hyle-clay/20 selection:text-hyle-text">
 		
