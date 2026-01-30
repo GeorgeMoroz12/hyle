@@ -9,12 +9,11 @@ interface Props {
 }
 
 const { product, categoryName } = Astro.props;
-// Добавили маркетинговые поля: isSale, oldPrice
+// FIX: Достаем маркетинговые поля
 const { title, price, images, status, tags, isSale, oldPrice } = product.data;
 
 const mainImage = images && images.length > 0 ? images[0] : '/images/placeholder.jpg';
 const formattedPrice = price > 0 ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
-const formattedOldPrice = oldPrice ? `${oldPrice.toLocaleString('ru-RU')} ₽` : '';
 
 const s = status?.toLowerCase() || '';
 const isSold = s === 'sold' || s === 'продано';
@@ -62,19 +61,17 @@ const productUrl = `/products/${product.slug}`;
 <div class="group relative w-full flex flex-col">
   
   <a href={productUrl} class="block relative overflow-hidden aspect-square bg-hyle-surface rounded-sm mb-3 cursor-pointer">
-    
-    <!-- Badges (Top Left) -->
     <div class="absolute top-2 left-2 z-30 flex flex-col gap-1 items-start">
         {(isSold || isReserved) && (
-            <span class="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
+        <span class="text-[9px] font-sans font-medium uppercase tracking-[0.2em] text-hyle-text px-2 py-1 bg-white/90 backdrop-blur-md border border-hyle-text/10 shadow-sm">
             {isSold ? 'Продано' : 'Резерв'}
-            </span>
+        </span>
         )}
         
-        <!-- SALE BADGE -->
+        <!-- АКЦИЯ -->
         {showSale && (
             <span class="text-[9px] font-sans font-bold uppercase tracking-[0.1em] text-white px-2 py-1 bg-[#B35A32] shadow-sm">
-            Sale
+            Акция
             </span>
         )}
     </div>
@@ -106,23 +103,14 @@ const productUrl = `/products/${product.slug}`;
         )}
     </div>
     
-    <!-- PRICE BLOCK (UPDATED FOR SALE) -->
     <div class="flex flex-col items-end shrink-0 pl-1 pt-1">
         {showSale ? (
-            <>
-                <!-- Old Price -->
-                <span class="font-mono text-[10px] text-hyle-text/40 line-through decoration-hyle-text/30 mb-0.5">
-                    {formattedOldPrice}
-                </span>
-                <!-- Sale Price (Accent Color) -->
-                <span class="font-hand text-lg md:text-2xl text-[#B35A32] font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
-                    {formattedPrice}
-                </span>
-            </>
+            <span class="font-hand text-lg md:text-2xl text-[#B35A32] font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
+            {formattedPrice}
+            </span>
         ) : (
-            // Standard Price
             <span class="font-hand text-lg md:text-2xl text-hyle-clay font-medium whitespace-nowrap -rotate-2 group-hover:rotate-0 transition-transform origin-center">
-                {formattedPrice}
+            {formattedPrice}
             </span>
         )}
     </div>

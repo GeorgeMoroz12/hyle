@@ -102,7 +102,7 @@ const specMap: Record<string, string> = {
             Hyle.
         </a>
         
-        <!-- BREADCRUMBS: FIXED (No product title) -->
+        <!-- BREADCRUMBS -->
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
              {categoryTitle && (
@@ -115,7 +115,7 @@ const specMap: Record<string, string> = {
              )}
         </div>
 
-        <!-- DESKTOP IMAGE (Click to Lightbox) -->
+        <!-- DESKTOP IMAGE (ZOOM + Lightbox) -->
         <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group">
              <img 
                 src={mainImage} 
@@ -127,7 +127,6 @@ const specMap: Record<string, string> = {
         </div>
 
         <!-- MOBILE GALLERY (Native Scroll + Lightbox) -->
-        <!-- FIX: Убрали touch-none, чтобы работал скролл. Добавили lightbox-trigger -->
         <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" id="mobile-gallery">
             {galleryImages.map((img) => (
                 <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative">
@@ -172,7 +171,6 @@ const specMap: Record<string, string> = {
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <!-- Заголовок товара -->
                         <ExpandableText maxHeight="80px" gradientFrom="from-hyle-surface">
                             <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">{title}</h1>
                         </ExpandableText>
@@ -183,10 +181,13 @@ const specMap: Record<string, string> = {
                 <div class="flex flex-col gap-2 mt-4 lg:mt-6 border-b border-hyle-text/5 pb-6">
                     {/* PRICE BLOCK */}
                     {showSale ? (
-                        <div class="flex items-baseline gap-4">
-                             <span class="font-mono text-sm text-hyle-text/40 line-through decoration-hyle-text/30">
-                                {formattedOldPrice}
-                             </span>
+                        <div class="flex flex-col gap-1">
+                             <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-sans font-bold uppercase tracking-widest text-white px-2 py-0.5 bg-[#B35A32] rounded-sm">Акция</span>
+                                <span class="font-mono text-sm text-hyle-text/40 line-through decoration-hyle-text/30">
+                                    {formattedOldPrice}
+                                </span>
+                             </div>
                              <span class="font-hand text-3xl md:text-4xl lg:text-5xl text-[#B35A32] -rotate-2 inline-block origin-left">
                                 {formattedPrice}
                              </span>
@@ -286,22 +287,46 @@ const specMap: Record<string, string> = {
 
   <!-- LIGHTBOX OVERLAY -->
   <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 hidden flex items-center justify-center opacity-0 transition-opacity duration-300 cursor-zoom-out">
-      <!-- Close Button -->
       <button id="lightbox-close" class="absolute top-6 right-6 text-white/70 hover:text-white p-4">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
       </button>
-      
-      <!-- Image -->
       <img id="lightbox-img" src="" alt="Full view" class="max-w-[95vw] max-h-[90vh] object-contain transition-transform duration-300" />
   </div>
 
 </Layout>
 
 <script>
-    // 1. LIGHTBOX LOGIC
+    // 1. DESKTOP ZOOM (HOVER LOUPE)
+    const container = document.querySelector('.zoom-container');
+    const img = document.getElementById('main-product-image');
+
+    if (container && img) {
+        container.addEventListener('mousemove', (e) => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                // @ts-ignore
+                const { left, top, width, height } = container.getBoundingClientRect();
+                // @ts-ignore
+                const x = ((e.clientX - left) / width) * 100;
+                // @ts-ignore
+                const y = ((e.clientY - top) / height) * 100;
+                
+                img.style.transformOrigin = `${x}% ${y}%`;
+                img.style.transform = 'scale(2.0)';
+            }
+        });
+
+        container.addEventListener('mouseleave', () => {
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                img.style.transform = 'scale(1)';
+                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
+            }
+        });
+    }
+
+    // 2. LIGHTBOX
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxClose = document.getElementById('lightbox-close');
@@ -312,9 +337,8 @@ const specMap: Record<string, string> = {
             // @ts-ignore
             lightboxImg.src = src;
             lightbox.classList.remove('hidden');
-            // Небольшая задержка для анимации opacity
             setTimeout(() => lightbox.classList.remove('opacity-0'), 10);
-            document.body.style.overflow = 'hidden'; // Блокируем скролл фона
+            document.body.style.overflow = 'hidden';
         }
     }
 
@@ -324,15 +348,17 @@ const specMap: Record<string, string> = {
             setTimeout(() => {
                 lightbox.classList.add('hidden');
                 // @ts-ignore
-                if(lightboxImg) lightboxImg.src = ''; // Чистим
-                document.body.style.overflow = ''; // Разблокируем скролл
+                if(lightboxImg) lightboxImg.src = '';
+                document.body.style.overflow = '';
             }, 300);
         }
     }
 
     triggers.forEach(trigger => {
         trigger.addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы не триггерить другие клики
+            // Если десктоп - открываем по клику. На мобайле нативное поведение скролла в приоритете,
+            // но если нажали на конкретное фото - открываем.
+            e.stopPropagation();
             const src = trigger.getAttribute('data-src') || trigger.getAttribute('src');
             if (src) openLightbox(src);
         });
@@ -345,24 +371,22 @@ const specMap: Record<string, string> = {
         });
     }
 
-    // 2. THUMBNAILS (Desktop)
+    // 3. THUMBNAILS
     const thumbs = document.querySelectorAll('.thumb-btn');
-    const mainImg = document.getElementById('main-product-image');
-    
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
-            if (mainImg && src) {
+            if (img && src) {
                 // @ts-ignore
-                mainImg.src = src;
-                mainImg.setAttribute('data-src', src); // Обновляем для лайтбокса
+                img.src = src;
+                img.setAttribute('data-src', src);
             }
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
 
-    // 3. HORIZONTAL WHEEL SCROLL (Related Products)
+    // 4. WHEEL SCROLL
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
