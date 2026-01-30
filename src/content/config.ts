@@ -34,7 +34,7 @@ const landing = defineCollection({
 // 4. Товары
 const products = defineCollection({
   type: 'content', 
-  schema: z.object({
+  : z.object({
     title: z.string(),
     sortOrder: z.number().optional().default(0),
     price: z.any().transform(v => isNaN(Number(v)) ? 0 : Number(v)).optional(),
