@@ -21,55 +21,26 @@ export default config({
     : { kind: 'local' },
 
   singletons: {
-    // 1. НАСТРОЙКИ
-    settings: singleton({
-      label: '⚙️ Настройки сайта',
-      path: 'src/content/settings/main',
-      schema: {
-        siteTitle: fields.text({ label: 'Название сайта', defaultValue: 'Hyle Ceramics' }),
-        telegramUser: fields.text({ label: 'Ник Telegram', description: 'Без @' }),
-        socialLinks: fields.array(
-          fields.object({
-            label: fields.text({ label: 'Название' }),
-            url: fields.url({ label: 'Ссылка' }),
-          }),
-          { label: 'Соцсети', itemLabel: (props) => props.fields.label.value }
-        ),
-        footerText: fields.text({ label: 'Футер', multiline: true }),
-      }
-    }),
-
-    // 2. LANDING
+    // 1. LANDING (Вернули классический вид)
     landing: singleton({
       label: 'Главная страница',
       path: 'src/content/landing/home',
       schema: {
-        // НОВОЕ: Слайдер
-        heroSlides: fields.array(
-          fields.object({
-            image: fields.image({
-              label: 'Фото',
-              directory: 'public/images/landing',
-              publicPath: '/images/landing/',
-              validation: { isRequired: true }
-            }),
-            titleLine1: fields.text({ label: 'Заголовок 1' }),
-            titleAccent: fields.text({ label: 'Акцент' }),
-            titleLine2: fields.text({ label: 'Заголовок 2' }),
-            description: fields.text({ label: 'Описание', multiline: true }),
-          }),
-          { label: '📸 Слайдер Hero', itemLabel: (props) => props.fields.titleLine1.value || 'Слайд' }
-        ),
+        // HERO СЕКЦИЯ (Одиночная)
+        heroTitleLine1: fields.text({ label: 'Hero: Заголовок 1', defaultValue: 'Глина' }),
+        heroTitleAccent: fields.text({ label: 'Hero: Акцент', defaultValue: 'хранит' }),
+        heroTitleLine2: fields.text({ label: 'Hero: Заголовок 2', defaultValue: 'тепло.' }),
+        
+        heroDescription: fields.text({ label: 'Hero: Описание', multiline: true }),
+        
+        heroImage: fields.image({
+            label: 'Hero: Фото',
+            directory: 'public/images/landing',
+            publicPath: '/images/landing/',
+            validation: { isRequired: true }
+        }),
 
-        // --- LEGACY FIELDS (ВЕРНУЛИ, ЧТОБЫ ПОЧИНИТЬ ОШИБКУ) ---
-        // Эти поля остались в JSON-файле, поэтому они обязаны быть в конфиге
-        heroTitleLine1: fields.text({ label: '⚠️ Old: Заголовок 1' }), 
-        heroTitleAccent: fields.text({ label: '⚠️ Old: Акцент' }),      // <--- Вернули
-        heroTitleLine2: fields.text({ label: '⚠️ Old: Заголовок 2' }),  // <--- Вернули
-        heroDescription: fields.text({ label: '⚠️ Old: Описание', multiline: true }), // <--- Вернули
-        heroImage: fields.image({ label: '⚠️ Old: Фото', directory: 'public/images/landing', publicPath: '/images/landing/' }),
-        // -----------------------------------------------------
-
+        // WORKSHOP СЕКЦИЯ
         workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
         workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
         workshopImage: fields.image({
@@ -77,23 +48,16 @@ export default config({
             directory: 'public/images/landing',
             publicPath: '/images/landing/'
         }),
-        faq: fields.array(
-          fields.object({
-            question: fields.text({ label: 'Вопрос' }),
-            answer: fields.text({ label: 'Ответ', multiline: true }),
-          }),
-          { label: '❓ FAQ', itemLabel: (props) => props.fields.question.value || 'Вопрос' }
-        ),
       },
     }),
 
-    // 3. ABOUT
+    // 2. ABOUT
     about: singleton({
       label: 'О Мастере',
       path: 'src/content/about/main',
       format: { contentField: 'content' },
       schema: {
-        title: fields.text({ label: 'Заголовок' }),
+        title: fields.text({ label: 'Заголовок', defaultValue: 'О Мастере' }),
         heroImage: fields.image({
           label: 'Фото мастера',
           directory: 'public/images/about',
@@ -110,7 +74,7 @@ export default config({
       },
     }),
 
-    // 4. B2B
+    // 3. B2B
     b2b: singleton({
       label: 'Страница B2B',
       path: 'src/content/b2b/main',
