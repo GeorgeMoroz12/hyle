@@ -1,109 +1,91 @@
 import { defineCollection, z, reference } from 'astro:content';
 
-// 1. Справочники (ТЕГИ И КАТЕГОРИИ)
-// ФИКС: Меняем type с 'content' на 'data', так как физически это YAML/JSON файлы.
+// 1. Справочники
 const tags = defineCollection({
-  type: 'data', // <--- БЫЛО: 'content', СТАЛО: 'data'
-  schema: z.object({ 
-    title: z.string(), 
-  }).passthrough(),
+  type: 'data', 
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
 const categories = defineCollection({
-  type: 'data', // <--- БЫЛО: 'content', СТАЛО: 'data'
-  schema: z.object({ 
-    title: z.string(), 
+  type: 'data', 
+  schema: z.object({ title: z.string() }).passthrough(),
+});
+
+// 2. Настройки
+const settings = defineCollection({
+  type: 'data',
+  schema: z.object({
+    siteTitle: z.string().optional(),
+    telegramUser: z.string().optional(),
+    // ...
   }).passthrough(),
 });
 
-// 2. Товары (Products) — Остаются 'content', так как у них есть тело статьи (.mdoc)
+// 3. Landing
+const landing = defineCollection({
+  type: 'data',
+  schema: z.object({
+    heroSlides: z.array(z.any()).optional(),
+    faq: z.array(z.any()).optional(),
+    // ...
+  }).passthrough(),
+});
+
+// 4. Товары
 const products = defineCollection({
   type: 'content', 
   schema: z.object({
     title: z.string(),
-    price: z.any().optional(),
+    sortOrder: z.number().optional().default(0),
+    price: z.any().transform(v => isNaN(Number(v)) ? 0 : Number(v)).optional(),
     
-    // Ссылки работают одинаково и для 'content', и для 'data' коллекций
-    category: z.union([
-        reference('categories'),
-        z.string(),
-        z.null(),
-        z.undefined()
-    ]).optional(),
-
-    tags: z.union([
-        z.array(z.union([reference('tags'), z.string(), z.null()])),
-        z.null(),
-        z.undefined()
-    ]).optional(),
-
-    // Остальные поля...
+    // МАРКЕТИНГ
+    isNew: z.boolean().optional().default(false),  // Новинка
+    isSale: z.boolean().optional().default(false), // Акция
+    oldPrice: z.number().optional(),               // Старая цена
+    
+    category: z.union([reference('categories'), z.string(), z.null(), z.undefined()]).optional(),
+    tags: z.union([z.array(z.union([reference('tags'), z.string(), z.null()])), z.null(), z.undefined()]).optional(),
     images: z.array(z.string()).default([]),
-    image: z.any().optional(),
     relatedProducts: z.any().optional(),
     specs: z.any().optional(),
     status: z.any().optional(),
     description: z.any().optional(),
     careInstructions: z.any().optional(),
     masterNote: z.any().optional(),
+    seo: z.any().optional(),
     
     // Legacy
     inStock: z.any().optional(),
-    isNew: z.any().optional(),
+    // isNew (старый) конфликтует по имени, но так как мы используем passthrough, 
+    // z.boolean() выше обработает и старые, и новые значения, если они были булевыми.
     care: z.any().optional(),
   }).passthrough(),
 });
 
-// 3. Блог — 'content' (это статьи)
+// ... About, Blog, B2B без изменений
+const about = defineCollection({
+  type: 'content', 
+  schema: z.object({ title: z.string().default('О Мастере'), heroImage: z.string().optional() }).passthrough(),
+});
+
 const blog = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    pubDate: z.union([z.string(), z.date()])
-      .transform((str) => new Date(str))
-      .optional(), 
+    pubDate: z.any().optional(),
     coverImage: z.string().optional(),
     relatedProducts: z.any().optional(),
     tags: z.any().optional(),
+    seo: z.any().optional(),
   }).passthrough(),
 });
 
-// 4. О Мастере — 'content' (это статья)
-const about = defineCollection({
-  type: 'content', 
-  schema: z.object({
-    title: z.string().default('О Мастере'),
-    heroImage: z.string().optional(),
-  }).passthrough(),
-});
-
-// 5. Landing — 'data' (JSON)
-const landing = defineCollection({
-  type: 'data',
-  schema: z.object({
-    heroTitleLine1: z.string().optional(),
-    heroImage: z.string().optional(),
-    workshopTitle: z.string().optional(),
-    workshopText: z.string().optional(),
-    workshopImage: z.string().optional(),
-  }).passthrough(),
-});
-
-// 6. B2B — 'data' (JSON)
 const b2b = defineCollection({
   type: 'data',
-  schema: z.object({
-    title: z.string(),
-    contactButtonText: z.string().optional(),
-  }).passthrough(),
+  schema: z.object({ title: z.string() }).passthrough(),
 });
 
 export const collections = {
-  products,
-  tags,
-  categories,
-  blog,
-  about, 
-  landing,
-  b2b,
+  products, tags, categories, blog, about, landing, b2b, settings
 };
