@@ -15,24 +15,40 @@ const productCardBlock = {
     : '⚠️ Выберите товар...',
 };
 
+// --- HELPER: SEO Fields ---
+// Чтобы не дублировать код, вынесем настройки SEO в функцию
+const seoFields = {
+  seo: fields.object({
+    title: fields.text({ 
+      label: 'SEO Заголовок (Title)', 
+      description: 'Если пусто — берется название страницы. (Синий текст в Google)',
+      validation: { length: { max: 60 } }
+    }),
+    description: fields.text({ 
+      label: 'SEO Описание (Meta Description)', 
+      multiline: true, 
+      description: 'Краткое описание для поисковиков. (Серый текст)',
+      validation: { length: { max: 160 } }
+    }),
+    // Картинку настраиваем отдельно в каждом блоке, так как разные папки
+  }, { label: '🔍 SEO Настройки (Meta & Social)' }),
+};
+
 export default config({
   storage: import.meta.env.PROD
     ? { kind: 'github', repo: 'GeorgeMoroz12/hyle' }
     : { kind: 'local' },
 
   singletons: {
-    // 1. LANDING (Вернули классический вид)
+    // 1. LANDING
     landing: singleton({
       label: 'Главная страница',
       path: 'src/content/landing/home',
       schema: {
-        // HERO СЕКЦИЯ (Одиночная)
         heroTitleLine1: fields.text({ label: 'Hero: Заголовок 1', defaultValue: 'Глина' }),
         heroTitleAccent: fields.text({ label: 'Hero: Акцент', defaultValue: 'хранит' }),
         heroTitleLine2: fields.text({ label: 'Hero: Заголовок 2', defaultValue: 'тепло.' }),
-        
         heroDescription: fields.text({ label: 'Hero: Описание', multiline: true }),
-        
         heroImage: fields.image({
             label: 'Hero: Фото',
             directory: 'public/images/landing',
@@ -40,7 +56,6 @@ export default config({
             validation: { isRequired: true }
         }),
 
-        // WORKSHOP СЕКЦИЯ
         workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
         workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
         workshopImage: fields.image({
@@ -49,30 +64,29 @@ export default config({
             publicPath: '/images/landing/'
         }),
 
-        // --- LEGACY FIELDS (ВЕРНУЛИ ДЛЯ СОВМЕСТИМОСТИ) ---
-        // Эти поля нужны, чтобы Keystatic мог открыть файл с оставшимися данными слайдера.
-        // Зайдите в админку, удалите элементы из этих списков и сохраните.
+        // SEO для Главной
+        seo: fields.object({
+          title: fields.text({ label: 'SEO Title' }),
+          description: fields.text({ label: 'SEO Description', multiline: true }),
+          ogImage: fields.image({ 
+            label: 'OG Image (Соцсети)', 
+            directory: 'public/images/landing/seo', 
+            publicPath: '/images/landing/seo/' 
+          }),
+        }, { label: '🔍 SEO Настройки' }),
+
+        // Legacy (чтобы не ломать старый файл)
         heroSlides: fields.array(
           fields.object({
-            image: fields.image({
-              label: 'Фото',
-              directory: 'public/images/landing',
-              publicPath: '/images/landing/',
-            }),
-            titleLine1: fields.text({ label: 'Заголовок 1' }),
-            titleAccent: fields.text({ label: 'Акцент' }),
-            titleLine2: fields.text({ label: 'Заголовок 2' }),
+            image: fields.image({ label: 'Фото', directory: 'public/images/landing', publicPath: '/images/landing/' }),
+            titleLine1: fields.text({ label: 'Заголовок' }),
             description: fields.text({ label: 'Описание' }),
           }),
-          { label: '⚠️ Old: Hero Slides (Удалите элементы)', itemLabel: (props) => 'Слайд (Legacy)' }
+          { label: '⚠️ Old: Hero Slides (Удалить)', itemLabel: (props) => 'Слайд' }
         ),
-
         faq: fields.array(
-          fields.object({
-            question: fields.text({ label: 'Вопрос' }),
-            answer: fields.text({ label: 'Ответ' }),
-          }),
-          { label: '⚠️ Old: FAQ (Удалите элементы)', itemLabel: (props) => 'Вопрос (Legacy)' }
+          fields.object({ question: fields.text({ label: 'Вопрос' }), answer: fields.text({ label: 'Ответ' }) }),
+          { label: '⚠️ Old: FAQ (Удалить)', itemLabel: (props) => 'Вопрос' }
         ),
       },
     }),
@@ -90,6 +104,18 @@ export default config({
           publicPath: '/images/about/',
           validation: { isRequired: true }
         }),
+        
+        // SEO для О Мастере
+        seo: fields.object({
+          title: fields.text({ label: 'SEO Title' }),
+          description: fields.text({ label: 'SEO Description', multiline: true }),
+          ogImage: fields.image({ 
+            label: 'OG Image', 
+            directory: 'public/images/about/seo', 
+            publicPath: '/images/about/seo/' 
+          }),
+        }, { label: '🔍 SEO Настройки' }),
+
         content: fields.document({
           label: 'Текст',
           formatting: true,
@@ -106,6 +132,18 @@ export default config({
       path: 'src/content/b2b/main',
       schema: {
         title: fields.text({ label: 'Заголовок' }),
+        
+        // SEO для B2B
+        seo: fields.object({
+          title: fields.text({ label: 'SEO Title' }),
+          description: fields.text({ label: 'SEO Description', multiline: true }),
+          ogImage: fields.image({ 
+            label: 'OG Image', 
+            directory: 'public/images/b2b/seo', 
+            publicPath: '/images/b2b/seo/' 
+          }),
+        }, { label: '🔍 SEO Настройки' }),
+
         content: fields.document({ label: 'Текст', formatting: true }),
         contactButtonText: fields.text({ label: 'Текст кнопки' }),
       },
@@ -134,35 +172,16 @@ export default config({
       format: { contentField: 'description' },
       columns: ['title', 'status', 'price', 'category'],
       schema: {
-        // ПРИОРИТЕТ
-        sortOrder: fields.number({
-          label: '🔢 Приоритет сортировки',
-          defaultValue: 0,
-        }),
-
-        // ОСНОВНОЕ
+        sortOrder: fields.number({ label: '🔢 Приоритет сортировки', defaultValue: 0 }),
         images: fields.array(
           fields.image({ label: 'Фото', directory: 'public/images/products', publicPath: '/images/products/' }),
           { label: 'Фотографии', itemLabel: (props) => `Фото #${props.index + 1}` }
         ),
         title: fields.slug({ name: { label: 'Название' } }),
-        
-        // ЦЕНА И МАРКЕТИНГ
         price: fields.number({ label: 'Цена (₽)' }),
-        
-        isNew: fields.checkbox({ 
-            label: '🔥 Новинка', 
-            description: 'Показать в блоке "Новое из печи".' 
-        }),
-        isSale: fields.checkbox({ 
-            label: '🏷️ Акция', 
-            description: 'Товар по акции.' 
-        }),
-        oldPrice: fields.number({ 
-            label: 'Старая цена (₽)', 
-            description: 'Будет зачеркнута.' 
-        }),
-
+        isNew: fields.checkbox({ label: '🔥 Новинка' }),
+        isSale: fields.checkbox({ label: '🏷️ Акция' }),
+        oldPrice: fields.number({ label: 'Старая цена (₽)' }),
         status: fields.select({
           label: 'Статус',
           options: [
@@ -173,7 +192,6 @@ export default config({
           ],
           defaultValue: 'В наличии',
         }),
-        
         category: fields.relationship({ label: 'Категория', collection: 'categories', validation: { isRequired: false } }),
         tags: fields.array(
           fields.relationship({ label: 'Тег', collection: 'tags' }),
@@ -184,19 +202,18 @@ export default config({
           { label: 'С этим покупают' }
         ),
         
-        // SEO
+        // SEO для Товаров
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
           ogImage: fields.image({ label: 'OG Image', directory: 'public/images/products/seo', publicPath: '/images/products/seo/' }),
-        }, { label: '🔍 SEO' }),
+        }, { label: '🔍 SEO Настройки' }),
 
         specs: fields.object({
           volume: fields.text({ label: 'Объем' }),
           size: fields.text({ label: 'Размер' }),
           material: fields.text({ label: 'Материал' }),
         }, { label: 'Характеристики' }),
-        
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
         description: fields.document({ label: 'Описание', formatting: true }),
@@ -222,11 +239,14 @@ export default config({
           directory: 'public/images/blog',
           publicPath: '/images/blog/',
         }),
+        
+        // SEO для Блога
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
           ogImage: fields.image({ label: 'OG Image', directory: 'public/images/blog/seo', publicPath: '/images/blog/seo/' }),
-        }, { label: '🔍 SEO' }),
+        }, { label: '🔍 SEO Настройки' }),
+
         relatedProducts: fields.array(
           fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'Товары' }
