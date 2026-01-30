@@ -15,11 +15,9 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// Деструктуризация всех полей, включая новые маркетинговые
 const { title, price, images, specs, status, masterNote, care_instructions, category, tags, isSale, oldPrice } = entry.data;
 const { Content } = await entry.render();
 
-// Хелпер для нормализации ID (строка или объект -> строка)
 const resolveId = (item: any) => {
     if (!item) return null;
     if (typeof item === 'string') return item;
@@ -68,7 +66,6 @@ if (relatedItems.length < 4) {
     relatedItems = [...relatedItems, ...leftovers];
 }
 
-// Загрузка маппинга категорий для карточек в слайдере
 const allCategories = await getCollection('categories');
 const categoryMap = allCategories.reduce((acc, cat) => {
     acc[cat.id] = cat.data.title;
@@ -105,6 +102,7 @@ const specMap: Record<string, string> = {
             Hyle.
         </a>
         
+        <!-- BREADCRUMBS: FIXED (No product title) -->
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
              {categoryTitle && (
@@ -115,28 +113,29 @@ const specMap: Record<string, string> = {
                     </a>
                 </>
              )}
-             <span class="text-hyle-text/30">/</span>
-             <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
 
-        <!-- DESKTOP IMAGE (ZOOM ENABLED) -->
+        <!-- DESKTOP IMAGE (Click to Lightbox) -->
         <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group">
              <img 
                 src={mainImage} 
                 alt={title} 
                 id="main-product-image" 
-                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" 
+                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl lightbox-trigger" 
+                data-src={mainImage}
             />
         </div>
 
-        <!-- MOBILE GALLERY (SWIPE & TAP-TO-ZOOM) -->
-        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide touch-none" id="mobile-gallery">
+        <!-- MOBILE GALLERY (Native Scroll + Lightbox) -->
+        <!-- FIX: Убрали touch-none, чтобы работал скролл. Добавили lightbox-trigger -->
+        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" id="mobile-gallery">
             {galleryImages.map((img) => (
-                <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative mobile-zoom-wrapper">
+                <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative">
                     <img 
                         src={img} 
                         alt={title} 
-                        class="max-w-full max-h-full object-contain drop-shadow-lg transition-transform duration-100 ease-out mobile-zoom-img" 
+                        class="max-w-full max-h-full object-contain drop-shadow-lg lightbox-trigger"
+                        data-src={img} 
                     />
                 </div>
             ))}
@@ -284,107 +283,86 @@ const specMap: Record<string, string> = {
         </div>
     </div>
   </div>
+
+  <!-- LIGHTBOX OVERLAY -->
+  <div id="lightbox" class="fixed inset-0 z-[9999] bg-black/90 hidden flex items-center justify-center opacity-0 transition-opacity duration-300 cursor-zoom-out">
+      <!-- Close Button -->
+      <button id="lightbox-close" class="absolute top-6 right-6 text-white/70 hover:text-white p-4">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+      </button>
+      
+      <!-- Image -->
+      <img id="lightbox-img" src="" alt="Full view" class="max-w-[95vw] max-h-[90vh] object-contain transition-transform duration-300" />
+  </div>
+
 </Layout>
 
 <script>
-    // --- 1. DESKTOP ZOOM ---
-    const container = document.querySelector('.zoom-container');
-    const img = document.getElementById('main-product-image');
+    // 1. LIGHTBOX LOGIC
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxClose = document.getElementById('lightbox-close');
+    const triggers = document.querySelectorAll('.lightbox-trigger');
 
-    if (container && img) {
-        container.addEventListener('mousemove', (e) => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                // @ts-ignore
-                const { left, top, width, height } = container.getBoundingClientRect();
-                // @ts-ignore
-                const x = ((e.clientX - left) / width) * 100;
-                // @ts-ignore
-                const y = ((e.clientY - top) / height) * 100;
-                img.style.transformOrigin = `${x}% ${y}%`;
-                img.style.transform = 'scale(1.5)';
-            }
-        });
-        container.addEventListener('mouseleave', () => {
-            if (window.matchMedia("(min-width: 1024px)").matches) {
-                img.style.transform = 'scale(1)';
-                setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
-            }
-        });
+    function openLightbox(src) {
+        if (lightbox && lightboxImg) {
+            // @ts-ignore
+            lightboxImg.src = src;
+            lightbox.classList.remove('hidden');
+            // Небольшая задержка для анимации opacity
+            setTimeout(() => lightbox.classList.remove('opacity-0'), 10);
+            document.body.style.overflow = 'hidden'; // Блокируем скролл фона
+        }
     }
 
-    // --- 2. MOBILE PINCH ZOOM (VANILLA JS) ---
-    const mobileWrappers = document.querySelectorAll('.mobile-zoom-wrapper');
-    mobileWrappers.forEach(wrapper => {
-        const mobileImg = wrapper.querySelector('.mobile-zoom-img');
-        if (!mobileImg) return;
-        
-        let startDist = 0;
-        let startScale = 1;
-        let currentScale = 1;
-        let isPinching = false;
-        
-        wrapper.addEventListener('touchstart', (e) => {
-            // @ts-ignore
-            if (e.touches.length === 2) {
-                isPinching = true;
+    function closeLightbox() {
+        if (lightbox) {
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
                 // @ts-ignore
-                startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                startScale = currentScale;
-            }
-        }, { passive: true });
+                if(lightboxImg) lightboxImg.src = ''; // Чистим
+                document.body.style.overflow = ''; // Разблокируем скролл
+            }, 300);
+        }
+    }
 
-        wrapper.addEventListener('touchmove', (e) => {
-            // @ts-ignore
-            if (isPinching && e.touches.length === 2) {
-                // @ts-ignore
-                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                const scale = Math.min(Math.max(1, startScale * (dist / startDist)), 3);
-                currentScale = scale;
-                // @ts-ignore
-                mobileImg.style.transform = `scale(${scale})`;
-            }
-        }, { passive: true });
-
-        wrapper.addEventListener('touchend', (e) => {
-            // @ts-ignore
-            if (e.touches.length < 2) {
-                isPinching = false;
-            }
-        });
-
-        // Tap toggle
-        let lastTap = 0;
-        wrapper.addEventListener('click', (e) => {
-            const now = Date.now();
-            if (now - lastTap > 300) { 
-                if (!isPinching) {
-                    if (currentScale > 1.2) {
-                        currentScale = 1;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1)`;
-                    } else {
-                        currentScale = 1.5;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1.5)`;
-                    }
-                }
-            }
-            lastTap = now;
+    triggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Чтобы не триггерить другие клики
+            const src = trigger.getAttribute('data-src') || trigger.getAttribute('src');
+            if (src) openLightbox(src);
         });
     });
 
-    // --- 3. THUMBNAILS ---
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightbox) {
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox || e.target === lightboxImg) closeLightbox();
+        });
+    }
+
+    // 2. THUMBNAILS (Desktop)
     const thumbs = document.querySelectorAll('.thumb-btn');
+    const mainImg = document.getElementById('main-product-image');
+    
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
-            if (img && src) img.setAttribute('src', src);
+            if (mainImg && src) {
+                // @ts-ignore
+                mainImg.src = src;
+                mainImg.setAttribute('data-src', src); // Обновляем для лайтбокса
+            }
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
 
-    // --- 4. SCROLL WHEEL ---
+    // 3. HORIZONTAL WHEEL SCROLL (Related Products)
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {

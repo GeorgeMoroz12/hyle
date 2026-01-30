@@ -44,6 +44,7 @@ export default config({
       label: 'Главная страница',
       path: 'src/content/landing/home',
       schema: {
+        // НОВОЕ: Слайдер
         heroSlides: fields.array(
           fields.object({
             image: fields.image({
@@ -59,9 +60,15 @@ export default config({
           }),
           { label: '📸 Слайдер Hero', itemLabel: (props) => props.fields.titleLine1.value || 'Слайд' }
         ),
-        // Старые поля оставляем на всякий случай
-        heroTitleLine1: fields.text({ label: 'Legacy: Заголовок 1' }), 
-        heroImage: fields.image({ label: 'Legacy: Фото', directory: 'public/images/landing', publicPath: '/images/landing/' }),
+
+        // --- LEGACY FIELDS (ВЕРНУЛИ, ЧТОБЫ ПОЧИНИТЬ ОШИБКУ) ---
+        // Эти поля остались в JSON-файле, поэтому они обязаны быть в конфиге
+        heroTitleLine1: fields.text({ label: '⚠️ Old: Заголовок 1' }), 
+        heroTitleAccent: fields.text({ label: '⚠️ Old: Акцент' }),      // <--- Вернули
+        heroTitleLine2: fields.text({ label: '⚠️ Old: Заголовок 2' }),  // <--- Вернули
+        heroDescription: fields.text({ label: '⚠️ Old: Описание', multiline: true }), // <--- Вернули
+        heroImage: fields.image({ label: '⚠️ Old: Фото', directory: 'public/images/landing', publicPath: '/images/landing/' }),
+        // -----------------------------------------------------
 
         workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
         workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
@@ -96,6 +103,8 @@ export default config({
         content: fields.document({
           label: 'Текст',
           formatting: true,
+          dividers: true,
+          links: true,
           images: { directory: 'public/images/about/content', publicPath: '/images/about/content/' },
         }),
       },
@@ -151,20 +160,18 @@ export default config({
         // ЦЕНА И МАРКЕТИНГ
         price: fields.number({ label: 'Цена (₽)' }),
         
-        // --- НОВЫЕ ПОЛЯ ---
         isNew: fields.checkbox({ 
             label: '🔥 Новинка', 
-            description: 'Показать в блоке "Новое из печи" на главной.' 
+            description: 'Показать в блоке "Новое из печи".' 
         }),
         isSale: fields.checkbox({ 
-            label: '🏷️ Акция (Распродажа)', 
-            description: 'Товар будет помечен как акционный.' 
+            label: '🏷️ Акция', 
+            description: 'Товар по акции.' 
         }),
         oldPrice: fields.number({ 
             label: 'Старая цена (₽)', 
-            description: 'Заполнять ТОЛЬКО если включена "Акция". Будет зачеркнута.' 
+            description: 'Будет зачеркнута.' 
         }),
-        // ------------------
 
         status: fields.select({
           label: 'Статус',
@@ -187,6 +194,7 @@ export default config({
           { label: 'С этим покупают' }
         ),
         
+        // SEO
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
@@ -205,7 +213,7 @@ export default config({
         
         // Legacy
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
-        isNewLegacy: fields.checkbox({ label: '⚠️ Old: isNew (Legacy)' }), // Переименовал, чтобы не конфликтовало
+        isNewLegacy: fields.checkbox({ label: '⚠️ Old: isNew (Legacy)' }),
         care: fields.text({ label: '⚠️ Old: care', multiline: true }),
       },
     }),
