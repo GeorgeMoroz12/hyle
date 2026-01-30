@@ -15,30 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// Получаем данные товара
-const product = entry.data;
-
-// --- 0. SEO SAFE LOGIC (FIX BUILD CRASH) ---
-// Если поля seo нет в файле, используем пустой объект, чтобы не было ошибки
-// @ts-ignore (игнорируем TS, если схема еще не обновлена)
-const seo = product.seo || {};
-
-// 1. Title: Если задан SEO-заголовок, берем его. Иначе — название товара.
-const pageTitle = seo.title || product.title;
-
-// 2. Description: Если задано SEO-описание, берем его. 
-// Иначе пробуем взять краткое описание (если оно есть в схеме) или ставим дефолт.
-// @ts-ignore
-const pageDescription = seo.description 
-    // @ts-ignore
-    || (product.description ? product.description.substring(0, 160) : "Авторская керамика ручной работы, вдохновленная природой.");
-
-// 3. Image: SEO-картинка -> Первая картинка товара -> Заглушка
-const socialImage = seo.ogImage || (product.images && product.images.length > 0 ? product.images[0] : '/images/hero-minimal.jpg');
-
-
-// --- Остальная логика (Category, Tags, Related) ---
-const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = product;
+const { title, price, images, specs, status, masterNote, care_instructions, category, tags } = entry.data;
 const { Content } = await entry.render();
 
 const resolveId = (item: any) => {
@@ -48,7 +25,7 @@ const resolveId = (item: any) => {
     return null;
 };
 
-// DATA LOGIC
+// --- DATA LOGIC ---
 const currentCategoryId = resolveId(category);
 let categoryTitle = 'Каталог';
 if (currentCategoryId) {
@@ -77,7 +54,7 @@ const relatedProducts = allProducts.filter(p => {
     const pCatId = resolveId(p.data.category);
     if (!currentCategoryId || !pCatId) return false;
     return pCatId === currentCategoryId;
-}).slice(0, 8);
+}).slice(0, 6);
 
 let relatedItems = relatedProducts;
 if (relatedItems.length < 4) {
@@ -106,17 +83,14 @@ const specMap: Record<string, string> = {
 };
 ---
 
-<!-- Передаем безопасные данные в Layout -->
-<Layout title={pageTitle} description={pageDescription} image={socialImage} hideHeader={true}>
+<Layout title={title} hideHeader={true}>
   
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
     
     <!-- LEFT: PRODUCT STAGE -->
-    <div class="relative w-full lg:w-[70%] h-[70vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
+    <div class="relative w-full lg:w-[70%] h-[60vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
         
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">
-            Hyle.
-        </a>
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide opacity-80 hover:opacity-100 mix-blend-multiply text-hyle-text">Hyle.</a>
         
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
@@ -128,39 +102,19 @@ const specMap: Record<string, string> = {
                     </a>
                 </>
              )}
-        </div>
-
-        <!-- MAIN IMAGE -->
-        <div class="hidden lg:flex zoom-container relative w-full h-full max-w-5xl max-h-[85vh] items-center justify-center cursor-zoom-in group overflow-hidden touch-none">
-             <img 
-                src={mainImage} 
-                alt={title} 
-                id="main-product-image" 
-                class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl will-change-transform" 
-            />
-        </div>
-
-        <!-- MOBILE GALLERY -->
-        <div class="lg:hidden w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide touch-none" id="mobile-gallery">
-            {(images && images.length > 0 ? images : [mainImage]).map((img) => (
-                <div class="w-full h-full shrink-0 snap-center flex items-center justify-center px-6 relative mobile-zoom-wrapper">
-                    <img 
-                        src={img} 
-                        alt={title} 
-                        class="max-w-full max-h-full object-contain drop-shadow-lg transition-transform duration-100 ease-out mobile-zoom-img" 
-                    />
-                </div>
-            ))}
+             <span class="text-hyle-text/30">/</span>
+             <span class="text-hyle-clay truncate max-w-[200px] cursor-default">{title}</span>
         </div>
         
-        <!-- Desktop Thumbnails -->
+        <div class="zoom-container relative w-full h-[50vh] lg:h-[85vh] flex items-center justify-center cursor-zoom-in group">
+             <img src={mainImage} alt={title} id="main-product-image" class="max-w-full max-h-full object-contain transition-transform duration-300 ease-out origin-center drop-shadow-xl" />
+             <div class="lg:hidden absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 text-[10px] uppercase tracking-widest text-hyle-text/60 rounded-full pointer-events-none">Tap to zoom</div>
+        </div>
+
         {images && images.length > 1 && (
             <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 gap-4 p-3 bg-white/60 backdrop-blur-md rounded-full border border-white/40 shadow-sm z-30">
                 {images.map((img) => (
-                    <button 
-                        class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" 
-                        data-src={img}
-                    >
+                    <button class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-hyle-clay transition-all thumb-btn" data-src={img}>
                         <img src={img} class="w-full h-full object-cover" />
                     </button>
                 ))}
@@ -169,12 +123,12 @@ const specMap: Record<string, string> = {
     </div>
 
     <!-- RIGHT: SIDEBAR -->
-    <div class="w-full lg:w-[30%] min-h-[50vh] bg-hyle-surface/90 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
+    <div class="w-full lg:w-[30%] min-h-[50vh] bg-white/80 border-l border-hyle-text/5 flex flex-col relative z-10 backdrop-blur-xl shadow-2xl shadow-hyle-text/5">
         <div class="flex-1 p-6 lg:p-12 flex flex-col gap-6 lg:gap-8">
             <div class="mt-0 lg:mt-4">
                 <div class="flex justify-between items-start mb-2">
                     <div class="flex-1 pr-4">
-                        <ExpandableText maxHeight="80px" gradientFrom="from-hyle-surface">
+                        <ExpandableText maxHeight="80px" gradientFrom="from-white/80">
                             <h1 class="font-serif text-3xl lg:text-5xl text-hyle-text leading-[1.1] break-words hyphens-auto">{title}</h1>
                         </ExpandableText>
                     </div>
@@ -199,15 +153,15 @@ const specMap: Record<string, string> = {
                 </div>
             </div>
 
-            <div class="bg-hyle-text/5 p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-text/5 relative mx-1">
+            <div class="bg-[#F6F5F1] p-5 lg:p-6 rounded-sm -rotate-1 shadow-sm border border-hyle-stone/50 relative mx-1">
                  <div class="absolute -top-3 left-1/2 w-3 h-3 rounded-full bg-hyle-text/10 shadow-inner"></div>
-                 <ExpandableText maxHeight="120px" gradientFrom="from-hyle-surface">
+                 <ExpandableText maxHeight="120px" gradientFrom="from-[#F6F5F1]">
                     <p class="font-hand text-xl lg:text-2xl text-hyle-text/80 leading-snug">"{noteText}"</p>
                  </ExpandableText>
             </div>
 
-            <ExpandableText maxHeight="140px" gradientFrom="from-hyle-surface">
-                <div class="prose prose-stone prose-sm prose-p:text-hyle-text/80 leading-relaxed font-light">
+            <ExpandableText maxHeight="140px" gradientFrom="from-white/80">
+                <div class="prose prose-sm prose-stone font-light leading-relaxed text-hyle-text/80 text-justify">
                     <Content />
                 </div>
             </ExpandableText>
@@ -220,7 +174,7 @@ const specMap: Record<string, string> = {
                                 <dt class="font-medium uppercase tracking-wider text-hyle-text/60">
                                     {specMap[key.toLowerCase()] || key}
                                 </dt>
-                                <dd className="text-hyle-text">{value}</dd>
+                                <dd>{value}</dd>
                             </>
                         ))}
                     </dl>
@@ -238,7 +192,7 @@ const specMap: Record<string, string> = {
 
             <div class="mt-2">
                  {isSoldOut ? (
-                    <button disabled class="w-full py-4 bg-hyle-text/10 text-hyle-text/40 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
+                    <button disabled class="w-full py-4 bg-neutral-100 text-neutral-400 font-serif italic cursor-not-allowed text-center text-xs uppercase tracking-widest">Изделие нашло свой дом</button>
                 ) : (
                     <OrderButton productName={title} price={price} url={currentUrl} />
                 )}
@@ -265,11 +219,32 @@ const specMap: Record<string, string> = {
   </div>
 </Layout>
 
+<!-- SCHEMA.ORG MICRODATA (SEO) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": title,
+  "description": `Авторская керамика ручной работы Hyle: ${title}. ${price}₽.`,
+  "image": mainImage,
+  "sku": entry.slug,
+  "brand": {
+    "@type": "Brand",
+    "name": "Hyle Ceramics"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": currentUrl,
+    "priceCurrency": "RUB",
+    "price": price,
+    "availability": isSoldOut ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition"
+  }
+})} />
+
 <script>
-    // --- 1. DESKTOP ZOOM ---
     const container = document.querySelector('.zoom-container');
     const img = document.getElementById('main-product-image');
-
+    let isZoomed = false;
     if (container && img) {
         container.addEventListener('mousemove', (e) => {
             if (window.matchMedia("(min-width: 1024px)").matches) {
@@ -289,81 +264,22 @@ const specMap: Record<string, string> = {
                 setTimeout(() => { img.style.transformOrigin = 'center center'; }, 300);
             }
         });
+        container.addEventListener('click', () => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+                if (isZoomed) { img.style.transform = 'scale(1)'; isZoomed = false; } 
+                else { img.style.transform = 'scale(1.5)'; isZoomed = true; }
+            }
+        });
     }
-
-    // --- 2. MOBILE PINCH ZOOM ---
-    const mobileWrappers = document.querySelectorAll('.mobile-zoom-wrapper');
-    mobileWrappers.forEach(wrapper => {
-        const mobileImg = wrapper.querySelector('.mobile-zoom-img');
-        if (!mobileImg) return;
-        
-        let startDist = 0;
-        let startScale = 1;
-        let currentScale = 1;
-        let isPinching = false;
-        
-        wrapper.addEventListener('touchstart', (e) => {
-            // @ts-ignore
-            if (e.touches.length === 2) {
-                isPinching = true;
-                // @ts-ignore
-                startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                startScale = currentScale;
-            }
-        }, { passive: true });
-
-        wrapper.addEventListener('touchmove', (e) => {
-            // @ts-ignore
-            if (isPinching && e.touches.length === 2) {
-                // @ts-ignore
-                const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                const scale = Math.min(Math.max(1, startScale * (dist / startDist)), 3);
-                currentScale = scale;
-                // @ts-ignore
-                mobileImg.style.transform = `scale(${scale})`;
-            }
-        }, { passive: true });
-
-        wrapper.addEventListener('touchend', (e) => {
-            // @ts-ignore
-            if (e.touches.length < 2) {
-                isPinching = false;
-            }
-        });
-
-        // Tap toggle
-        let lastTap = 0;
-        wrapper.addEventListener('click', (e) => {
-            const now = Date.now();
-            if (now - lastTap > 300) { 
-                if (!isPinching) {
-                    if (currentScale > 1.2) {
-                        currentScale = 1;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1)`;
-                    } else {
-                        currentScale = 1.5;
-                        // @ts-ignore
-                        mobileImg.style.transform = `scale(1.5)`;
-                    }
-                }
-            }
-            lastTap = now;
-        });
-    });
-
-    // --- 3. THUMBS & SCROLL ---
     const thumbs = document.querySelectorAll('.thumb-btn');
     thumbs.forEach(btn => {
         btn.addEventListener('click', () => {
             const src = btn.getAttribute('data-src');
-            // @ts-ignore
-            if (img && src) img.src = src;
+            if (img && src) img.setAttribute('src', src);
             thumbs.forEach(t => t.classList.remove('border-hyle-clay'));
             btn.classList.add('border-hyle-clay');
         });
     });
-
     const slider = document.getElementById('related-slider');
     if (slider) {
         slider.addEventListener('wheel', (e) => {
