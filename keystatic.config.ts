@@ -48,6 +48,32 @@ export default config({
             directory: 'public/images/landing',
             publicPath: '/images/landing/'
         }),
+
+        // --- LEGACY FIELDS (ВЕРНУЛИ ДЛЯ СОВМЕСТИМОСТИ) ---
+        // Эти поля нужны, чтобы Keystatic мог открыть файл с оставшимися данными слайдера.
+        // Зайдите в админку, удалите элементы из этих списков и сохраните.
+        heroSlides: fields.array(
+          fields.object({
+            image: fields.image({
+              label: 'Фото',
+              directory: 'public/images/landing',
+              publicPath: '/images/landing/',
+            }),
+            titleLine1: fields.text({ label: 'Заголовок 1' }),
+            titleAccent: fields.text({ label: 'Акцент' }),
+            titleLine2: fields.text({ label: 'Заголовок 2' }),
+            description: fields.text({ label: 'Описание' }),
+          }),
+          { label: '⚠️ Old: Hero Slides (Удалите элементы)', itemLabel: (props) => 'Слайд (Legacy)' }
+        ),
+
+        faq: fields.array(
+          fields.object({
+            question: fields.text({ label: 'Вопрос' }),
+            answer: fields.text({ label: 'Ответ' }),
+          }),
+          { label: '⚠️ Old: FAQ (Удалите элементы)', itemLabel: (props) => 'Вопрос (Legacy)' }
+        ),
       },
     }),
 
