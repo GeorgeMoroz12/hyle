@@ -6,5 +6,10 @@ heroImage: /images/landing/heroImage.jpg
 workshopTitle: Керамика
 workshopText: 'В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.'
 workshopImage: /images/landing/workshopImage.jpg
+seo:
+  title: 'Hyle: Керамика, к которой хочется прикоснуться'
+  description: >-
+    Посуда и декор ручной работы. Вещи, которые делают дом живым, а не просто
+    красивым!
 heroSlides: []
 faq: []
