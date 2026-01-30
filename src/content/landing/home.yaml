@@ -1,3 +1,6 @@
+heroSlides:
+  - image: /images/landing/heroSlides/0/image.jpg
+  - image: /images/landing/heroSlides/1/image.jpg
 heroTitleLine1: Глина
 heroTitleAccent: хранит
 heroTitleLine2: тепло рук.
@@ -5,3 +8,6 @@ heroDescription: Керамика с характером. Неидеальна�
 workshopTitle: 'Биба и Боба '
 workshopText: 'В блоге мы делимся процессом: как бесформенный кусок глины обретает характер.'
 workshopImage: /images/landing/workshopImage.jpg
+faq:
+  - question: 'Как происходит доставка? '
+    answer: Нормально
