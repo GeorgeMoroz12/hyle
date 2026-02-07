@@ -58,27 +58,26 @@ const pageDesc = "Полная коллекция керамики ручной 
 
 <Layout title={pageTitle} description={pageDesc}>
   
-  <div class="min-h-screen pt-24 md:pt-32 pb-20 bg-hyle-bg transition-colors duration-500">
+  <div class="min-h-screen pt-16 md:pt-20 pb-20 bg-hyle-bg transition-colors duration-500">
+    <!-- HEADER: компактно, без декоративных линий -->
     <div class="container-main">
-        
-        <!-- HEADER -->
-        <div class="flex flex-col items-center text-center gap-6 mb-12 animate-appear">
-            <h1 class="font-serif text-5xl md:text-7xl text-hyle-text leading-[0.9]">
+        <div class="flex flex-col items-center text-center gap-4 mb-10 animate-appear">
+            <h1 class="font-serif text-4xl md:text-6xl text-hyle-text leading-[1.05] tracking-tight">
                 Керамика
             </h1>
-            <div class="w-12 h-px bg-hyle-text/10"></div>
-            <p class="text-hyle-text/60 font-light max-w-md text-sm md:text-base leading-relaxed">
-                Вещи, хранящие тепло рук. <br/>
+            <p class="text-hyle-text/60 font-sans font-light max-w-md text-base md:text-lg leading-relaxed">
+                Вещи, хранящие тепло рук.<br/>
                 Найдите то, что откликается именно вам.
             </p>
         </div>
+    </div>
 
-        <!-- FILTERS -->
-        <div class="sticky top-0 z-40 bg-hyle-bg/95 backdrop-blur-sm py-6 mb-12 transition-all w-full" id="filter-bar">
-            <div class="flex flex-col items-center gap-6">
-                
-                <!-- LEVEL 1: CATEGORIES — на мобиле горизонтальный скролл -->
-                <div class="w-full -mx-5 px-5 md:mx-0 md:px-0 border-b border-hyle-text/5 pb-2">
+    <!-- FILTERS: во всю ширину блока с товарами (тот же container-main) -->
+    <div class="sticky top-0 z-40 bg-hyle-bg/95 backdrop-blur-sm py-4 md:py-6 mb-10 transition-all w-full border-y border-hyle-text/5" id="filter-bar">
+        <div class="container-main">
+            <div class="flex flex-col gap-5">
+                <!-- LEVEL 1: CATEGORIES — горизонтальный скролл на всю ширину блока -->
+                <div class="w-full border-b border-hyle-text/5 pb-2">
                     <div class="flex flex-nowrap gap-6 overflow-x-auto scrollbar-hide overscroll-x-contain md:flex-wrap md:justify-center md:gap-8 md:overflow-visible">
                         <button 
                             class="filter-btn group pb-1 shrink-0 transition-all duration-300 text-lg md:text-xl font-serif"
@@ -104,9 +103,9 @@ const pageDesc = "Полная коллекция керамики ручной 
                     </div>
                 </div>
 
-                <!-- LEVEL 2: TAGS — на мобиле горизонтальный скролл -->
+                <!-- LEVEL 2: TAGS — горизонтальный скролл на всю ширину блока -->
                 {filterTags.length > 0 && (
-                    <div class="w-full -mx-5 px-5 md:mx-0 md:px-0 md:flex md:justify-center">
+                    <div class="w-full md:flex md:justify-center">
                         <div class="flex flex-nowrap gap-3 overflow-x-auto scrollbar-hide overscroll-x-contain md:flex-wrap md:justify-center md:overflow-visible">
                             {filterTags.map(tag => (
                                 <button 
@@ -124,14 +123,16 @@ const pageDesc = "Полная коллекция керамики ручной 
                 )}
             </div>
             
-            <div id="active-filters-info" class="hidden mt-4 text-center">
-                <button id="reset-all" class="text-[10px] uppercase tracking-widest text-hyle-text/40 hover:text-hyle-clay border-b border-current pb-0.5 transition-colors">
-                    Сбросить фильтры
-                </button>
+                <div id="active-filters-info" class="hidden mt-4 text-center">
+                    <button id="reset-all" class="text-[10px] uppercase tracking-widest text-hyle-text/40 hover:text-hyle-clay border-b border-current pb-0.5 transition-colors">
+                        Сбросить фильтры
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- GRID -->
+    <!-- GRID -->
+    <div class="container-main">
         <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-12 md:gap-x-8 md:gap-y-16 min-h-[50vh]">
             
             {sortedProducts.map((product) => {

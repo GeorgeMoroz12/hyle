@@ -53,9 +53,9 @@ if (mainTagId) {
 <!-- Передаем SEO данные в Layout -->
 <Layout title={pageTitle} description={pageDescription} image={pageImage}>
   
-  <article class="min-h-screen pt-32 pb-24 bg-hyle-bg">
+  <article class="min-h-screen pt-32 pb-24 bg-hyle-bg w-full min-w-0 overflow-x-hidden">
     
-    <div class="container-main max-w-4xl mx-auto text-center mb-16 animate-appear">
+    <div class="container-main max-w-4xl mx-auto text-center mb-16 animate-appear w-full min-w-0">
         <div class="flex items-center justify-center gap-3 mb-6 text-xs font-mono uppercase tracking-widest text-hyle-text/40">
             <a href="/blog" class="hover:text-hyle-clay transition-colors border-b border-transparent hover:border-hyle-clay">Журнал</a>
             {tagName && <><span>/</span><span class="text-hyle-clay">#{tagName}</span></>}
@@ -65,7 +65,7 @@ if (mainTagId) {
     </div>
 
     {coverImage && (
-        <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear" style="animation-delay: 100ms;">
+        <div class="container-main max-w-5xl mx-auto mb-16 md:mb-24 animate-appear w-full min-w-0" style="animation-delay: 100ms;">
             <div class="aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-sm shadow-xl">
                 <img 
                     src={coverImage} 
@@ -76,8 +76,8 @@ if (mainTagId) {
         </div>
     )}
 
-    <div class="container-main max-w-[680px] mx-auto animate-appear" style="animation-delay: 200ms;">
-        <div class="prose prose-stone prose-lg md:prose-xl 
+    <div class="container-main max-w-[680px] mx-auto animate-appear w-full min-w-0" style="animation-delay: 200ms;">
+        <div class="prose prose-stone prose-lg md:prose-xl max-w-full 
             prose-headings:font-serif prose-headings:font-normal prose-headings:text-hyle-text 
             prose-p:font-sans prose-p:font-light prose-p:text-hyle-text/80 prose-p:leading-relaxed
             prose-a:text-hyle-clay prose-a:no-underline hover:prose-a:underline
@@ -99,7 +99,7 @@ if (mainTagId) {
         </div>
     </div>
 
-    <div class="container-main mt-24 pt-12 border-t border-hyle-text/5">
+    <div class="container-main mt-24 pt-12 border-t border-hyle-text/5 w-full min-w-0">
         <div class="flex justify-between items-center">
             <a href="/blog" class="group flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-hyle-text/60 hover:text-hyle-clay transition-colors"><span class="group-hover:-translate-x-1 transition-transform">←</span>Назад в журнал</a>
             <a href="/catalog" class="group flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-hyle-text/60 hover:text-hyle-clay transition-colors">В каталог<span class="group-hover:translate-x-1 transition-transform">→</span></a>
