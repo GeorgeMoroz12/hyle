@@ -77,45 +77,49 @@ const pageDesc = "Полная коллекция керамики ручной 
         <div class="sticky top-0 z-40 bg-hyle-bg/95 backdrop-blur-sm py-6 mb-12 transition-all w-full" id="filter-bar">
             <div class="flex flex-col items-center gap-6">
                 
-                <!-- LEVEL 1: CATEGORIES -->
-                <div class="flex flex-wrap justify-center gap-6 md:gap-8 pb-2 border-b border-hyle-text/5 w-full">
-                    <button 
-                        class="filter-btn group pb-1 transition-all duration-300 text-lg md:text-xl font-serif"
-                        data-type="category"
-                        data-value="all"
-                        data-active-class="text-hyle-text border-b border-hyle-text"
-                        data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b border-transparent"
-                    >
-                        Все
-                    </button>
-
-                    {filterCategories.map(cat => (
+                <!-- LEVEL 1: CATEGORIES — на мобиле горизонтальный скролл -->
+                <div class="w-full -mx-5 px-5 md:mx-0 md:px-0 border-b border-hyle-text/5 pb-2">
+                    <div class="flex flex-nowrap gap-6 overflow-x-auto scrollbar-hide overscroll-x-contain md:flex-wrap md:justify-center md:gap-8 md:overflow-visible">
                         <button 
-                            class="filter-btn group pb-1 transition-all duration-300 text-lg md:text-xl font-serif"
+                            class="filter-btn group pb-1 shrink-0 transition-all duration-300 text-lg md:text-xl font-serif"
                             data-type="category"
-                            data-value={cat.id} 
+                            data-value="all"
                             data-active-class="text-hyle-text border-b border-hyle-text"
                             data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b border-transparent"
                         >
-                            {cat.title}
+                            Все
                         </button>
-                    ))}
-                </div>
 
-                <!-- LEVEL 2: TAGS -->
-                {filterTags.length > 0 && (
-                    <div class="flex flex-wrap justify-center gap-3 px-4">
-                        {filterTags.map(tag => (
+                        {filterCategories.map(cat => (
                             <button 
-                                class="filter-btn group px-4 py-1.5 rounded-full border transition-all duration-300 text-[11px] lowercase tracking-wide font-mono"
-                                data-type="tag"
-                                data-value={tag.id} 
-                                data-active-class="bg-hyle-text text-hyle-bg border-hyle-text"
-                                data-inactive-class="bg-transparent text-hyle-text/50 border-hyle-text/10 hover:border-hyle-clay hover:text-hyle-clay"
+                                class="filter-btn group pb-1 shrink-0 transition-all duration-300 text-lg md:text-xl font-serif"
+                                data-type="category"
+                                data-value={cat.id} 
+                                data-active-class="text-hyle-text border-b border-hyle-text"
+                                data-inactive-class="text-hyle-text/40 hover:text-hyle-clay border-b border-transparent"
                             >
-                                {tag.title}
+                                {cat.title}
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                <!-- LEVEL 2: TAGS — на мобиле горизонтальный скролл -->
+                {filterTags.length > 0 && (
+                    <div class="w-full -mx-5 px-5 md:mx-0 md:px-0 md:flex md:justify-center">
+                        <div class="flex flex-nowrap gap-3 overflow-x-auto scrollbar-hide overscroll-x-contain md:flex-wrap md:justify-center md:overflow-visible">
+                            {filterTags.map(tag => (
+                                <button 
+                                    class="filter-btn group shrink-0 px-4 py-1.5 rounded-full border transition-all duration-300 text-[11px] lowercase tracking-wide font-mono"
+                                    data-type="tag"
+                                    data-value={tag.id} 
+                                    data-active-class="bg-hyle-text text-hyle-bg border-hyle-text"
+                                    data-inactive-class="bg-transparent text-hyle-text/50 border-hyle-text/10 hover:border-hyle-clay hover:text-hyle-clay"
+                                >
+                                    {tag.title}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
@@ -230,8 +234,8 @@ const pageDesc = "Полная коллекция керамики ручной 
                 if (value === 'all') isActive = activeCategories.size === 0;
                 else isActive = type === 'category' ? activeCategories.has(value) : activeTags.has(value);
 
-                // Восстанавливаем классы, не теряя стили
-                let baseClasses = "filter-btn group transition-all duration-300 whitespace-nowrap cursor-pointer";
+                // Восстанавливаем классы, не теряя стили (shrink-0 нужен для горизонтального скролла на мобиле)
+                let baseClasses = "filter-btn group shrink-0 transition-all duration-300 whitespace-nowrap cursor-pointer";
                 if (type === 'category') baseClasses += " pb-1 text-lg md:text-xl font-serif";
                 else baseClasses += " px-4 py-1.5 rounded-full border text-[11px] lowercase tracking-wide font-mono";
                 
