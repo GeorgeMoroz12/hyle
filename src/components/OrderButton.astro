@@ -9,7 +9,7 @@ interface Props {
 
 const { productName, price, url, className = "" } = Astro.props;
 
-const tgUsername = import.meta.env.PUBLIC_TG_USERNAME || 'uliana_vovchuk'; 
+const tgUsername = 'uliana_vovchuk'; 
 const message = `Здравствуйте! Хочу приобрести ${productName} за ${price}₽. Ссылка: ${url}`;
 const encodedMessage = encodeURIComponent(message);
 const telegramLink = `https://t.me/${tgUsername}?text=${encodedMessage}`;
