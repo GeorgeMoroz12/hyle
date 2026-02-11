@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   // Твой реальный домен
-  site: 'https://hyle-w6he.vercel.app',
+  site: 'https://hyleceramics.ru',
   
   // ВАЖНО: Возвращаем статический режим.
   // Это починит страницы товаров, так как они будут собраны заранее.
