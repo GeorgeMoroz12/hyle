@@ -1,0 +1,10 @@
+﻿meta:
+  environment: node
+  toolchain: npm
+  version: 20.11.0
+build:
+  requirementsPath: package.json
+run:
+  scriptName: start
+  containerPort: 3000
+  persistence: []
