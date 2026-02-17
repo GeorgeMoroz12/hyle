@@ -1,25 +1,12 @@
 meta:
   environment: node
-  toolchain: npm
-  version: 20.10.0 # Важно: версия 20+ для React 19 и Astro 5
-
+  toolchain:
+    name: npm
+    version: 20
 build:
-  requirementsPath: package.json
-  # Команды для установки зависимостей и сборки проекта
-  command: |
-    npm install
-    npm run build
-  # Что сохранить после сборки для запуска (папка dist и модули)
-  artifacts:
-    - dist
-    - package.json
-    - node_modules
-
+  requirements: package.json
+  command: export ASTRO_ADAPTER=node && npm run build
 run:
-  scriptName: index.js # Формально требуется, но переопределяется ниже
-  # Команда запуска сервера (как у вас в package.json)
   command: npm run start
-  # Порт, на котором работает Astro (по умолчанию 4321)
-  containerPort: 4321
-  persistenceMounts:
-    - /data
+  persistence:
+    - mountPoint: /data
