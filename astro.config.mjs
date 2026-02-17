@@ -5,24 +5,31 @@ import markdoc from '@astrojs/markdoc';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
+
+// Определяем адаптер на основе переменной окружения
+const adapter = process.env.ASTRO_ADAPTER === 'node'
+  ? node({
+    mode: 'standalone',
+  })
+  : vercel({
+    imageService: true,
+  });
 
 // https://astro.build/config
 export default defineConfig({
   // Твой реальный домен
   site: 'https://hyleceramics.ru',
-  
-  // ВАЖНО: Возвращаем статический режим.
-  // Это починит страницы товаров, так как они будут собраны заранее.
-  output: 'static',
-  
-  // Адаптер Vercel нужен, чтобы работала API-функция админки (которую мы создадим ниже)
-  adapter: vercel({
-    imageService: true,
-  }),
+
+  // Динамически выбираем output: 'server' для Node.js (нужен для API), 
+  // 'static' для Vercel (как было ранее, но с возможностью переопределения)
+  output: process.env.ASTRO_ADAPTER === 'node' ? 'server' : 'static',
+
+  adapter,
 
   integrations: [
-    react(), 
+    react(),
     keystatic(), // Авто-интеграция обрабатывает UI (/keystatic), но API мы перехватим вручную
     markdoc(),
   ],
