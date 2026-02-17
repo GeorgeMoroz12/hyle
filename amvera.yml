@@ -1,12 +1,7 @@
 meta:
   environment: node
-  toolchain:
-    name: npm
-    version: 20
-build:
-  requirements: package.json
-  command: export ASTRO_ADAPTER=node && npm run build
+  toolchain: npm
+  version: 20.x
 run:
-  command: npm run start
-  persistence:
-    - mountPoint: /data
+  scriptName: start
+  containerPort: 3000
