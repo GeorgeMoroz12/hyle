@@ -1,8 +1,15 @@
-version: null
 meta:
-  environment: docker
+  environment: node
+  toolchain: npm
+  version: 20
+
 build:
-  dockerfile: Dockerfile
+  command: npm install && npm run build
+  artifacts:
+    - key: "**"
+      value: "/"
+
 run:
+  scriptName: dist/server/entry.mjs
   containerPort: 4321
-serviceType: compute
+  persistenceMount: /data
