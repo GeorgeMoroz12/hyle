@@ -1,22 +1,8 @@
 version: null
 meta:
-  environment: node
-  toolchain:
-    name: npm
-    version: 20.11.0
+  environment: docker
 build:
-  skip: false
-  command: npm install && npm run build
-  container: auto
-  artifacts:
-    "*": /
+  dockerfile: Dockerfile
 run:
-  persistenceMount: /data
-  command: node ./dist/server/entry.mjs
   containerPort: 4321
-  envs:
-    - name: HOST
-      value: "0.0.0.0"
-    - name: PORT
-      value: "4321"
 serviceType: compute
