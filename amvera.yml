@@ -3,17 +3,15 @@ meta:
   environment: node
   toolchain:
     name: npm
-    version: "20"
+    version: 20.11.0
 build:
   skip: false
-  additionalCommands: npm install && npm run build
+  command: npm run build
+  container: auto
   artifacts:
     "*": /
 run:
   persistenceMount: /data
-  scriptName: start
-  scriptArguments: null
-  nodeArguments: null
-  command: npm run start
-  containerPort: 3000
+  command: node ./dist/server/entry.mjs
+  containerPort: 4321
 serviceType: compute

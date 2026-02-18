@@ -4,29 +4,19 @@ import { defineConfig } from 'astro/config';
 import markdoc from '@astrojs/markdoc';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
-import vercel from '@astrojs/vercel';
 import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
-
-// Определяем адаптер на основе переменной окружения
-const adapter = process.env.ASTRO_ADAPTER === 'node'
-  ? node({
-    mode: 'standalone',
-  })
-  : vercel({
-    imageService: true,
-  });
 
 // https://astro.build/config
 export default defineConfig({
   // Твой реальный домен
   site: 'https://hyleceramics.ru',
 
-  // Динамически выбираем output: 'server' для Node.js (нужен для API), 
-  // 'static' для Vercel (как было ранее, но с возможностью переопределения)
-  output: process.env.ASTRO_ADAPTER === 'node' ? 'server' : 'static',
+  output: 'server',
 
-  adapter,
+  adapter: node({
+    mode: 'standalone',
+  }),
 
   integrations: [
     react(),
