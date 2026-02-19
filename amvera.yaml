@@ -1,4 +1,3 @@
-@"
 meta:
   environment: node
   toolchain: npm
@@ -14,4 +13,3 @@ run:
   scriptName: dist/server/entry.mjs
   containerPort: 4321
   persistenceMount: /data
-"@ | Out-File -Encoding UTF8 amvera.yaml
