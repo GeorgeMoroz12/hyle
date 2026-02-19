@@ -12,4 +12,4 @@ build:
 run:
   scriptName: dist/server/entry.mjs
   containerPort: 4321
-  persistenceMount: /data
+  persistenceMount: /data # update
