@@ -36,7 +36,7 @@ const seoFields = {
 
 export default config({
   storage: import.meta.env.PROD
-    ? { kind: 'github', repo: { owner: 'GeorgeMoroz12', name: 'hyle-ceramics' } }
+    ? { kind: 'github', repo: { owner: 'GeorgeMoroz12', name: 'hyle' } }
     : { kind: 'local' },
 
   singletons: {
