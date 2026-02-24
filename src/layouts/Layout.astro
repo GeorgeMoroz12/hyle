@@ -1,14 +1,15 @@
 ---
 // src/layouts/Layout.astro
-import '../styles/global.css';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
 
 interface Props {
-	title?: string;       // Fallback заголовок
-	description?: string; // Fallback описание
-    image?: string;       // Fallback картинка
-    seo?: {               // Объект из CMS
+    title?: string; // Fallback заголовок
+    description?: string; // Fallback описание
+    image?: string; // Fallback картинка
+    seo?: {
+        // Объект из CMS
         title?: string;
         description?: string;
         ogImage?: string;
@@ -16,12 +17,12 @@ interface Props {
     hideHeader?: boolean;
 }
 
-const { 
-    title = "Керамика ручной работы", 
-    description = "Авторская керамика ручной работы Hyle. Посуда с характером, созданная в тишине.", 
+const {
+    title = "Керамика ручной работы",
+    description = "Авторская керамика ручной работы Хиле / Hylẽ. Посуда с характером, созданная в тишине.",
     image = "/images/hero-minimal.jpg",
-    seo = {}, 
-    hideHeader = false 
+    seo = {},
+    hideHeader = false,
 } = Astro.props;
 
 // --- CASCADE LOGIC ---
@@ -33,22 +34,27 @@ const finalDescription = seo.description || description;
 const finalImage = seo.ogImage || image;
 
 // Формируем полный URL для OG картинки
-const siteUrl = Astro.site ? Astro.site.href : 'https://hyle-ceramics.com'; // Замените на реальный домен
-const ogImageUrl = finalImage.startsWith('http') ? finalImage : new URL(finalImage, siteUrl).href;
+const siteUrl = Astro.site ? Astro.site.href : "https://hyle-ceramics.com"; // Замените на реальный домен
+const ogImageUrl = finalImage.startsWith("http")
+    ? finalImage
+    : new URL(finalImage, siteUrl).href;
 ---
 
 <!doctype html>
 <html lang="ru">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="format-detection" content="telephone=no" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
         <!-- PRIMARY META -->
-		<title>{finalTitle} | Hyle.</title>
-		<meta name="title" content={finalTitle} />
-		<meta name="description" content={finalDescription} />
+        <title>{finalTitle} | Хиле / Hylẽ</title>
+        <meta name="title" content={finalTitle} />
+        <meta name="description" content={finalDescription} />
 
         <!-- OPEN GRAPH / FACEBOOK -->
         <meta property="og:type" content="website" />
@@ -63,20 +69,24 @@ const ogImageUrl = finalImage.startsWith('http') ? finalImage : new URL(finalIma
         <meta property="twitter:title" content={finalTitle} />
         <meta property="twitter:description" content={finalDescription} />
         <meta property="twitter:image" content={ogImageUrl} />
-		
+
         <!-- FONTS -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;500;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-	</head>
-	<body class="flex flex-col min-h-screen min-h-[100dvh] w-full antialiased selection:bg-hyle-clay/20 selection:text-hyle-text">
-		
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;500;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body
+        class="flex flex-col min-h-screen min-h-[100dvh] w-full antialiased selection:bg-hyle-clay/20 selection:text-hyle-text"
+    >
         {!hideHeader && <Header />}
-		
-		<main class="flex-grow w-full min-w-0 overflow-x-hidden">
-			<slot />
-		</main>
+
+        <main class="flex-grow w-full min-w-0 overflow-x-hidden">
+            <slot />
+        </main>
 
         {!hideHeader && <Footer />}
-	</body>
+    </body>
 </html>
