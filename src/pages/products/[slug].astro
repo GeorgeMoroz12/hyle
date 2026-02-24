@@ -106,7 +106,7 @@ const seoImage = mainImage;
   <div class="min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-hyle-bg transition-colors duration-500">
     <!-- LEFT: PRODUCT STAGE -->
     <div class="relative w-full lg:w-[70%] h-[70vh] lg:h-screen lg:sticky lg:top-0 bg-hyle-stone/10 flex flex-col justify-center overflow-hidden pt-32 lg:pt-20 pb-10">
-        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">Hyle.</a>
+        <a href="/" class="absolute top-6 left-6 lg:top-8 lg:left-8 z-30 font-serif text-xl lg:text-2xl tracking-wide text-hyle-text opacity-90 hover:opacity-100 transition-opacity">Хилẽ</a>
         <div class="absolute top-14 left-6 lg:top-8 lg:left-32 z-20 flex items-center gap-2 pt-1 font-hand text-lg lg:text-2xl text-hyle-text/50">
              <a href="/catalog" class="hover:text-hyle-clay transition-colors">Каталог</a>
              {categoryTitle && <><span class="text-hyle-text/30">/</span><a href={`/catalog?categories=${currentCategoryId}`} class="text-hyle-clay -rotate-1 hover:text-hyle-text transition-colors">{categoryTitle}</a></>}
@@ -329,12 +329,12 @@ const seoImage = mainImage;
   "@context": "https://schema.org",
   "@type": "Product",
   "name": title,
-  "description": description ? description.substring(0, 160) : `Авторская керамика ручной работы Hyle: ${title}. ${price}₽.`,
+  "description": description ? description.substring(0, 160) : `Авторская керамика ручной работы Хилẽ: ${title}. ${price}₽.`,
   "image": mainImage,
   "sku": entry.slug,
   "brand": {
     "@type": "Brand",
-    "name": "Hyle Ceramics"
+    "name": "Хилẽ"
   },
   "offers": {
     "@type": "Offer",
