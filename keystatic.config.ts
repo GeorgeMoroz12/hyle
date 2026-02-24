@@ -10,8 +10,8 @@ const productCardBlock = {
       validation: { isRequired: true },
     }),
   },
-  preview: (props: any) => props.fields.item.value 
-    ? `📦 Товар: ${props.fields.item.value}` 
+  preview: (props: any) => props.fields.item.value
+    ? `📦 Товар: ${props.fields.item.value}`
     : '⚠️ Выберите товар...',
 };
 
@@ -19,14 +19,14 @@ const productCardBlock = {
 // Чтобы не дублировать код, вынесем настройки SEO в функцию
 const seoFields = {
   seo: fields.object({
-    title: fields.text({ 
-      label: 'SEO Заголовок (Title)', 
+    title: fields.text({
+      label: 'SEO Заголовок (Title)',
       description: 'Если пусто — берется название страницы. (Синий текст в Google)',
       validation: { length: { max: 60 } }
     }),
-    description: fields.text({ 
-      label: 'SEO Описание (Meta Description)', 
-      multiline: true, 
+    description: fields.text({
+      label: 'SEO Описание (Meta Description)',
+      multiline: true,
       description: 'Краткое описание для поисковиков. (Серый текст)',
       validation: { length: { max: 160 } }
     }),
@@ -36,7 +36,7 @@ const seoFields = {
 
 export default config({
   storage: import.meta.env.PROD
-    ? { kind: 'github', repo: 'GeorgeMoroz12/hyle' }
+    ? { kind: 'github', repo: { owner: 'GeorgeMoroz12', name: 'hyle-ceramics' } }
     : { kind: 'local' },
 
   singletons: {
@@ -50,28 +50,28 @@ export default config({
         heroTitleLine2: fields.text({ label: 'Hero: Заголовок 2', defaultValue: 'тепло.' }),
         heroDescription: fields.text({ label: 'Hero: Описание', multiline: true }),
         heroImage: fields.image({
-            label: 'Hero: Фото',
-            directory: 'public/images/landing',
-            publicPath: '/images/landing/',
-            validation: { isRequired: true }
+          label: 'Hero: Фото',
+          directory: 'public/images/landing',
+          publicPath: '/images/landing/',
+          validation: { isRequired: true }
         }),
 
         workshopTitle: fields.text({ label: 'Workshop: Заголовок' }),
         workshopText: fields.text({ label: 'Workshop: Текст', multiline: true }),
         workshopImage: fields.image({
-            label: 'Workshop: Фото',
-            directory: 'public/images/landing',
-            publicPath: '/images/landing/'
+          label: 'Workshop: Фото',
+          directory: 'public/images/landing',
+          publicPath: '/images/landing/'
         }),
 
         // SEO для Главной
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
-          ogImage: fields.image({ 
-            label: 'OG Image (Соцсети)', 
-            directory: 'public/images/landing/seo', 
-            publicPath: '/images/landing/seo/' 
+          ogImage: fields.image({
+            label: 'OG Image (Соцсети)',
+            directory: 'public/images/landing/seo',
+            publicPath: '/images/landing/seo/'
           }),
         }, { label: '🔍 SEO Настройки' }),
 
@@ -104,15 +104,15 @@ export default config({
           publicPath: '/images/about/',
           validation: { isRequired: true }
         }),
-        
+
         // SEO для О Мастере
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
-          ogImage: fields.image({ 
-            label: 'OG Image', 
-            directory: 'public/images/about/seo', 
-            publicPath: '/images/about/seo/' 
+          ogImage: fields.image({
+            label: 'OG Image',
+            directory: 'public/images/about/seo',
+            publicPath: '/images/about/seo/'
           }),
         }, { label: '🔍 SEO Настройки' }),
 
@@ -132,15 +132,15 @@ export default config({
       path: 'src/content/b2b/main',
       schema: {
         title: fields.text({ label: 'Заголовок' }),
-        
+
         // SEO для B2B
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
           description: fields.text({ label: 'SEO Description', multiline: true }),
-          ogImage: fields.image({ 
-            label: 'OG Image', 
-            directory: 'public/images/b2b/seo', 
-            publicPath: '/images/b2b/seo/' 
+          ogImage: fields.image({
+            label: 'OG Image',
+            directory: 'public/images/b2b/seo',
+            publicPath: '/images/b2b/seo/'
           }),
         }, { label: '🔍 SEO Настройки' }),
 
@@ -198,10 +198,10 @@ export default config({
           { label: 'Теги', itemLabel: (props) => props.value }
         ),
         relatedProducts: fields.array(
-          fields.relationship({ label: 'Товар', collection: 'products' }), 
+          fields.relationship({ label: 'Товар', collection: 'products' }),
           { label: 'С этим покупают' }
         ),
-        
+
         // SEO для Товаров
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),
@@ -217,7 +217,7 @@ export default config({
         careInstructions: fields.text({ label: 'Уход', multiline: true }),
         masterNote: fields.text({ label: 'Заметка мастера', multiline: true }),
         description: fields.document({ label: 'Описание', formatting: true }),
-        
+
         // Legacy
         inStock: fields.checkbox({ label: '⚠️ Old: inStock' }),
         isNewLegacy: fields.checkbox({ label: '⚠️ Old: isNew (Legacy)' }),
@@ -239,7 +239,7 @@ export default config({
           directory: 'public/images/blog',
           publicPath: '/images/blog/',
         }),
-        
+
         // SEO для Блога
         seo: fields.object({
           title: fields.text({ label: 'SEO Title' }),

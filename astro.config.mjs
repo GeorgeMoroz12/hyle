@@ -9,10 +9,12 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://hyleceramics.ru',
   output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  adapter: node({
+    mode: 'standalone',
+  }),
   server: {
-    host: '0.0.0.0',
-    port: 4321,
+    host: true, // слушаем 0.0.0.0 — требование Amvera
+    port: process.env.PORT ? parseInt(process.env.PORT) : 80,
   },
   integrations: [react(), keystatic(), markdoc()],
   vite: {
