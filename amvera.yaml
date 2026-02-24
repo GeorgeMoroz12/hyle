@@ -3,6 +3,10 @@ meta:
   toolchain:
     name: npm
     version: 20
+
+build:
+  additionalCommands: npm run build
+
 run:
-  command: node ./dist/server/entry.mjs
+  command: npm run start
   containerPort: 80
