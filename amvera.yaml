@@ -3,12 +3,8 @@ meta:
   toolchain:
     name: npm
     version: 20
-
 build:
-  # Amvera автоматически запустит npm install и npm run build
-  skip: false
-
+  command: npm install && npm run build
 run:
-  # Запуск собранного сервера Astro
   command: node ./dist/server/entry.mjs
   containerPort: 80
